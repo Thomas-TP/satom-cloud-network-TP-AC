@@ -8,5 +8,6 @@ Test de chevauchement : create-subnet --cidr-block 10.20.0.0/27 (inclus dans 10.
   -> aws: [ERROR]: An error occurred (InvalidSubnet.Conflict) when calling the CreateSubnet operation: The CIDR '10.20.0.0/27' conflicts with another subnet
 
 Joignabilite web-01 (10.20.0.10) -> app-01 (10.20.1.10) : ping 3/3 recus, 0 % de perte, rtt moyen 0,25 ms (route locale du VPC)
-Joignabilite app-01 -> Internet avant IGW/NAT : impossible (la table par defaut ne contient que la route locale 10.20.0.0/22)
+app-01 -> Internet avant IGW/NAT : NON TESTE (SSM indisponible sans acces Internet) ; deduit de la table de routage qui ne contient que la route locale 10.20.0.0/22
 Note : l'outil Reachability Analyzer (tiros:CreateQuery) est bloque par l'organisation ; les tests de ping ont donc ete faits via SSM apres le module 2.
+

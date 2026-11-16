@@ -4,7 +4,7 @@ TP1 - IGW + rt-public (0.0.0.0/0 -> igw) + IP publique (Elastic IP) sur web-01
   web-01 -> app-01 ping 10.20.1.10 : 3/3 recus
 TP2 - NAT nat-prod-leman-TP-AC + rt-prive (0.0.0.0/0 -> nat)
   app-01 -> ping 8.8.8.8 : 2/2 recus (~4 ms) ; curl https://checkip.amazonaws.com -> IP de la NAT (l'adresse de app-01 reste privee)
-  SSH depuis l'exterieur vers app-01 : impossible (pas d'IP publique, SG ferme)
+  SSH depuis l'exterieur vers app-01 : NON TESTE a ce stade ; app-01 n'a pas d'adresse IP publique (donc non joignable depuis Internet)
 TP3 - route par defaut retiree puis retablie (ping 8.8.8.8 chaque seconde depuis app-01, heures UTC de l'instance) :
   10:49:04 a 10:49:18  OK    (route 0.0.0.0/0 -> NAT presente)
   10:49:19 a 10:49:37  ECHEC (route retiree a 10:49:20 UTC, soit 19 s d'echec)
@@ -12,3 +12,4 @@ TP3 - route par defaut retiree puis retablie (ping 8.8.8.8 chaque seconde depuis
 Tables de routage finales :
   rt-public-leman-TP-AC : 10.20.0.0/22 local | 0.0.0.0/0 -> igw-prod-leman-TP-AC
   rt-prive-leman-TP-AC  : 10.20.0.0/22 local | 0.0.0.0/0 -> nat-prod-leman-TP-AC
+

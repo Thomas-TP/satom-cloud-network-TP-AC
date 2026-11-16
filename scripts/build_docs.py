@@ -11,7 +11,7 @@ MOD = os.path.join(ROOT, 'docs', 'modules')
 base = sys.argv[1].rstrip('/') if len(sys.argv) > 1 else None
 base_root = base.rsplit('/docs/images', 1)[0] if base else None
 
-LABELS = {'00-console': 'Console AWS (capture réelle)', '99-preuves': 'Preuves de tests (journal)'}
+LABELS = {'00-console': 'Console AWS', '99-preuves': 'Journal des tests'}
 
 
 def label(fn):
@@ -19,7 +19,7 @@ def label(fn):
     for k, v in LABELS.items():
         if n.startswith(k):
             return v + ' – ' + n.split('-', 2)[-1].replace('-', ' ') if k == '00-console' else v
-    return 'Sortie AWS CLI – ' + n.split('-', 1)[-1].replace('-', ' ')
+    return 'Terminal – ' + n.split('-', 1)[-1].replace('-', ' ')
 
 
 def captures_section(m, absolute):
@@ -52,3 +52,4 @@ if base:
     dossier = re.sub(r'\]\(\.\./images/', '](' + base + '/', dossier)
 open(os.path.join(ROOT, 'docs', 'DOSSIER.md'), 'w', encoding='utf-8', newline='\n').write(dossier)
 print('modules assembles :', len(parts), '| caracteres :', len(dossier))
+

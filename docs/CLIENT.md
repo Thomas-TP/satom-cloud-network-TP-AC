@@ -10,10 +10,10 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | Objectif | Ce que nous avons livré | Preuve |
 |---|---|---|
 | Isoler prod / dev | Deux réseaux privés distincts (`10.20.0.0/22`, `10.21.0.0/24`) reliés par un lien contrôlé limité au port 8080 de l'API | tests du module 5 |
-| Relier siège et agence en chiffré | Tunnels **IPsec IKEv2 (AES-256, SHA-256, PFS)** ; clés dans un coffre-fort de secrets ; le siège joint l'application, l'agence seulement l'API (8080), aucun site ne voit le développement | modules 7 et 8 |
+| Relier siège et agence en chiffré | Tunnels **IPsec IKEv2 (AES-256, SHA-256, PFS)** ; clés dans un coffre-fort de secrets ; le siège joint l'application, l'agence seulement l'API (8080) ; le réseau de développement n'est pas annoncé aux sites | modules 7 et 8 |
 | Filtrer et journaliser | Pare-feux à deux niveaux (Security Groups, NACL), journaux de flux réseau, alarme sur erreurs applicatives | modules 3 et 12 |
 | Répartition de charge et DNS | Répartiteur HTTPS sur 2 zones, routage `/api/*`, DNS privé/public avec bascule automatique, CDN | modules 9 à 11 |
-| Maîtriser les coûts | Ressources facturées à l'heure supprimées après usage ; coût total du projet très inférieur au budget | section 7 |
+| Maîtriser les coûts | Instances arrêtées hors séance ; NAT et répartiteurs conservés jusqu'à la fin du cours ; budget de 100 USD par mois avec alerte à 80 % | section 7 |
 | Reproductibilité | Template CloudFormation : suppression puis redéploiement identique, sans étape manuelle | module 13 |
 
 ![Architecture](../images/global.png)
@@ -64,7 +64,7 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | CloudFront, Route 53, CloudWatch | négligeable à cette échelle |
 | Network Firewall, Transit Gateway, VPN managé (cibles) | ~0,40 USD/h, ~0,05 USD/h par attachement, ~0,05 USD/h par connexion : à budgéter en production |
 
-Les crédits du compte ont été augmentés par les activités pédagogiques (120 → 180 USD) ; l'ensemble du projet consomme une très faible partie du budget.
+Estimation au 16/11 : de l'ordre de 2 à 4 USD pour la première journée (calcul par heures de ressources ; la facturation réelle n'était pas encore disponible, Cost Explorer a un retard d'environ 24 h). Les activités pédagogiques ont porté les crédits du compte à 180 USD.
 
 ## 8. Reproductibilité et exploitation
 * **Code** : scripts PowerShell/AWS CLI (un par module), templates CloudFormation (`reseau-leman.yaml`, `optional-*.yaml`), schémas et preuves dans le dépôt Git.
@@ -80,3 +80,6 @@ Les crédits du compte ont été augmentés par les activités pédagogiques (12
 
 ## 10. Prochaines étapes
 Validation du dossier par Léman Finance → recette sur environnement de production → bascule des utilisateurs → transfert d'exploitation (procédures de diagnostic, tableau de bord, alarmes).
+
+
+

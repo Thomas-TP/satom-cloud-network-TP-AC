@@ -98,17 +98,17 @@ Toutes les ressources créées portent le suffixe **`-TP-AC`** (convention des a
 
 ## Captures
 
-**Console AWS (capture réelle) – budgets**
+**Console AWS – budgets**
 
-![Console AWS (capture réelle) – budgets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-budgets.png)
+![Console AWS – budgets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-budgets.png)
 
-**Console AWS (capture réelle) – credits**
+**Console AWS – credits**
 
-![Console AWS (capture réelle) – credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-credits.png)
+![Console AWS – credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-credits.png)
 
-**Console AWS (capture réelle) – quetes credits**
+**Console AWS – quetes credits**
 
-![Console AWS (capture réelle) – quetes credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-quetes-credits.png)
+![Console AWS – quetes credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-quetes-credits.png)
 
 
 ---
@@ -167,7 +167,7 @@ Test de chevauchement : create-subnet --cidr-block 10.20.0.0/27 (inclus dans 10.
   -> aws: [ERROR]: An error occurred (InvalidSubnet.Conflict) when calling the CreateSubnet operation: The CIDR '10.20.0.0/27' conflicts with another subnet
 
 Joignabilite web-01 (10.20.0.10) -> app-01 (10.20.1.10) : ping 3/3 recus, 0 % de perte, rtt moyen 0,25 ms (route locale du VPC)
-Joignabilite app-01 -> Internet avant IGW/NAT : impossible (la table par defaut ne contient que la route locale 10.20.0.0/22)
+app-01 -> Internet avant IGW/NAT : NON TESTE (SSM indisponible sans acces Internet) ; deduit de la table de routage qui ne contient que la route locale 10.20.0.0/22
 Note : l'outil Reachability Analyzer (tiros:CreateQuery) est bloque par l'organisation ; les tests de ping ont donc ete faits via SSM apres le module 2.
 ```
 
@@ -180,33 +180,33 @@ Note : l'outil Reachability Analyzer (tiros:CreateQuery) est bloque par l'organi
 
 ## Captures
 
-**Console AWS (capture réelle) – instances**
+**Console AWS – instances**
 
-![Console AWS (capture réelle) – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-instances.png)
+![Console AWS – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-instances.png)
 
-**Console AWS (capture réelle) – sous reseaux**
+**Console AWS – sous reseaux**
 
-![Console AWS (capture réelle) – sous reseaux](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-sous-reseaux.png)
+![Console AWS – sous reseaux](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-sous-reseaux.png)
 
-**Console AWS (capture réelle) – vpcs**
+**Console AWS – vpcs**
 
-![Console AWS (capture réelle) – vpcs](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-vpcs.png)
+![Console AWS – vpcs](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-vpcs.png)
 
-**Sortie AWS CLI – vpc**
+**Terminal – vpc**
 
-![Sortie AWS CLI – vpc](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/01-vpc.png)
+![Terminal – vpc](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/01-vpc.png)
 
-**Sortie AWS CLI – subnets**
+**Terminal – subnets**
 
-![Sortie AWS CLI – subnets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/02-subnets.png)
+![Terminal – subnets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/02-subnets.png)
 
-**Sortie AWS CLI – instances**
+**Terminal – instances**
 
-![Sortie AWS CLI – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/03-instances.png)
+![Terminal – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/03-instances.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/99-preuves-tests.png)
 
 
 ---
@@ -253,7 +253,7 @@ TP1 - IGW + rt-public (0.0.0.0/0 -> igw) + IP publique (Elastic IP) sur web-01
   web-01 -> app-01 ping 10.20.1.10 : 3/3 recus
 TP2 - NAT nat-prod-leman-TP-AC + rt-prive (0.0.0.0/0 -> nat)
   app-01 -> ping 8.8.8.8 : 2/2 recus (~4 ms) ; curl https://checkip.amazonaws.com -> IP de la NAT (l'adresse de app-01 reste privee)
-  SSH depuis l'exterieur vers app-01 : impossible (pas d'IP publique, SG ferme)
+  SSH depuis l'exterieur vers app-01 : NON TESTE a ce stade ; app-01 n'a pas d'adresse IP publique (donc non joignable depuis Internet)
 TP3 - route par defaut retiree puis retablie (ping 8.8.8.8 chaque seconde depuis app-01, heures UTC de l'instance) :
   10:49:04 a 10:49:18  OK    (route 0.0.0.0/0 -> NAT presente)
   10:49:19 a 10:49:37  ECHEC (route retiree a 10:49:20 UTC, soit 19 s d'echec)
@@ -271,29 +271,29 @@ Conformément au HackMD, **la NAT et son Elastic IP sont supprimées** quand ell
 
 ## Captures
 
-**Console AWS (capture réelle) – passerelle nat**
+**Console AWS – passerelle nat**
 
-![Console AWS (capture réelle) – passerelle nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelle-nat.png)
+![Console AWS – passerelle nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelle-nat.png)
 
-**Console AWS (capture réelle) – passerelles internet**
+**Console AWS – passerelles internet**
 
-![Console AWS (capture réelle) – passerelles internet](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelles-internet.png)
+![Console AWS – passerelles internet](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelles-internet.png)
 
-**Console AWS (capture réelle) – tables routage**
+**Console AWS – tables routage**
 
-![Console AWS (capture réelle) – tables routage](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-tables-routage.png)
+![Console AWS – tables routage](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-tables-routage.png)
 
-**Sortie AWS CLI – routes**
+**Terminal – routes**
 
-![Sortie AWS CLI – routes](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/01-routes.png)
+![Terminal – routes](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/01-routes.png)
 
-**Sortie AWS CLI – nat**
+**Terminal – nat**
 
-![Sortie AWS CLI – nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/02-nat.png)
+![Terminal – nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/02-nat.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/99-preuves-tests.png)
 
 
 ---
@@ -381,25 +381,25 @@ refus supprime -> curl externe : HTTP 200
 
 ## Captures
 
-**Console AWS (capture réelle) – groupes securite**
+**Console AWS – groupes securite**
 
-![Console AWS (capture réelle) – groupes securite](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-groupes-securite.png)
+![Console AWS – groupes securite](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-groupes-securite.png)
 
-**Console AWS (capture réelle) – nacl**
+**Console AWS – nacl**
 
-![Console AWS (capture réelle) – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-nacl.png)
+![Console AWS – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-nacl.png)
 
-**Sortie AWS CLI – sg**
+**Terminal – sg**
 
-![Sortie AWS CLI – sg](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/01-sg.png)
+![Terminal – sg](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/01-sg.png)
 
-**Sortie AWS CLI – nacl**
+**Terminal – nacl**
 
-![Sortie AWS CLI – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/02-nacl.png)
+![Terminal – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/02-nacl.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/99-preuves-tests.png)
 
 
 ---
@@ -520,21 +520,21 @@ dev-01 (via prod = transit, NON transitif) -> tiers-01 10.22.0.10 : Success	2 pa
 
 ## Captures
 
-**Console AWS (capture réelle) – peering**
+**Console AWS – peering**
 
-![Console AWS (capture réelle) – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/00-console-peering.png)
+![Console AWS – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/00-console-peering.png)
 
-**Sortie AWS CLI – peering**
+**Terminal – peering**
 
-![Sortie AWS CLI – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/01-peering.png)
+![Terminal – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/01-peering.png)
 
-**Sortie AWS CLI – routes dev**
+**Terminal – routes dev**
 
-![Sortie AWS CLI – routes dev](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/02-routes-dev.png)
+![Terminal – routes dev](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/02-routes-dev.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/99-preuves-tests.png)
 
 
 ---
@@ -613,7 +613,7 @@ Relier le siège (`192.168.10.0/24`) et l'agence (`192.168.20.0/24`) au VPC de p
 |---|---|
 | 1. Objets | équivalent des CGW/VPN : routeurs, IP publiques, groupes de sécurité (UDP 500, 4500, ESP limités à l'adresse du pair), clés dans Secrets Manager, tags sur toutes les ressources |
 | 2. Tunnel siège | strongSwan route-based (`if_id 11`) ; tunnel `ESTABLISHED` ; `ping 10.20.1.10` depuis le siège réussit ; vérification de la route vers `192.168.10.0/24` dans `rt-prive` |
-| 3. Agence | tunnel `if_id 12` ; l'agence joint `app-01` sur 8080 **uniquement** (ICMP refusé par `sg-app`) ; ni siège ni agence ne joignent `dev-01` (`10.21.0.10`, aucune route annoncée) |
+| 3. Agence | tunnel `if_id 12` ; l'agence joint `app-01` sur 8080 **uniquement** (ICMP refusé par `sg-app`) ; le développement n'est pas annoncé aux sites (seul `10.20.0.0/22` passe dans le tunnel) ; le test d'inaccessibilité de `dev-01` est à refaire (l'instance était arrêtée) |
 
 Scripts : `scripts/m07-ipsec-sim.ps1 -Site siege|agence`.
 
@@ -676,10 +676,7 @@ rtt min/avg/max/mdev = 2.426/2.551/2.787/0.166 ms
   
 siege -> app-01:8080 : Success  app-01 TP-AC /api/health
   
-siege -> dev-01 (10.21.0.10) : Success  2 packets transmitted, 0 received, 100% packet loss, time 1017ms
-
-exit=0
-    (aucune route : la prod seule est annoncee)
+siege -> dev-01 : TEST NON CONCLUANT (dev-01 etait arretee) ; le dev n'est pas annonce aux sites (seul 10.20.0.0/22 est dans le tunnel), a refaire avec dev-01 demarree
 === Module 7 - tunnel IPsec agence (simulation strongSwan) ===
 rtr-aws : swanctl --list-sas
 Success	siege: #2, CONNECTING, IKEv2, 46d24f38fb1cec9c_i* 0000000000000000_r
@@ -711,10 +708,7 @@ exit=0
 	
 agence -> app-01:8080 (seul flux autorise) : Success	app-01 TP-AC /api/health
 	
-agence -> dev-01 (10.21.0.10) : Success	2 packets transmitted, 0 received, 100% packet loss, time 1009ms
-
-exit=0
-	  (aucune route : la prod seule est annoncee)
+agence -> dev-01 : TEST NON CONCLUANT (dev-01 etait arretee) ; le dev n'est pas annonce aux sites (seul 10.20.0.0/22 est dans le tunnel), a refaire avec dev-01 demarree
 ```
 
 ## Nettoyage
@@ -725,23 +719,24 @@ Le HackMD est contradictoire (conserver / supprimer en fin de séance) : conform
 * Quota d'Elastic IP du compte atteint : les routeurs utilisent des IP publiques automatiques (elles changent à l'arrêt/redémarrage ; le script les relit).
 * Quota de 16 vCPU pour toute la classe : un seul site simulé est actif à la fois.
 
+
 ## Captures
 
-**Console AWS (capture réelle) – secret vpn**
+**Console AWS – secret vpn**
 
-![Console AWS (capture réelle) – secret vpn](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/00-console-secret-vpn.png)
+![Console AWS – secret vpn](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/00-console-secret-vpn.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-1.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-1.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-2.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-2.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-3.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-3.png)
 
 
 ---
@@ -762,7 +757,7 @@ Comprendre la connectivité dédiée (dimensionnement, VIF, BGP) et la politique
 ## TP
 | Tâche | Réalisation |
 |---|---|
-| 1. Dimensionnement | 2 To en 8 h = 16 000 Gbit / 28 800 s = **0,556 Gbit/s** → liaison **1 Gbit/s**, marge ≈ 44 % ; emplacements DX européens proches de Genève consultés dans la console (aucune commande passée) ; création de `dxgw-leman-TP-AC` (ASN 64513) **bloquée par SCP** |
+| 1. Dimensionnement | 2 To en 8 h = 16 000 Gbit / 28 800 s = **0,556 Gbit/s** → liaison **1 Gbit/s**, marge ≈ 44 % ; le choix de l'emplacement n'a pas pu être fait : `directconnect:DescribeLocations` est refusé par l'organisation (explicit deny SCP, testé le 16/11) ; la création de `dxgw-leman-TP-AC` (ASN 64513) est refusée de la même façon (`CreateDirectConnectGateway`, testé le 16/11) |
 | 2. GRE + BGP | tunnel GRE `169.254.100.0/30` entre `rtr-siege` (AS 65010) et `rtr-aws` (AS 64513), BGP `Established`, `192.168.10.0/24` annoncé, `10.20.0.0/22` reçu, `ping 10.20.1.10` réussi |
 | 3. Politique et bascule | `local-pref 200` sur les routes reçues par DX ; `AS-path prepend ×3` sur le chemin VPN ; coupure du GRE → bascule vers le VPN (délai mesuré) ; rétablissement → retour automatique sur DX |
 
@@ -896,19 +891,20 @@ Rien n'est facturé à l'heure pour Direct Connect (rien commandé). Les routeur
 * GRE traverse la NAT 1-pour-1 des IP publiques AWS (protocole 47 autorisé dans les Security Groups).
 
 
+
 ## Captures
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-1.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-1.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-2.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-2.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-3.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-3.png)
 
 
 ---
@@ -979,33 +975,33 @@ curl https://ALB/ -> web-01 TP-AC  [HTTP 200]
 
 ## Captures
 
-**Console AWS (capture réelle) – alb**
+**Console AWS – alb**
 
-![Console AWS (capture réelle) – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-alb.png)
+![Console AWS – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-alb.png)
 
-**Console AWS (capture réelle) – groupes cibles**
+**Console AWS – groupes cibles**
 
-![Console AWS (capture réelle) – groupes cibles](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-groupes-cibles.png)
+![Console AWS – groupes cibles](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-groupes-cibles.png)
 
-**Sortie AWS CLI – alb**
+**Terminal – alb**
 
-![Sortie AWS CLI – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/01-alb.png)
+![Terminal – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/01-alb.png)
 
-**Sortie AWS CLI – targets web**
+**Terminal – targets web**
 
-![Sortie AWS CLI – targets web](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/02-targets-web.png)
+![Terminal – targets web](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/02-targets-web.png)
 
-**Sortie AWS CLI – targets app**
+**Terminal – targets app**
 
-![Sortie AWS CLI – targets app](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/03-targets-app.png)
+![Terminal – targets app](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/03-targets-app.png)
 
-**Sortie AWS CLI – rules**
+**Terminal – rules**
 
-![Sortie AWS CLI – rules](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/04-rules.png)
+![Terminal – rules](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/04-rules.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/99-preuves-tests.png)
 
 
 ---
@@ -1073,29 +1069,29 @@ Zones et enregistrements conservés (modules 11 et 12). Le health check (~0,50 U
 
 ## Captures
 
-**Console AWS (capture réelle) – enregistrements**
+**Console AWS – enregistrements**
 
-![Console AWS (capture réelle) – enregistrements](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-enregistrements.png)
+![Console AWS – enregistrements](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-enregistrements.png)
 
-**Console AWS (capture réelle) – zones**
+**Console AWS – zones**
 
-![Console AWS (capture réelle) – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-zones.png)
+![Console AWS – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-zones.png)
 
-**Sortie AWS CLI – zones**
+**Terminal – zones**
 
-![Sortie AWS CLI – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/01-zones.png)
+![Terminal – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/01-zones.png)
 
-**Sortie AWS CLI – records**
+**Terminal – records**
 
-![Sortie AWS CLI – records](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/02-records.png)
+![Terminal – records](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/02-records.png)
 
-**Sortie AWS CLI – records privee**
+**Terminal – records privee**
 
-![Sortie AWS CLI – records privee](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/03-records-privee.png)
+![Terminal – records privee](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/03-records-privee.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/99-preuves-tests.png)
 
 
 ---
@@ -1182,17 +1178,17 @@ Route 53 : alias primaire -> CloudFront ; reponse DNS : 3.171.102.185	3.171.102.
 
 ## Captures
 
-**Console AWS (capture réelle) – cloudfront**
+**Console AWS – cloudfront**
 
-![Console AWS (capture réelle) – cloudfront](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/00-console-cloudfront.png)
+![Console AWS – cloudfront](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/00-console-cloudfront.png)
 
-**Sortie AWS CLI – distribution**
+**Terminal – distribution**
 
-![Sortie AWS CLI – distribution](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/01-distribution.png)
+![Terminal – distribution](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/01-distribution.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/99-preuves-tests.png)
 
 
 ---
@@ -1279,37 +1275,37 @@ Tableau de bord, alarme, groupe de logs conservés (module 13) ; rétention réd
 
 ## Captures
 
-**Console AWS (capture réelle) – alarme**
+**Console AWS – alarme**
 
-![Console AWS (capture réelle) – alarme](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-alarme.png)
+![Console AWS – alarme](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-alarme.png)
 
-**Console AWS (capture réelle) – tableau de bord**
+**Console AWS – tableau de bord**
 
-![Console AWS (capture réelle) – tableau de bord](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-tableau-de-bord.png)
+![Console AWS – tableau de bord](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-tableau-de-bord.png)
 
-**Sortie AWS CLI – alarm**
+**Terminal – alarm**
 
-![Sortie AWS CLI – alarm](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/01-alarm.png)
+![Terminal – alarm](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/01-alarm.png)
 
-**Sortie AWS CLI – flowlog**
+**Terminal – flowlog**
 
-![Sortie AWS CLI – flowlog](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/02-flowlog.png)
+![Terminal – flowlog](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/02-flowlog.png)
 
-**Sortie AWS CLI – sns**
+**Terminal – sns**
 
-![Sortie AWS CLI – sns](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/03-sns.png)
+![Terminal – sns](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/03-sns.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-1.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-1.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-2.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-2.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests.png)
 
 
 ---
@@ -1402,18 +1398,18 @@ Le template et la stack sont conservés (le HackMD le demande). La stack (instan
 
 ## Captures
 
-**Console AWS (capture réelle) – piles cloudformation**
+**Console AWS – piles cloudformation**
 
-![Console AWS (capture réelle) – piles cloudformation](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/00-console-piles-cloudformation.png)
+![Console AWS – piles cloudformation](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/00-console-piles-cloudformation.png)
 
-**Sortie AWS CLI – stack**
+**Terminal – stack**
 
-![Sortie AWS CLI – stack](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/01-stack.png)
+![Terminal – stack](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/01-stack.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-1.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-1.png)
 
-**Preuves de tests (journal)**
+**Journal des tests**
 
-![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-2.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-2.png)
