@@ -40,7 +40,7 @@ rtt min/avg/max/mdev = 2.426/2.551/2.787/0.166 ms
   
 siege -> app-01:8080 : Success  app-01 TP-AC /api/health
   
-siege -> dev-01 : TEST NON CONCLUANT (dev-01 etait arretee) ; le dev n'est pas annonce aux sites (seul 10.20.0.0/22 est dans le tunnel), a refaire avec dev-01 demarree
+siege -> dev-01 : premier essai NON CONCLUANT (dev-01 etait arretee) ; refait plus bas avec dev-01 demarree
 === Module 7 - tunnel IPsec agence (simulation strongSwan) ===
 rtr-aws : swanctl --list-sas
 Success	siege: #2, CONNECTING, IKEv2, 46d24f38fb1cec9c_i* 0000000000000000_r
@@ -72,5 +72,108 @@ exit=0
 	
 agence -> app-01:8080 (seul flux autorise) : Success	app-01 TP-AC /api/health
 	
-agence -> dev-01 : TEST NON CONCLUANT (dev-01 etait arretee) ; le dev n'est pas annonce aux sites (seul 10.20.0.0/22 est dans le tunnel), a refaire avec dev-01 demarree
+agence -> dev-01 : premier essai NON CONCLUANT (dev-01 etait arretee) ; refait plus bas avec dev-01 demarree
+
+=== Module 7 - tunnel IPsec siege (simulation strongSwan) ===
+rtr-aws : swanctl --list-sas
+Success	agence: #1, CONNECTING, IKEv2, 395d821a9697a878_i* 0000000000000000_r
+  local  '%any' @ 10.20.0.74[500]
+  remote '%any' @ 13.60.86.14[500]
+  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+
+rtr-siege : swanctl --list-sas
+Success	siege: #1, ESTABLISHED, IKEv2, b535252c8726a847_i* fdcc7f92d6069070_r
+  local  '51.20.144.158' @ 192.168.10.10[4500]
+  remote '16.171.171.189' @ 16.171.171.189[4500]
+  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
+  established 11s ago, rekeying in 14194s
+  siege: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+    installed 11s ago, rekeying in 3286s, expires in 3949s
+    in  c78f150b (-|0x0000000b),      0 bytes,     0 packets
+    out c1856d9b (-|0x0000000b),      0 bytes,     0 packets
+    local  0.0.0.0/0
+    remote 0.0.0.0/0
+	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+
+(mode DevOnly : app-01 arretee, seuls l'etat du tunnel et le test dev-01 sont executes)
+siege -> dev-01 (10.21.0.10), dev-01 en cours d'execution (SSM : Online) : Success	3 packets transmitted, 0 received, 100% packet loss, time 2061ms
+
+code retour=0
+	  (le tunnel ne contient que 10.20.0.0/22)
+=== Module 7 - tunnel IPsec agence (simulation strongSwan) ===
+rtr-aws : swanctl --list-sas
+Success	siege: #2, CONNECTING, IKEv2, 7fadf2f20e07735e_i* 0000000000000000_r
+  local  '%any' @ 10.20.0.74[500]
+  remote '%any' @ 51.20.144.158[500]
+  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+
+rtr-agence : swanctl --list-sas
+Success	agence: #1, ESTABLISHED, IKEv2, 54b21ff5d5cbddfd_i* fb535af7b613e7e5_r
+  local  '13.62.50.97' @ 192.168.20.10[4500]
+  remote '16.171.171.189' @ 16.171.171.189[4500]
+  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
+  established 11s ago, rekeying in 13121s
+  agence: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+    installed 11s ago, rekeying in 3449s, expires in 3949s
+    in  c5ff0eeb (-|0x0000000c),      0 bytes,     0 packets
+    out c468260c (-|0x0000000c),      0 bytes,     0 packets
+    local  0.0.0.0/0
+    remote 0.0.0.0/0
+	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+
+(mode DevOnly : app-01 arretee, seuls l'etat du tunnel et le test dev-01 sont executes)
+agence -> dev-01 (10.21.0.10), dev-01 en cours d'execution (SSM : Online) : Success	3 packets transmitted, 0 received, 100% packet loss, time 2024ms
+
+code retour=0
+	  (le tunnel ne contient que 10.20.0.0/22)
 

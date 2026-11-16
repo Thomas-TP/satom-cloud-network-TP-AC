@@ -3,7 +3,7 @@
 # et rtr-siege (192.168.10.0/24) ou rtr-agence (192.168.20.0/24).
 # Contraintes de la plateforme partagee : quota EIP atteint -> IP publiques automatiques ; 16 vCPU pour toute la classe -> un site a la fois.
 # Usage : pwsh scripts\m07-ipsec-sim.ps1 -Site siege|agence
-param([ValidateSet('siege','agence')][string]$Site = 'siege', [switch]$ConfigOnly)
+param([ValidateSet('siege','agence')][string]$Site = 'siege', [switch]$ConfigOnly, [switch]$DevOnly)
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\lib.ps1"
 $s = Get-State
@@ -51,6 +51,12 @@ function New-Router($subnet,$sg,$ip,$name) {
 function Pub($id) { Aws ec2 describe-instances --instance-ids $id --query 'Reservations[0].Instances[0].PublicIpAddress' }
 function IpsecRules($ip) { @("IpProtocol=udp,FromPort=500,ToPort=500,IpRanges=[{CidrIp=$ip/32,Description=IKE}]","IpProtocol=udp,FromPort=4500,ToPort=4500,IpRanges=[{CidrIp=$ip/32,Description=NAT-T}]","IpProtocol=50,IpRanges=[{CidrIp=$ip/32,Description=ESP}]") }
 
+function Reset-IpsecRules($sg, $ip) {
+  $json = & $script:aws ec2 describe-security-groups --group-ids $sg --query 'SecurityGroups[0].IpPermissions' --output json --profile TP-AC --region eu-north-1
+  $old = @(($json | ConvertFrom-Json) | Where-Object { $_.IpProtocol -eq '50' -or ($_.IpProtocol -eq 'udp' -and $_.FromPort -in 500,4500) })
+  if ($old.Count) { $of = Join-Path $env:TEMP "tpac-old-ipsec-$sg.json"; [IO.File]::WriteAllText($of, ($old | ConvertTo-Json -Depth 6 -AsArray)); Aws ec2 revoke-security-group-ingress --group-id $sg --ip-permissions "file://$of" | Out-Null }
+  Aws ec2 authorize-security-group-ingress --group-id $sg --ip-permissions (IpsecRules $ip) | Out-Null
+}
 # --- routeur cote AWS (une fois) ---
 if (-not $s.rtrAws) {
   $s.sgRtrAws = New-Sg $s.vpc 'rtr-aws-TP-AC'
@@ -59,11 +65,16 @@ if (-not $s.rtrAws) {
   $s.eniRtrAws = Aws ec2 describe-instances --instance-ids $s.rtrAws --query 'Reservations[0].Instances[0].NetworkInterfaces[0].NetworkInterfaceId'
   Save-State $s
 }
+if ($ConfigOnly) {
+  $startIds = @($s.rtrAws, $s[$rk]); if ($DevOnly) { $startIds += $s.dev }
+  Aws ec2 start-instances --instance-ids $startIds | Out-Null
+  Aws ec2 wait instance-running --instance-ids $startIds
+}
 $s.pubAws = Pub $s.rtrAws
 
 # --- routeur du site demande ---
 $sgKey = "sg$($rk.Substring(0,1).ToUpper())$($rk.Substring(1))"
-if ($ConfigOnly) { $pubSite = $s.pubSite } else {
+if ($ConfigOnly) { $pubSite = Pub $s[$rk]; $s.pubSite = $pubSite; Reset-IpsecRules $s[$sgKey] $s.pubAws; Reset-IpsecRules $s.sgRtrAws $pubSite; Save-State $s } else {
 $s[$sgKey] = New-Sg $s[$c.vpc] "rtr-$Site-TP-AC"
 $s[$rk] = New-Router $s[$c.sub] $s[$sgKey] $c.ip "rtr-$Site-TP-AC"
 $pubSite = Pub $s[$rk]
@@ -77,7 +88,7 @@ if ($Site -eq 'siege') {
 }
 $s.pubSite = $pubSite; Save-State $s
 }
-foreach ($i in $s.rtrAws,$s[$rk]) { "$i SSM: $(Wait-Ssm $i 420)" }
+foreach ($i in $s.rtrAws,$s[$rk]) { "$i SSM: $(Wait-Ssm $i 420)" }; if ($DevOnly) { "dev-01 SSM: $(Wait-Ssm $s.dev 420)" }
 
 # --- configuration strongSwan (route-based, interfaces xfrm) ---
 $common = @'
@@ -146,14 +157,16 @@ L "=== Module 7 - tunnel IPsec $Site (simulation strongSwan) ==="
 L "rtr-aws : swanctl --list-sas`n$awsOut"
 L "rtr-${Site} : swanctl --list-sas`n$siteOut"
 function Run($id,$cmd) { ((Invoke-Ssm $id $cmd 60) -join "`n") }
-if ($Site -eq 'siege') {
+if ($DevOnly) { L "(mode DevOnly : app-01 arretee, seuls l'etat du tunnel et le test dev-01 sont executes)" } elseif ($Site -eq 'siege') {
   L "siege -> app-01 (10.20.1.10) ping : `n$(Run $s[$rk] 'ping -c 3 -I 192.168.10.10 10.20.1.10 | tail -3')"
   L "siege -> app-01:8080 : $(Run $s[$rk] 'curl -s -m 5 --interface 192.168.10.10 http://10.20.1.10:8080/api/health || echo ECHEC')"
 } else {
   L "agence -> app-01 ping (ICMP non autorise pour l'agence) : `n$(Run $s[$rk] 'ping -c 2 -W 2 -I 192.168.20.10 10.20.1.10 | tail -2; echo exit=$?')"
   L "agence -> app-01:8080 (seul flux autorise) : $(Run $s[$rk] 'curl -s -m 5 --interface 192.168.20.10 http://10.20.1.10:8080/api/health || echo ECHEC')"
 }
-L "$Site -> dev-01 (10.21.0.10) : $(Run $s[$rk] "ping -c 2 -W 2 -I $($c.ip) 10.21.0.10 | tail -2; echo exit=`$?")  (aucune route : la prod seule est annoncee)"
+$devPing = if ($s.dev) { Aws ssm describe-instance-information --filters "Key=InstanceIds,Values=$($s.dev)" --query 'InstanceInformationList[0].PingStatus' } else { 'inconnu' }
+L "$Site -> dev-01 (10.21.0.10), dev-01 en cours d'execution (SSM : $devPing) : $(Run $s[$rk] "ping -c 3 -W 2 -I $($c.ip) 10.21.0.10 | tail -2; echo code retour=`$?")  (le tunnel ne contient que 10.20.0.0/22)"
 $log | Add-Content $outFile -Encoding utf8
 $s | ConvertTo-Json
+
 
