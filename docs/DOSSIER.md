@@ -7,7 +7,7 @@
 ## Vidéo de rendu
 <video controls preload="metadata" width="100%" src="https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/video/satom-cloud-network-TP-AC.mp4"></video>
 
-Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/Thomas-TP/satom-cloud-network-TP-AC/blob/main/video/satom-cloud-network-TP-AC.mp4) (durée 7 min 30 : schémas, captures de la console AWS et preuves de tests, module par module).
+Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/Thomas-TP/satom-cloud-network-TP-AC/blob/main/video/satom-cloud-network-TP-AC.mp4) (durée environ 8 min : schémas, captures de la console AWS et preuves de tests, module par module).
 ## Sommaire
 | Module | Sujet | Statut |
 |---|---|---|
@@ -29,6 +29,7 @@ Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/
 ![Schéma réseau final](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
 
 Dépôt du code, des scripts et des preuves : dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`. Les captures de preuve sont dans `captures/mNN/` : captures **réelles de la console AWS** (fichiers `00-console-*.png`, l'identifiant de compte est masqué), tableaux d'état issus de l'AWS CLI et journaux de tests (`99-preuves-tests.png`).
+
 
 
 

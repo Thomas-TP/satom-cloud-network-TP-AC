@@ -15,7 +15,7 @@ Région : **eu-north-1 (Stockholm)** – tags `Projet=SatomCloudNetwork`, `Equip
 | Services bloqués par l'organisation | [`docs/01-services-bloques.md`](docs/01-services-bloques.md) |
 | Journal de projet et nettoyage | [`docs/NETTOYAGE.md`](docs/NETTOYAGE.md) |
 | Captures (console AWS réelles, état CLI, preuves de tests) | [`captures/`](captures/) |
-| Vidéo de rendu | [`video/satom-cloud-network-TP-AC.mp4`](video/satom-cloud-network-TP-AC.mp4) |
+| Vidéo de rendu (environ 8 min) | [`video/satom-cloud-network-TP-AC.mp4`](video/satom-cloud-network-TP-AC.mp4) |
 
 ## Rejouer le projet
 ```powershell
@@ -24,3 +24,4 @@ pwsh scripts/m01-vpc.ps1; pwsh scripts/m02-routage.ps1; pwsh scripts/m03-securit
 python scripts/build_docs.py && python scripts/diagrams/gen_m05_m13.py                   # documents et schémas
 ```
 Chaque script de module écrit ses preuves dans `docs/modules/mNN/tests.txt`. Les ressources facturées à l'heure sont listées dans `docs/NETTOYAGE.md`.
+
