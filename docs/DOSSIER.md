@@ -1,100 +1,78 @@
-# Satom Cloud Network – Dossier de réalisation (équipe TP-AC)
+# Satom Cloud Network – Dossier du binôme TP-AC
 
-**Client** : Groupe Léman Finance SA – **Intégrateur** : Satom IT & Learning Solutions – **Équipe** : TP-AC (Thomas Prud'homme, Abderahmane Chaouche)
-**Formation** : AWS niveau 300 « Intégrer des services réseau multiplateformes » – Geneva Institute of Technology, promotion E3 – semaine du 16 au 20 novembre 2026
-**Région de travail** : Europe (Stockholm) `eu-north-1` – **Tags** : `Projet=SatomCloudNetwork`, `Equipe=TP-AC`, `Environnement=prod|dev`
+Projet réalisé par Thomas Prud'homme et Abderahmane Chaouche pour le client fictif Groupe Léman Finance SA (formation AWS niveau 300, Geneva Institute of Technology, promo E3, semaine du 16 au 20 novembre 2026).
 
-## Vidéo de rendu
+Tout est fait dans la région de Stockholm (`eu-north-1`). Nos ressources portent le suffixe `-TP-AC` et les tags `Projet=SatomCloudNetwork`, `Equipe=TP-AC` et `Environnement=prod` ou `dev`.
+
+## Vidéo
 <video controls preload="metadata" width="100%" src="https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/video/satom-cloud-network-TP-AC.mp4"></video>
 
-Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/Thomas-TP/satom-cloud-network-TP-AC/blob/main/video/satom-cloud-network-TP-AC.mp4) (durée environ 8 min : schémas, captures de la console AWS et preuves de tests, module par module).
-## Sommaire
-| Module | Sujet | Statut |
+Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/Thomas-TP/satom-cloud-network-TP-AC/blob/main/video/satom-cloud-network-TP-AC.mp4).
+
+## Où nous en sommes
+| Module | Sujet | Ce que nous avons fait |
 |---|---|---|
-| 0 | Cadrage, mandat, équipe, plan d'adressage | ✔ |
-| 1 | VPC et sous-réseaux | ✔ déployé et testé |
-| 2 | Routage : IGW et NAT | ✔ déployé et testé |
-| 3 | Security Groups et NACL | ✔ déployé et testé |
-| 4 | Network Firewall | ◐ bloqué par l'organisation : architecture, template validé, procédure |
-| 5 | VPC Peering | ✔ déployé et testé |
-| 6 | Transit Gateway | ◐ bloqué par l'organisation : architecture, template validé, procédure |
-| 7 | VPN site à site | ✔ simulé (IPsec strongSwan réel) |
-| 8 | Direct Connect | ✔ simulé (GRE + BGP FRRouting) |
-| 9 | Elastic Load Balancing | ✔ déployé et testé |
-| 10 | Route 53 | ✔ déployé et testé |
-| 11 | CloudFront | ✔ déployé et testé |
-| 12 | CloudWatch et Flow Logs | ✔ déployé et testé |
-| 13 | CloudFormation | ✔ déployé, drift, suppression/redéploiement testés |
+| 0 | Cadrage et plan d'adressage | fait |
+| 1 | VPC et sous-réseaux | déployé et testé |
+| 2 | Routage, IGW et NAT | déployé et testé |
+| 3 | Security Groups et NACL | déployé et testé |
+| 4 | Network Firewall | **non déployé** : le service est bloqué sur le compte de formation |
+| 5 | VPC Peering | déployé et testé |
+| 6 | Transit Gateway | **non déployé** : service bloqué |
+| 7 | VPN site à site | **simulé** avec strongSwan (le VPN AWS est bloqué) |
+| 8 | Direct Connect | **simulé** avec un tunnel GRE et du BGP (Direct Connect est bloqué) |
+| 9 | Load balancer | déployé et testé |
+| 10 | Route 53 | déployé et testé |
+| 11 | CloudFront | déployé et testé |
+| 12 | CloudWatch et Flow Logs | déployé et testé |
+| 13 | CloudFormation | déployé et testé |
+
+Les services bloqués le sont par une règle de l'organisation AWS du formateur. Nous avons relevé les erreurs exactes dans le fichier `docs/01-services-bloques.md` du dépôt.
 
 ![Schéma réseau final](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
 
-Dépôt du code, des scripts et des preuves : dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`. Les captures de preuve sont dans `captures/mNN/` : captures **réelles de la console AWS** (fichiers `00-console-*.png`, l'identifiant de compte est masqué), tableaux d'état issus de l'AWS CLI et journaux de tests (`99-preuves-tests.png`).
+Tout le code (scripts AWS CLI, templates CloudFormation), les preuves et les captures sont dans le dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`.
 
 
+# Module 0 – Cadrage et plan d'adressage
 
+## Le projet
+Léman Finance veut un réseau AWS sécurisé qui sépare la production du développement, relie le siège de Genève et l'agence de Lausanne, garde une trace des accès et reste maîtrisé en coût. Tout doit pouvoir être redéployé depuis un template.
 
+Nous sommes deux sur le projet. Le sujet prévoit une répartition en binômes avec des rôles (architecte, sécurité, exploitation…) ; nous ne l'avons pas appliquée et avons traité tous les modules ensemble.
 
+## Ce qui a changé par rapport au sujet
+Le compte AWS est partagé avec toute la classe et l'organisation du formateur impose des limites. Voilà ce que nous avons dû adapter.
 
-# Module 0 – Cadrage, mandat et équipe
+- **Région** : le sujet parle de Zurich, mais seule Stockholm est utilisable (Zurich n'est pas activée, Francfort est refusée).
+- **Services bloqués** : Network Firewall, Transit Gateway, VPN et Direct Connect sont refusés. Nous avons relevé les messages d'erreur (voir `01-services-bloques.md`).
+- **Budget** : le sujet annonce 150 CHF par équipe, mais le compte dispose de 100 USD de crédits partagés. Nous avons créé un budget de 100 USD par mois avec une alerte à 80 %.
+- **Domaine et certificats** : nous n'avons pas acheté de domaine. Le certificat du load balancer est donc auto-signé, et la zone publique `leman-finance.example` n'est pas réellement déléguée.
+- **Adresses IP** : les autres équipes utilisent déjà `10.0.0.0/16`, et le prof nous a dit qu'un /16 était trop grand. Nous avons pris des plages plus petites.
+- **Accès aux machines** : pas de SSH ni de clé, nous passons par AWS Systems Manager (SSM).
 
-## Objectif
-Poser le cadre du projet **Satom Cloud Network** : un réseau AWS sécurisé pour le client **Groupe Léman Finance SA**
-(siège à Genève-Cornavin, agence à Lausanne), avec séparation production / développement, traçabilité et données financières sensibles.
-
-## Équipe
-| Rôle | Responsable |
-|---|---|
-| Binôme **TP-AC** (tous les rôles du tableau du HackMD sont assurés par le binôme) | Thomas Prud'homme et Abderahmane Chaouche |
-| Relecture croisée | binôme voisin désigné par le formateur |
-
-Toutes les ressources créées portent le suffixe **`-TP-AC`** (convention des autres équipes de la classe : initiales en suffixe) et les tags
-`Projet=SatomCloudNetwork`, `Equipe=TP-AC`, `Environnement=prod|dev`.
-
-## Objectifs du mandat (O1 à O6) et état
-| # | Objectif | Réalisation |
+## Plan d'adressage
+| Réseau | Plage | Contenu |
 |---|---|---|
-| O1 | Isoler production et développement | VPC prod `10.20.0.0/22` et VPC dev `10.21.0.0/24`, liaison contrôlée par peering (module 5) |
-| O2 | Relier siège, agence et cloud en chiffré | Tunnels IPsec IKEv2 **simulés** avec strongSwan (module 7) – VPN géré AWS bloqué par l'organisation |
-| O3 | Filtrer les flux et journaliser | Security Groups, NACL (module 3), VPC Flow Logs (module 12) ; Network Firewall bloqué (module 4) |
-| O4 | Répartition de charge et DNS | ALB HTTPS (module 9), Route 53 privé/public + failover (module 10), CloudFront (module 11) |
-| O5 | Maîtriser les coûts | Ressources facturées à l'heure supprimées après les tests ; budget et crédits suivis |
-| O6 | Reproductibilité | Scripts PowerShell/AWS CLI versionnés + template CloudFormation (module 13) |
-
-## Contraintes et écarts assumés par rapport au HackMD
-| Sujet | HackMD | Réalité sur la plateforme | Décision |
-|---|---|---|---|
-| Région | Zurich `eu-central-2` | Zurich non activée, Francfort bloquée : **Stockholm `eu-north-1`** seule autorisée | Stockholm |
-| Budget | 150 CHF / équipe | Crédits partagés de 100 USD par compte | Suppression des ressources facturées, suivi des coûts |
-| Services | tous disponibles | Network Firewall, Transit Gateway, Site-to-Site VPN, Direct Connect **bloqués par SCP** | Simulation ou documentation + template (voir `01-services-bloques.md`) |
-| Domaine | `leman-finance.example` délégué | domaine fictif, pas d'achat | Tests DNS directs sur les serveurs de noms Route 53 |
-| Certificats | ACM validé par DNS | pas de domaine réel | Certificat auto-signé importé dans ACM ; certificat `*.cloudfront.net` |
-| Plage d'adresses | `10.0.0.0/16` | déjà utilisée par les autres équipes, et surdimensionnée | `10.20.0.0/22` (prod), `10.21.0.0/24` (dev) |
-| Accès aux instances | SSH | pas de paire de clés, principe du moindre privilège | AWS Systems Manager (SSM), aucun port 22 exposé |
-
-## Plan d'adressage validé
-| Réseau | CIDR | Rôle |
-|---|---|---|
-| `vpc-prod-leman-TP-AC` | `10.20.0.0/22` | production (1 024 adresses) |
-| `sub-public-1a` | `10.20.0.0/26` | `web-01` = `10.20.0.10`, NAT |
-| `sub-public-1b` | `10.20.0.64/26` | 2ᵉ zone de l'ALB, routeur `rtr-aws` |
-| `sub-prive-1a` | `10.20.1.0/26` | `app-01` = `10.20.1.10` |
-| `sub-fw-1a` (module 4, non déployé) | `10.20.2.0/28` | endpoint du pare-feu |
-| réservé base de données | `10.20.3.0/26` | non créé |
-| `vpc-dev-leman-TP-AC` | `10.21.0.0/24` | `dev-01` = `10.21.0.10` |
-| Siège (simulé) | `192.168.10.0/24` | selon HackMD |
-| Agence (simulée) | `192.168.20.0/24` | selon HackMD |
+| vpc-prod-leman-TP-AC | 10.20.0.0/22 | production |
+| sub-public-1a | 10.20.0.0/26 | web-01 (10.20.0.10), NAT |
+| sub-public-1b | 10.20.0.64/26 | deuxième zone du load balancer, routeur rtr-aws (10.20.0.74) |
+| sub-prive-1a | 10.20.1.0/26 | app-01 (10.20.1.10) |
+| sub-fw-1a | 10.20.2.0/28 | endpoint du pare-feu (prévu, non créé) |
+| réservé | 10.20.3.0/26 | base de données (non créé) |
+| vpc-dev-leman-TP-AC | 10.21.0.0/24 | développement, dev-01 (10.21.0.10) |
+| siège (simulé) | 192.168.10.0/24 | selon le sujet |
+| agence (simulée) | 192.168.20.0/24 | selon le sujet |
 
 ![Plan global](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
 
-## Méthode de travail
-* **Tout est scripté** (`scripts/mNN-*.ps1`, AWS CLI) : une exécution rejoue le TP, les preuves de tests sont enregistrées automatiquement dans `docs/modules/mNN/tests.txt`.
-* Les captures de la console AWS sont dans `captures/mNN/`.
-* Chaque module se termine par un **nettoyage** pour limiter les coûts ; les ressources conservées sont listées dans le module.
-
 ## Crédits et budget
-* **Crédits du compte** : 100 USD de base ; les 5 activités « Gagnez des crédits AWS » réalisables (EC2, Lambda, DynamoDB, RDS, Budgets) sont validées : **100 USD gagnés sur 100 USD possibles** (plafond atteint, l'activité Bedrock ne rapporte plus). Solde affiché au dernier contrôle : 180 USD (le report des 20 derniers USD peut être différé). Chaque ressource d'activité a été supprimée dès la quête validée.
-* **Budget de projet** : `budget-TP-AC-satom`, 100 USD par mois, alerte à **80 %** des dépenses réelles envoyée au topic SNS `sns-exploitation-leman-TP-AC` (aucune adresse e-mail personnelle). Un second budget `budget-TP-AC-quete` a été créé pour valider l'activité pédagogique (assistant de la console, qui exige une adresse : adresse de test sur domaine réservé `example.com`).
-* Captures : `captures/m00/00-console-credits.png`, `00-console-quetes-credits.png`, `00-console-budgets.png`.
+Le compte part avec 100 USD. Les activités « Gagnez des crédits AWS » nous ont rapporté 100 USD de plus (EC2, Lambda, DynamoDB, RDS et Budgets). Nous les avons faites en ligne de commande et supprimé les ressources juste après. L'écran de la console affichait encore 180 USD au dernier contrôle ; le report des derniers crédits peut prendre du temps.
+
+Le budget `budget-TP-AC-satom` envoie son alerte à 80 % vers le topic SNS d'exploitation.
+
+## Méthode
+Nous avons tout scripté avec l'AWS CLI (un script par module dans `scripts/`). Chaque test écrit son résultat dans un fichier du dépôt, que l'on retrouve dans la partie « Résultats des tests » de chaque module.
 
 ## Captures
 
@@ -116,46 +94,36 @@ Toutes les ressources créées portent le suffixe **`-TP-AC`** (convention des a
 # Module 1 – VPC et sous-réseaux
 
 ## Objectif
-Créer le réseau privé virtuel de production, découper l'espace d'adresses en sous-réseaux public et privé, et vérifier la communication interne.
+Créer le réseau de production, un sous-réseau public et un privé, deux serveurs, et vérifier qu'ils se parlent.
 
-## Cours (essentiel)
-* Un **VPC** est un réseau IP isolé dans une région. Son CIDR (de /16 à /28) ne peut pas chevaucher celui d'un autre réseau que l'on voudra relier (peering, VPN).
-* Un **sous-réseau** appartient à **une seule zone de disponibilité** ; AWS réserve **5 adresses** par sous-réseau (réseau, routeur VPC, DNS, futur usage, diffusion) : un /26 offre 59 adresses utilisables.
-* Tant qu'on n'a rien ajouté, la table de routage du VPC ne contient que la **route locale** (`10.20.0.0/22 → local`) : les instances se parlent, mais rien ne sort.
-* Dimensionnement : le HackMD propose un /16 (65 536 adresses). Pour deux serveurs, c'est surdimensionné et cela complique le peering ; nous avons retenu un **/22** (1 024 adresses) découpé en /26.
+## Ce qu'il faut savoir
+Un VPC est un réseau isolé dans une région, avec une plage d'adresses (CIDR). Un sous-réseau vit dans une seule zone de disponibilité et AWS y réserve 5 adresses, donc un /26 offre 59 adresses utilisables. Au départ, la table de routage ne contient que la route locale : les machines du VPC se voient, mais rien ne sort.
 
-## Scénario
-Léman Finance veut un environnement de production isolé. On crée `vpc-prod-leman-TP-AC`, un sous-réseau public (serveur web) et un sous-réseau privé (application).
+Le sujet propose un /16. Le prof nous a dit que c'était trop large pour deux serveurs, nous avons pris un /22.
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. VPC et sous-réseaux | `vpc-prod-leman-TP-AC` `10.20.0.0/22` ; `sub-public-1a-TP-AC` `10.20.0.0/26` et `sub-prive-1a-TP-AC` `10.20.1.0/26` en `eu-north-1a` ; vérification : la table par défaut ne contient que la route locale |
-| 2. Instances | `web-01-TP-AC` (`10.20.0.10`, public) et `app-01-TP-AC` (`10.20.1.10`, privé) ; Amazon Linux 2023, `t3.micro`, accès par **SSM** (rôle `TP-AC-ec2-ssm-role`) ; ping `web-01 → app-01` |
-| 3. Limites | création de `10.20.0.0/27` refusée (chevauchement) ; réservation de `10.20.3.0/26` pour la base de données (non créé) |
+## Ce que nous avons fait
+- Le VPC `vpc-prod-leman-TP-AC` en `10.20.0.0/22`.
+- Un sous-réseau public `10.20.0.0/26` et un privé `10.20.1.0/26`, tous les deux en `eu-north-1a`.
+- Deux instances `t3.micro` sous Amazon Linux 2023 : `web-01` (`10.20.0.10`, public) et `app-01` (`10.20.1.10`, privé).
+- Un rôle IAM pour que les instances soient administrables par SSM, sans SSH.
+- Un test de chevauchement : créer `10.20.0.0/27` dans un /26 existant est refusé.
+- La plage `10.20.3.0/26` est réservée pour une future base de données.
 
 Script : `scripts/m01-vpc.ps1`.
 
-## Diagramme
 ![Module 1](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m01-vpc.png)
 
-## Tableau de configuration
-| Ressource | Nom | Valeur |
-|---|---|---|
-| VPC | `vpc-prod-leman-TP-AC` | `10.20.0.0/22`, DNS hostnames activé |
-| Sous-réseau public | `sub-public-1a-TP-AC` | `10.20.0.0/26`, `eu-north-1a` |
-| Sous-réseau privé | `sub-prive-1a-TP-AC` | `10.20.1.0/26`, `eu-north-1a` |
-| Instance web | `web-01-TP-AC` | `10.20.0.10`, `t3.micro` |
-| Instance application | `app-01-TP-AC` | `10.20.1.10`, `t3.micro` |
-| Rôle IAM | `TP-AC-ec2-ssm-role` | `AmazonSSMManagedInstanceCore` |
+| Ressource | Valeur |
+|---|---|
+| VPC | `vpc-prod-leman-TP-AC`, `10.20.0.0/22` |
+| Sous-réseau public | `sub-public-1a-TP-AC`, `10.20.0.0/26` |
+| Sous-réseau privé | `sub-prive-1a-TP-AC`, `10.20.1.0/26` |
+| web-01 / app-01 | `10.20.0.10` / `10.20.1.10` |
 
-## Procédure de test
-1. `aws ec2 describe-subnets` : CIDR et zone conformes au plan.
-2. `aws ec2 describe-route-tables` : seule la route locale existe.
-3. `aws ec2 create-subnet --cidr-block 10.20.0.0/27` doit échouer avec `InvalidSubnet.Conflict`.
-4. Depuis `web-01` (SSM) : `ping -c 3 10.20.1.10` doit réussir.
+## Comment nous testons
+Nous vérifions les CIDR et la zone de chaque sous-réseau, nous essayons de créer un sous-réseau qui chevauche (AWS doit refuser), et nous faisons un ping de `web-01` vers `app-01`. Pour la sortie vers Internet, nous avons lancé une petite instance de test dans un sous-réseau sans route par défaut : elle a lancé un ping et un `curl` au démarrage et nous avons lu le résultat dans la console série.
 
-## Résultats
+## Résultats des tests
 ```
 === Module 1 : VPC et sous-reseaux (region eu-north-1) ===
 Creation du VPC vpc-prod-leman-TP-AC 10.20.0.0/22, sub-public-1a-TP-AC 10.20.0.0/26 et sub-prive-1a-TP-AC 10.20.1.0/26 (eu-north-1a)
@@ -167,16 +135,23 @@ Test de chevauchement : create-subnet --cidr-block 10.20.0.0/27 (inclus dans 10.
   -> aws: [ERROR]: An error occurred (InvalidSubnet.Conflict) when calling the CreateSubnet operation: The CIDR '10.20.0.0/27' conflicts with another subnet
 
 Joignabilite web-01 (10.20.0.10) -> app-01 (10.20.1.10) : ping 3/3 recus, 0 % de perte, rtt moyen 0,25 ms (route locale du VPC)
-app-01 -> Internet avant IGW/NAT : NON TESTE (SSM indisponible sans acces Internet) ; deduit de la table de routage qui ne contient que la route locale 10.20.0.0/22
+TEST REEL (instance de test sans route par defaut, sous-reseau prive 10.20.3.0/26, resultat lu dans la console serie) :
+  ip-10-20-3-20 login: TPAC-TEST table de routage :
+  default via [35m10.20.3.1 [0mdev [36mens5 [0mproto dhcp src [35m10.20.3.20 [0mmetric 512
+  TPAC-TEST ping 8.8.8.8 :
+  3 packets transmitted, 0 received, 100% packet loss, time 2077ms
+  code retour ping = 1
+  TPAC-TEST curl :
+  code retour curl = 28
+  TPAC-TEST-FIN
 Note : l'outil Reachability Analyzer (tiros:CreateQuery) est bloque par l'organisation ; les tests de ping ont donc ete faits via SSM apres le module 2.
 ```
 
 ## Nettoyage
-`web-01` et `app-01` sont **arrêtés** (non supprimés) en fin de séance ; le VPC et les sous-réseaux sont conservés. Les volumes EBS (8 Go chacun) restent facturés quelques centimes par mois.
+Nous arrêtons `web-01` et `app-01` après chaque séance. Le VPC et les sous-réseaux restent.
 
-## Écarts et remarques
-* Le HackMD utilise SSH ; nous utilisons SSM Session Manager (aucun port 22 ouvert, aucune clé à stocker).
-* L'outil *Reachability Analyzer* est bloqué par l'organisation (`tiros:CreateQuery`) ; les tests passent par de vrais pings.
+## Problèmes rencontrés
+L'outil Reachability Analyzer est bloqué par l'organisation. Et SSM a besoin d'un accès Internet pour fonctionner : le ping entre `web-01` et `app-01` n'a donc été possible qu'après le module 2.
 
 ## Captures
 
@@ -211,41 +186,36 @@ Note : l'outil Reachability Analyzer (tiros:CreateQuery) est bloque par l'organi
 
 ---
 
-# Module 2 – Routage : Internet Gateway et NAT
+# Module 2 – Routage : IGW et NAT
 
 ## Objectif
-Donner un accès Internet entrant/sortant au sous-réseau public, un accès sortant seulement au sous-réseau privé, et savoir diagnostiquer un défaut de route.
+Donner un accès Internet au sous-réseau public, un accès sortant seulement au privé, et savoir trouver une panne de route.
 
-## Cours (essentiel)
-* Un sous-réseau est **public** si sa table de routage contient `0.0.0.0/0 → Internet Gateway` ; l'instance doit en plus avoir une **IP publique**.
-* La **NAT Gateway** (placée dans un sous-réseau public) permet aux instances privées de **sortir** sans être joignables de l'extérieur. Elle est facturée à l'heure (~0,045 USD) et à la donnée traitée.
-* La **route la plus spécifique** l'emporte (longest prefix match) ; `local` est toujours prioritaire pour le CIDR du VPC.
+## Ce qu'il faut savoir
+Un sous-réseau est public quand sa table de routage envoie `0.0.0.0/0` vers une Internet Gateway (et que l'instance a une IP publique). Pour un sous-réseau privé, on met une NAT Gateway dans le sous-réseau public : les machines privées peuvent sortir, mais personne ne peut entrer. La NAT coûte environ 0,045 USD de l'heure, ce qui compte avec un budget limité. Quand plusieurs routes correspondent, la plus précise gagne.
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. IGW et table publique | `igw-prod-leman-TP-AC`, `rt-public-leman-TP-AC` (`0.0.0.0/0 → IGW`) associée à `sub-public-1a`, Elastic IP sur `web-01` |
-| 2. NAT et table privée | Elastic IP + `nat-prod-leman-TP-AC` dans `sub-public-1a`, `rt-prive-leman-TP-AC` (`0.0.0.0/0 → NAT`) associée à `sub-prive-1a` |
-| 3. Panne | route par défaut retirée de `rt-prive` : le ping échoue 19 s ; rétablie : il repart |
+## Ce que nous avons fait
+- Une Internet Gateway `igw-prod-leman-TP-AC`, et une table `rt-public-leman-TP-AC` avec `0.0.0.0/0` vers l'IGW, associée aux sous-réseaux publics.
+- Une Elastic IP sur `web-01`.
+- Une NAT Gateway `nat-prod-leman-TP-AC` dans le sous-réseau public, et une table `rt-prive-leman-TP-AC` avec `0.0.0.0/0` vers la NAT.
+- Un test de panne : nous avons supprimé la route par défaut du privé pendant que `app-01` pinguait `8.8.8.8` chaque seconde, puis nous l'avons remise.
 
 Script : `scripts/m02-routage.ps1`.
 
-## Diagramme
 ![Module 2](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m02-routage.png)
 
-## Tableaux de configuration
-| Table | Association | Routes |
-|---|---|---|
-| `rt-public-leman-TP-AC` | `sub-public-1a`, `sub-public-1b` | `10.20.0.0/22 → local` ; `0.0.0.0/0 → igw-prod-leman-TP-AC` |
-| `rt-prive-leman-TP-AC` | `sub-prive-1a` | `10.20.0.0/22 → local` ; `0.0.0.0/0 → nat-prod-leman-TP-AC` |
+| Table | Routes |
+|---|---|
+| rt-public-leman-TP-AC | `10.20.0.0/22` local ; `0.0.0.0/0` vers l'IGW |
+| rt-prive-leman-TP-AC | `10.20.0.0/22` local ; `0.0.0.0/0` vers la NAT |
 
-## Procédure de diagnostic en quatre étapes
-1. **Table associée** : `describe-route-tables` – le sous-réseau est-il bien associé à la bonne table (et non à la table principale) ?
-2. **Route par défaut** : `0.0.0.0/0` existe-t-elle ?
-3. **Cible** : pointe-t-elle vers la bonne IGW / NAT (pas un identifiant supprimé) ?
-4. **État de la cible** : la NAT est `available`, l'IGW est `attached`, l'instance a bien une IP publique (public) ou la NAT une EIP (privé).
+## Si ça ne marche pas : quatre vérifications
+1. Le sous-réseau est-il associé à la bonne table de routage ?
+2. La route par défaut existe-t-elle ?
+3. Pointe-t-elle vers la bonne cible (IGW ou NAT) ?
+4. La cible est-elle en bon état (NAT `available`, IGW attachée, IP publique sur l'instance) ?
 
-## Résultats
+## Résultats des tests
 ```
 === Module 2 : routage ===
 TP1 - IGW + rt-public (0.0.0.0/0 -> igw) + IP publique (Elastic IP) sur web-01
@@ -253,7 +223,7 @@ TP1 - IGW + rt-public (0.0.0.0/0 -> igw) + IP publique (Elastic IP) sur web-01
   web-01 -> app-01 ping 10.20.1.10 : 3/3 recus
 TP2 - NAT nat-prod-leman-TP-AC + rt-prive (0.0.0.0/0 -> nat)
   app-01 -> ping 8.8.8.8 : 2/2 recus (~4 ms) ; curl https://checkip.amazonaws.com -> IP de la NAT (l'adresse de app-01 reste privee)
-  SSH depuis l'exterieur vers app-01 : NON TESTE a ce stade ; app-01 n'a pas d'adresse IP publique (donc non joignable depuis Internet)
+  app-01 n'a aucune adresse IP publique (describe-instances : PublicIpAddress = None) : il n'est pas joignable depuis Internet
 TP3 - route par defaut retiree puis retablie (ping 8.8.8.8 chaque seconde depuis app-01, heures UTC de l'instance) :
   10:49:04 a 10:49:18  OK    (route 0.0.0.0/0 -> NAT presente)
   10:49:19 a 10:49:37  ECHEC (route retiree a 10:49:20 UTC, soit 19 s d'echec)
@@ -264,10 +234,10 @@ Tables de routage finales :
 ```
 
 ## Nettoyage
-Conformément au HackMD, **la NAT et son Elastic IP sont supprimées** quand elles ne servent plus ; l'IGW et les tables sont conservées. En pratique, la NAT reste active pendant la durée du projet (elle donne l'accès SSM à `app-01`), puis est supprimée en fin de projet (voir `docs/NETTOYAGE.md`).
+Le sujet demande de supprimer la NAT en fin de séance. Nous la gardons pour l'instant, car elle donne à `app-01` l'accès SSM, et nous la supprimerons à la fin du cours.
 
-## Écarts et remarques
-* Quota d'Elastic IP du compte partagé limité (5 par région) : les autres machines du projet utilisent des IP publiques automatiques.
+## Problèmes rencontrés
+Le compte n'autorise que 5 Elastic IP pour toute la classe. Les autres machines du projet utilisent donc des IP publiques automatiques.
 
 ## Captures
 
@@ -301,58 +271,37 @@ Conformément au HackMD, **la NAT et son Elastic IP sont supprimées** quand ell
 # Module 3 – Security Groups et NACL
 
 ## Objectif
-Filtrer les flux à deux niveaux : au niveau de l'instance (Security Group, avec état) et du sous-réseau (NACL, sans état), et savoir diagnostiquer un blocage.
+Filtrer le trafic à deux endroits : sur chaque instance (Security Group) et sur chaque sous-réseau (NACL), et savoir dire lequel bloque.
 
-## Cours (essentiel)
-| | Security Group | NACL |
-|---|---|---|
-| Niveau | interface (ENI) de l'instance | sous-réseau |
-| État | **avec état** : la réponse est autorisée automatiquement | **sans état** : il faut autoriser aller **et** retour (ports éphémères 1024-65535) |
-| Règles | autorisation uniquement | autorisation **et refus**, évaluées par **numéro croissant**, la première qui correspond gagne |
-| Référence | CIDR ou autre Security Group | CIDR uniquement |
+## Ce qu'il faut savoir
+Un Security Group garde l'état des connexions : si l'aller est autorisé, le retour l'est aussi. Il ne contient que des autorisations. Une NACL ne garde pas l'état : il faut autoriser l'aller et le retour (les ports éphémères 1024-65535). Elle accepte des refus, et ses règles sont lues par numéro croissant : la première qui correspond gagne.
 
-## Scénario
-Seul le HTTPS public doit atteindre `web-01` ; l'API de `app-01` (8080) n'est joignable que depuis `web-01`.
+## Ce que nous avons fait
+- `sg-web-TP-AC` : 443 ouvert à tous, 22 ouvert seulement à une plage de test. Le sujet parle de l'adresse de la « salle d'exploitation » sans la donner ; nous avons mis `203.0.113.0/24` (plage réservée à la documentation).
+- `sg-app-TP-AC` : 8080, 22 et ICMP autorisés seulement depuis `sg-web`.
+- Un petit nginx (80 et 443 avec certificat auto-signé) sur `web-01`, et une mini-API Python sur le port 8080 de `app-01`.
+- Une NACL `nacl-public-TP-AC` sur le sous-réseau public : entrée 443 et ports éphémères, sortie 443 et ports éphémères, plus tout le trafic interne du VPC.
+- Trois pannes volontaires : retirer la règle de retour de la NACL, retirer le 8080 de `sg-app`, et placer un refus explicite avant l'autorisation (règle 50 contre règle 100).
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Security Groups | `sg-web-TP-AC` : 443 depuis `0.0.0.0/0`, 22 depuis la salle d'exploitation ; `sg-app-TP-AC` : 8080, 22 et ICMP depuis `sg-web` ; services de test : nginx (80/443, certificat auto-signé) sur `web-01`, mini API (8080) sur `app-01` |
-| 2. NACL | `nacl-public-TP-AC` : entrée 443 + éphémères + VPC ; sortie 443 + éphémères + VPC ; retrait de la règle de retour → échec ; rétablie → succès |
-| 3. Diagnostic | 8080 retiré de `sg-app` → échec ; refus explicite NACL (règle 50) placé avant l'autorisation (règle 100) → échec |
+Scripts : `scripts/m03-securite.ps1` et `scripts/m03-tests.ps1`.
 
-Scripts : `scripts/m03-securite.ps1` (déploiement) et `scripts/m03-tests.ps1` (preuves).
-
-## Diagramme
 ![Module 3](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m03-securite.png)
 
-## Tableaux des règles
-**Security Groups**
-| Groupe | Sens | Protocole / port | Source | Commentaire |
-|---|---|---|---|---|
-| `sg-web-TP-AC` | entrée | TCP 443 | `0.0.0.0/0` | HTTPS public |
-| `sg-web-TP-AC` | entrée | TCP 22 | `203.0.113.0/24` | « salle d'exploitation » (adresse réelle non fournie : plage de documentation) |
-| `sg-app-TP-AC` | entrée | TCP 8080 | `sg-web-TP-AC` | API |
-| `sg-app-TP-AC` | entrée | TCP 22 / ICMP | `sg-web-TP-AC` | administration et diagnostic |
+| Groupe | Sens | Port | Source |
+|---|---|---|---|
+| sg-web | entrée | 443 | tout Internet |
+| sg-web | entrée | 22 | 203.0.113.0/24 |
+| sg-app | entrée | 8080, 22, ICMP | sg-web |
 
-**NACL `nacl-public-TP-AC`** (sous-réseau `sub-public-1a`)
-| N° | Sens | Protocole | Plage / port | Action |
-|---|---|---|---|---|
-| 100 | entrée | TCP | 443 depuis `0.0.0.0/0` | autoriser |
-| 110 | entrée | TCP | 1024-65535 depuis `0.0.0.0/0` | autoriser (retours) |
-| 120 | entrée | tous | `10.20.0.0/22` | autoriser |
-| 100 | sortie | TCP | 443 vers `0.0.0.0/0` | autoriser |
-| 110 | sortie | TCP | 1024-65535 vers `0.0.0.0/0` | autoriser (réponses aux clients) |
-| 120 | sortie | tous | `10.20.0.0/22` | autoriser |
+NACL : entrée 100 (TCP 443, tous), 110 (TCP 1024-65535, tous), 120 (tout, VPC) ; sortie 100, 110 et 120 identiques.
 
-## Procédure de diagnostic
-1. **SG de la cible** : le port est-il ouvert pour la source ? (`describe-security-groups`)
-2. **Règles SG** : la source est-elle un CIDR ou un SG correct ?
-3. **NACL** : les règles d'entrée **et** de sortie (ports éphémères) du sous-réseau, et leur ordre.
-4. **Route** : le chemin retour existe-t-il (table du sous-réseau) ?
-Rétablir la production : remettre la règle d'origine, retester le flux.
+## Si ça ne marche pas : quatre vérifications
+1. Le Security Group de la cible ouvre-t-il le port pour cette source ?
+2. La source de la règle est-elle correcte (une plage ou un autre groupe) ?
+3. La NACL du sous-réseau autorise-t-elle l'aller et le retour, dans le bon ordre ?
+4. La route de retour existe-t-elle ?
 
-## Résultats
+## Résultats des tests
 ```
 === TP1 : Security Groups ===
 curl https depuis Internet vers web-01 : HTTP 200
@@ -372,12 +321,10 @@ refus supprime -> curl externe : HTTP 200
 ```
 
 ## Nettoyage
-`sg-web`, `sg-app` et `nacl-public` sont conservés ; `web-01` et `app-01` arrêtés en fin de séance.
+Nous gardons les deux groupes et la NACL, et arrêtons les instances après chaque séance.
 
-## Écarts et remarques
-* AWS interdit les noms de groupes commençant par `sg-` : le nom logique `sg-web-TP-AC` est porté par le tag `Name`, le nom technique du groupe est `web-TP-AC`.
-* Les captures « ancien lab » du HackMD ont été remplacées par les nôtres.
-* Le port 22 est ouvert pour la forme prévue au sujet ; l'administration réelle passe par SSM.
+## Problèmes rencontrés
+AWS interdit les noms de groupe qui commencent par `sg-`. Le nom `sg-web-TP-AC` est donc dans le tag `Name`, et le groupe s'appelle `web-TP-AC`. Le port 22 est ouvert pour respecter le sujet, mais nous administrons par SSM.
 
 ## Captures
 
@@ -404,101 +351,73 @@ refus supprime -> curl externe : HTTP 200
 
 ---
 
-# Module 4 – AWS Network Firewall
+# Module 4 – Network Firewall
 
-> **Statut : non déployable sur la plateforme de formation.** Toutes les actions `network-firewall:*` sont refusées par une *Service Control Policy* de l'organisation (voir `01-services-bloques.md`). Ce module fournit le cours, l'architecture cible, un **template CloudFormation validé** (`cfn/optional-m04-network-firewall.yaml`) et la procédure de test à rejouer dès que la restriction sera levée.
+> Nous n'avons pas pu faire ce module. Toutes les actions `network-firewall:*` sont refusées par une règle de l'organisation AWS du formateur : rien n'a été déployé et rien n'a été testé. Nous avons préparé l'architecture, les règles et un template CloudFormation, mais celui-ci a seulement passé `validate-template` (vérification de syntaxe) et n'a jamais été déployé.
 
 ## Objectif
-Inspecter et filtrer le trafic sortant du sous-réseau privé : n'autoriser que des dépôts de mises à jour, bloquer le reste du HTTP/HTTPS et journaliser les alertes.
+Filtrer ce qui sort du sous-réseau privé : n'autoriser que des dépôts de mises à jour, bloquer le reste du web et garder les alertes dans CloudWatch Logs.
 
-## Cours (essentiel)
-* **Network Firewall** est un pare-feu managé placé dans un **sous-réseau dédié** (`sub-fw`) ; on y fait transiter le trafic par des **routes vers l'endpoint** (`vpce-…`).
-* Moteurs : *stateless* (règles 5-tuples, rapide, par paquet) puis *stateful* (Suricata : domaines HTTP Host / TLS SNI, signatures). En mode **ordre strict**, les règles sont évaluées par priorité et une action par défaut (`drop_established` + alerte) s'applique ensuite.
-* **Symétrie** : le trafic de retour doit repasser par le même endpoint, sinon l'état du flux est perdu ; d'où la route de retour dans la table du sous-réseau public (celui de la NAT).
-* Coût : ~0,40 USD/h par endpoint + traitement : à supprimer après les tests.
+## Ce qu'il faut savoir
+Network Firewall est un pare-feu managé placé dans un sous-réseau à part. On y envoie le trafic avec des routes qui visent son endpoint. Il a un moteur sans état (par paquet) et un moteur avec état (domaines HTTP et TLS, règles Suricata). Il faut que le retour d'un flux repasse par le même endpoint, sinon le pare-feu perd l'état. Il coûte environ 0,40 USD de l'heure : on le supprime après les tests.
 
-## Architecture cible
+## Ce que nous avons prévu
+Le trafic de `app-01` irait vers l'endpoint du pare-feu (`sub-fw-1a`, `10.20.2.0/28`), puis vers la NAT, puis vers Internet. Au retour, une route dans la table publique renverrait le trafic vers le pare-feu.
+
 ![Module 4](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m04-firewall.png)
 
-Chemin sortant : `app-01 → sub-prive → endpoint pare-feu (sub-fw) → NAT (sub-public) → Internet` ; retour : `NAT → rt-public (10.20.1.0/26 → endpoint) → pare-feu → app-01`.
+Règles prévues, en ordre strict :
+1. laisser passer tout le trafic interne du VPC (`10.20.0.0/22`) pour ne pas casser les autres modules ;
+2. autoriser seulement `.amazonlinux.com` et `.amazonaws.com` ;
+3. par défaut, bloquer et journaliser (`drop_established` et `alert_established`) dans `/leman/nfw-alert-TP-AC`.
 
-## Ce qui a été fait / tenté
-| Étape | Résultat |
-|---|---|
-| Sous-réseau `sub-fw-1a-TP-AC` `10.20.2.0/28` + table `rt-fw` (`0.0.0.0/0 → NAT`) | créés, puis supprimés lors du constat du blocage |
-| `create-rule-group` / `create-firewall-policy` / `create-firewall` | **AccessDenied : explicit deny in a service control policy** (`p-yxwnli3w`) |
-| Réalisation alternative | impossible sans l'API ; template CloudFormation fourni et validé (`aws cloudformation validate-template` : OK) |
+Les routes prévues sont : `rt-prive` avec `0.0.0.0/0` vers l'endpoint ; `rt-fw` avec `0.0.0.0/0` vers la NAT ; `rt-public` avec `10.20.1.0/26` vers l'endpoint pour le retour.
 
-## Règles prévues (tableau de configuration)
-| Priorité | Groupe | Contenu | Rôle |
-|---|---|---|---|
-| 1 | `rg-vpc-pass-TP-AC` | `pass ip 10.20.0.0/22 any -> 10.20.0.0/22 any` | ne pas casser les flux internes (modules 3, 5, 6) |
-| 2 | `rg-depots-autorises-TP-AC` | liste blanche `.amazonlinux.com`, `.amazonaws.com` (HTTP_HOST + TLS_SNI) | dépôts de mises à jour + SSM |
-| défaut | politique `policy-prod-leman-TP-AC` | `drop_established` + `alert_established` | tout le reste est bloqué et journalisé dans `/leman/nfw-alert-TP-AC` |
+Fichiers prêts : `cfn/optional-m04-network-firewall.yaml` et `scripts/m04-firewall.ps1` (jamais exécutés avec succès).
 
-Tables de routage avant / après :
-| Table | Avant | Après |
-|---|---|---|
-| `rt-prive-leman-TP-AC` | `0.0.0.0/0 → nat` | `0.0.0.0/0 → vpce-pare-feu` |
-| `rt-fw-leman-TP-AC` | – | `0.0.0.0/0 → nat` |
-| `rt-public-leman-TP-AC` | `0.0.0.0/0 → igw` | `0.0.0.0/0 → igw` + `10.20.1.0/26 → vpce-pare-feu` (retour) |
+## Ce que nous testerions
+1. Le pare-feu passe à `Ready` et son endpoint apparaît dans la zone.
+2. Depuis `app-01`, `curl https://cdn.amazonlinux.com` fonctionne, `curl https://example.com` échoue.
+3. L'alerte du deuxième test apparaît dans les journaux.
 
-## Procédure de test (à rejouer quand la SCP sera levée)
-1. `aws cloudformation deploy --template-file cfn/optional-m04-network-firewall.yaml ...` : pare-feu `Ready`, endpoint visible dans la zone.
-2. Depuis `app-01` : `curl https://cdn.amazonlinux.com` **réussit** ; `curl https://example.com` **échoue**.
-3. `aws logs start-query` sur `/leman/nfw-alert-TP-AC` : l'alerte du second test apparaît (action `blocked`).
-4. Contrôle des routes (tableau ci-dessus).
+## Ce que nous avons essayé
+Nous avons créé le sous-réseau du pare-feu puis tenté de créer les groupes de règles, la politique et le pare-feu : refusé par l'organisation (message « explicit deny in a service control policy »). Nous avons supprimé le sous-réseau devenu inutile.
 
-## Nettoyage
-Supprimer le pare-feu **avant** la politique et les groupes de règles ; restaurer `0.0.0.0/0 → NAT` dans `rt-prive` (script `scripts/m04-cleanup.ps1`, prêt).
-
-## Justification de l'écart
-Le formateur a bloqué ce service (coût élevé). Les compétences du module sont couvertes par l'architecture, les règles, le template validé et la procédure de test ; la partie « filtrage au niveau réseau » est démontrée à moindre échelle par les Security Groups et NACL (module 3).
+## Nettoyage prévu
+Supprimer d'abord le pare-feu, puis la politique et les groupes de règles, et remettre `0.0.0.0/0` vers la NAT dans `rt-prive`.
 
 
 ---
 
-# Module 5 – VPC Peering (environnement de développement)
+# Module 5 – VPC Peering
 
 ## Objectif
-Créer un VPC de développement isolé, le relier à la production par un peering **limité au port 8080**, et comprendre les limites du peering (CIDR chevauchants, non-transitivité).
+Créer un VPC de développement, le relier à la production pour le seul port 8080, et comprendre les limites du peering.
 
-## Cours (essentiel)
-* Le **peering** relie deux VPC par le réseau privé AWS (pas de passerelle, pas de point unique de défaillance, pas de coût horaire). Il faut : demande + acceptation, **routes dans les deux sens** et règles de Security Group adaptées.
-* Les CIDR ne doivent **pas se chevaucher**. AWS accepte la demande mais la passe en état `failed` à l'acceptation.
-* Le peering n'est **pas transitif** : A↔B et B↔C n'impliquent pas A↔C. Pour un maillage large, on utilise un Transit Gateway (module 6).
+## Ce qu'il faut savoir
+Un peering relie deux VPC par le réseau privé d'AWS. Il faut faire la demande, l'accepter, ajouter les routes dans les deux sens et ouvrir ce qu'il faut dans les Security Groups. Les plages ne doivent pas se chevaucher (AWS accepte la demande, puis la met en échec à l'acceptation). Le peering n'est pas transitif : si A parle à B et B à C, A ne parle pas à C.
 
-## Scénario
-L'équipe de développement (`dev-01`) doit tester l'API de production (8080) sans accéder au reste.
-
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Réseau dev | `vpc-dev-leman-TP-AC` `10.21.0.0/24`, `sub-dev-1a-TP-AC` `10.21.0.0/26`, `dev-01-TP-AC` `10.21.0.10` (IGW dédiée + IP publique pour SSM ; `sg-dev` sans aucune entrée) |
-| 2. Peering | `pcx-lab-TP-AC` acceptée ; routes `10.20.0.0/22 → pcx` (table dev) et `10.21.0.0/24 → pcx` (`rt-prive`) ; `sg-app` autorise 8080 depuis `10.21.0.0/24` |
-| 3. Limites | peering avec un VPC en `10.20.0.0/24` (chevauche la prod) → `failed` ; `dev-01` ne joint pas un 3ᵉ VPC relié seulement à la prod |
+## Ce que nous avons fait
+- Le VPC `vpc-dev-leman-TP-AC` en `10.21.0.0/24`, un sous-réseau `10.21.0.0/26`, une instance `dev-01` (`10.21.0.10`). Elle a une IP publique pour joindre SSM, et son groupe de sécurité n'autorise aucune entrée.
+- Le peering `pcx-lab-TP-AC` entre la prod et le dev, les routes dans les deux tables, et le port 8080 ouvert dans `sg-app` pour `10.21.0.0/24`.
+- Un VPC volontairement en `10.20.0.0/24` pour tenter un peering avec la prod : il passe en échec.
+- Un troisième VPC `10.22.0.0/24` relié seulement à la prod : `app-01` le joint, `dev-01` non.
 
 Scripts : `scripts/m05-peering.ps1` et `scripts/m05-tests.ps1`.
 
-## Diagramme
 ![Module 5](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m05-peering.png)
 
-## Tableaux de configuration
-| Ressource | Valeur |
+| Élément | Valeur |
 |---|---|
-| `vpc-dev-leman-TP-AC` | `10.21.0.0/24`, tag `Environnement=dev` |
-| `pcx-lab-TP-AC` | prod `10.20.0.0/22` ↔ dev `10.21.0.0/24` |
-| `rt-dev-leman-TP-AC` | `10.20.0.0/22 → pcx-lab` ; `0.0.0.0/0 → igw-dev` |
-| `rt-prive-leman-TP-AC` | `10.21.0.0/24 → pcx-lab` (ajout) |
-| `sg-app-TP-AC` | TCP 8080 depuis `10.21.0.0/24` (ajout) |
+| Peering | prod `10.20.0.0/22` avec dev `10.21.0.0/24` |
+| Table du dev | `10.20.0.0/22` vers le peering, `0.0.0.0/0` vers l'IGW du dev |
+| Table du privé (prod) | `10.21.0.0/24` vers le peering |
+| sg-app | TCP 8080 depuis `10.21.0.0/24` |
 
-## Procédure de test
-1. `dev-01` : `curl http://10.20.1.10:8080/api/health` → réponse.
-2. `dev-01` : test TCP sur 22 → fermé (seul 8080 est ouvert).
-3. Créer un VPC `10.20.0.0/24`, demander puis accepter un peering avec la prod → état `failed`.
-4. 3ᵉ VPC `10.22.0.0/24` relié à la prod : `app-01` le joint, `dev-01` (via la prod) **non**.
+## Comment nous testons
+Depuis `dev-01`, un `curl` sur `app-01:8080` doit répondre et le port 22 doit rester fermé. Le peering avec la plage qui chevauche doit échouer. Et `dev-01` ne doit pas joindre le VPC relié seulement à la prod, alors qu'`app-01` le joint.
 
-## Résultats
+## Résultats des tests
 ```
 dev-01 SSM en ligne : True
 === TP2 : peering pcx-lab (prod <-> dev) ===
@@ -512,11 +431,7 @@ dev-01 (via prod = transit, NON transitif) -> tiers-01 10.22.0.10 : Success	2 pa
 ```
 
 ## Nettoyage
-`pcx-lab` est supprimé au module 6 dans le HackMD ; **ici le Transit Gateway est bloqué** (module 6) : le peering est donc conservé comme liaison prod/dev. Le VPC dev est conservé ; `dev-01` arrêté.
-
-## Écarts et remarques
-* Les captures « ancien lab » du HackMD ont été remplacées par nos preuves de tests.
-* Le VPC « tiers » et celui au CIDR chevauchant sont des ressources de test supprimées dès les mesures faites.
+Le sujet supprime le peering au module 6, mais le Transit Gateway est bloqué : nous gardons donc le peering pour relier prod et dev. `dev-01` est arrêtée après les tests, les VPC de test sont supprimés.
 
 ## Captures
 
@@ -541,98 +456,65 @@ dev-01 (via prod = transit, NON transitif) -> tiers-01 10.22.0.10 : Success	2 pa
 
 # Module 6 – Transit Gateway
 
-> **Statut : non déployable sur la plateforme de formation.** `ec2:CreateTransitGateway` est refusé par la SCP de l'organisation (la lecture est autorisée). Ce module fournit le cours, l'architecture, un **template CloudFormation validé** (`cfn/optional-m06-m08-interconnexion.yaml`) et la procédure de test. La liaison prod/dev reste assurée par le peering du module 5.
+> Nous n'avons pas pu faire ce module : la création d'un Transit Gateway (`ec2:CreateTransitGateway`) est refusée par l'organisation AWS du formateur. Rien n'a été déployé ni testé. Le template CloudFormation préparé a seulement passé `validate-template`. La liaison prod et dev reste assurée par le peering du module 5.
 
 ## Objectif
-Remplacer les liaisons point à point (peering) par un **hub** : un Transit Gateway relie plusieurs VPC et, plus tard, des sites distants, avec une table de routage par environnement.
+Remplacer les liaisons une à une par un point central : un Transit Gateway relie plusieurs VPC, avec une table de routage par environnement.
 
-## Cours (essentiel)
-* Le **TGW** est un routeur régional managé : chaque VPC (ou VPN, Direct Connect) s'y connecte par un **attachement**. Le peering demande n(n-1)/2 liens ; le TGW en demande n.
-* **Association** : un attachement est associé à **une** table de routage TGW (celle qui décide où il peut aller). **Propagation** : un attachement publie son CIDR dans une table. En désactivant l'association/propagation par défaut, on isole prod et dev et on décide explicitement qui voit qui.
-* Les routes **dans les tables des VPC** (`10.21.0.0/24 → tgw`) sont toujours nécessaires.
-* Facturation : ~0,05 USD/h **par attachement** + données traitées.
+## Ce qu'il faut savoir
+Chaque VPC se branche au Transit Gateway par un attachement. Avec le peering il faut un lien par paire de réseaux ; avec le Transit Gateway, un seul par réseau. Un attachement est associé à une table de routage (celle qui décide où il peut aller) et peut publier sa plage dans une autre table (propagation). En coupant l'association et la propagation par défaut, on décide à la main qui voit qui. Les routes dans les tables des VPC restent nécessaires. Il coûte environ 0,05 USD de l'heure par attachement.
 
-## Architecture cible
+## Ce que nous avons prévu
+Un Transit Gateway `tgw-leman-TP-AC` (ASN 64512), deux attachements `tgwa-prod` et `tgwa-dev`, deux tables `tgw-rt-prod` et `tgw-rt-dev` avec propagation croisée, et des routes `10.21.0.0/24` et `10.20.0.0/22` dans les tables des deux VPC.
+
 ![Module 6](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m06-tgw.png)
 
-## Configuration prévue
-| Ressource | Valeur |
-|---|---|
-| `tgw-leman-TP-AC` | ASN `64512`, association et propagation par défaut **désactivées** |
-| `tgwa-prod-TP-AC` | VPC prod, sous-réseau `sub-prive-1a` |
-| `tgwa-dev-TP-AC` | VPC dev, sous-réseau `sub-dev-1a` |
-| `tgw-rt-prod-TP-AC` | associée à `tgwa-prod` ; propagation depuis `tgwa-dev` |
-| `tgw-rt-dev-TP-AC` | associée à `tgwa-dev` ; propagation depuis `tgwa-prod` |
-| `rt-prive-leman-TP-AC` | `10.21.0.0/24 → tgw-leman` (remplace la route du peering) |
-| `rt-dev-leman-TP-AC` | `10.20.0.0/22 → tgw-leman` |
+Fichiers prêts : `cfn/optional-m06-m08-interconnexion.yaml` (template validé, jamais déployé) et `scripts/m06-tgw.ps1` (jamais exécuté avec succès).
 
-## Ce qui a été tenté
-`aws ec2 create-transit-gateway` → `UnauthorizedOperation … explicit deny in a service control policy` (preuve dans `01-services-bloques.md`). Le script `scripts/m06-tgw.ps1` (création, attachements, tables, propagation, tests, test d'asymétrie) est prêt à rejouer.
+## Ce que nous testerions
+1. Les deux attachements passent à `available`.
+2. `dev-01` joint `app-01` sur 8080 par le Transit Gateway.
+3. On retire la propagation de `tgwa-dev` vers `tgw-rt-prod` : le `curl` échoue (le retour n'a plus de route). On la remet : il refonctionne.
 
-## Procédure de test (à rejouer quand la SCP sera levée)
-1. Deux attachements `available`, `pcx-lab` supprimé.
-2. `dev-01` : `curl http://10.20.1.10:8080/api/health` réussit via le TGW.
-3. Retirer la propagation `tgwa-dev → tgw-rt-prod` : le `curl` **échoue** (la prod ne sait plus répondre au dev : trafic asymétrique) ; rétablir : il réussit.
-4. Procédure de diagnostic : **association** de l'attachement → **route propagée** dans la table TGW → **route dans la table du VPC** → **SG de la cible**.
-
-## Nettoyage
-Garder `tgw-leman` si le module 7 suit ; sinon supprimer les attachements puis le TGW et le noter dans le journal du projet. Dans notre cas rien n'est facturé, rien n'a été créé.
-
-## Justification de l'écart
-Service bloqué par l'organisation. Le comportement de routage (association, propagation, asymétrie) est étudié dans le module 5 (peering) et dans la simulation du module 7 (routeur `rtr-aws`).
+## Ce que nous avons essayé
+`aws ec2 create-transit-gateway` renvoie « explicit deny in a service control policy » (le détail est dans `01-services-bloques.md`). La lecture reste autorisée, pas la création.
 
 
 ---
 
 # Module 7 – VPN site à site (siège et agence)
 
-> **Statut : réalisé par simulation.** Le service managé Site-to-Site VPN est bloqué par la SCP de l'organisation (`CreateCustomerGateway`, `CreateVpnGateway`, `CreateVpnConnection` refusés, Transit Gateway aussi). Le **tunnel IPsec IKEv2 réel** est donc monté avec **strongSwan** sur des instances EC2 qui jouent les rôles des routeurs du siège, de l'agence et de la passerelle côté AWS. Le template CloudFormation du service managé est fourni (`cfn/optional-m06-m08-interconnexion.yaml`).
+> Le VPN géré d'AWS est bloqué par l'organisation (`CreateCustomerGateway`, `CreateVpnGateway` et `CreateVpnConnection` sont refusés, le Transit Gateway aussi). Nous avons donc **simulé** les trois routeurs avec strongSwan sur des instances EC2 : le tunnel IPsec est réel, mais ce n'est pas le service VPN d'AWS.
 
 ## Objectif
-Relier le siège (`192.168.10.0/24`) et l'agence (`192.168.20.0/24`) au VPC de production par des tunnels **chiffrés**, avec des droits différents : le siège joint `app-01` (ping + 8080), l'agence seulement le port 8080 ; ni l'un ni l'autre ne joint `dev-01`.
+Relier le siège (`192.168.10.0/24`) et l'agence (`192.168.20.0/24`) au VPC de production par des tunnels chiffrés. Le siège doit pouvoir joindre `app-01` (ping et 8080), l'agence seulement le port 8080.
 
-## Cours (essentiel)
-* **IPsec IKEv2** : une phase d'authentification (clé pré-partagée, échange Diffie-Hellman) puis une association de sécurité **ESP** qui chiffre le trafic (`aes256-sha256-modp2048`).
-* Le VPN géré AWS fournit **deux tunnels** par connexion (deux zones) et des adresses de tunnel `169.254.x.x/30` ; la **customer gateway** (CGW) décrit le routeur du site (IP publique, ASN).
-* **Route-based** : le tunnel est une interface (`xfrm`/VTI) ; le routage (statique ou BGP) décide ce qui y passe. Plus souple qu'un VPN à politiques (selectors).
-* La clé pré-partagée ne doit **jamais** être écrite dans un document ou un dépôt : elle est stockée dans **Secrets Manager** (`Projet/SatomCloudNetwork/vpn`) et lue par les routeurs via leur rôle IAM.
+## Ce qu'il faut savoir
+IPsec en version 2 fonctionne en deux temps : une phase d'authentification (ici une clé partagée et un échange Diffie-Hellman), puis un tunnel ESP qui chiffre le trafic (nous utilisons `aes256-sha256-modp2048`). Le VPN d'AWS fournit deux tunnels par connexion et des adresses de tunnel en `169.254.x.x/30`. Nous avons fait du « route-based » : le tunnel est une interface et ce sont les routes qui décident ce qui y passe. La clé partagée ne doit jamais traîner dans un document : la nôtre est dans Secrets Manager (`Projet/SatomCloudNetwork/vpn`), les routeurs la lisent avec leur rôle IAM.
 
-## Architecture de la simulation
+## Ce que nous avons fait
+- `rtr-aws-TP-AC` dans le sous-réseau public 1b (`10.20.0.74`), qui joue la passerelle côté AWS.
+- `rtr-siege-TP-AC` (`192.168.10.10`) et `rtr-agence-TP-AC` (`192.168.20.10`), chacun dans son propre petit VPC simulé.
+- Des routes dans `rt-prive` vers `192.168.10.0/24` et `192.168.20.0/24` qui passent par le routeur AWS.
+- Dans `sg-app`, le ping et le 8080 pour le siège, le 8080 seulement pour l'agence.
+
+Script : `scripts/m07-ipsec-sim.ps1 -Site siege` ou `-Site agence`.
+
 ![Module 7](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m07-vpn.png)
 
-| Rôle réel | Réalisation (simulation) |
+| Élément | Valeur |
 |---|---|
-| Passerelle VPN / TGW côté AWS | `rtr-aws-TP-AC` (Ubuntu 24.04, strongSwan) dans `sub-public-1b`, `10.20.0.74`, contrôle source/destination désactivé |
-| Routeur du siège | `rtr-siege-TP-AC` `192.168.10.10` dans `vpc-siege-sim-TP-AC` (`192.168.10.0/24`) |
-| Routeur de l'agence | `rtr-agence-TP-AC` `192.168.20.10` dans `vpc-agence-sim-TP-AC` (`192.168.20.0/24`) |
-| Adresses des tunnels | siège `169.254.10.0/30` (AWS `.1`, site `.2`) ; agence `169.254.20.0/30` |
-| Routes propagées | `rt-prive` : `192.168.10.0/24` et `192.168.20.0/24` → ENI de `rtr-aws` |
+| IKE et ESP | `aes256-sha256-modp2048`, authentification par clé partagée |
+| Interfaces de tunnel | `xfrm-siege` (`169.254.10.0/30`), `xfrm-agence` (`169.254.20.0/30`) |
+| Adresses publiques | automatiques, car le quota d'Elastic IP du compte est plein |
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Objets | équivalent des CGW/VPN : routeurs, IP publiques, groupes de sécurité (UDP 500, 4500, ESP limités à l'adresse du pair), clés dans Secrets Manager, tags sur toutes les ressources |
-| 2. Tunnel siège | strongSwan route-based (`if_id 11`) ; tunnel `ESTABLISHED` ; `ping 10.20.1.10` depuis le siège réussit ; vérification de la route vers `192.168.10.0/24` dans `rt-prive` |
-| 3. Agence | tunnel `if_id 12` ; l'agence joint `app-01` sur 8080 **uniquement** (ICMP refusé par `sg-app`) ; le développement n'est pas annoncé aux sites (seul `10.20.0.0/22` passe dans le tunnel) ; le test d'inaccessibilité de `dev-01` est à refaire (l'instance était arrêtée) |
+## Si ça ne marche pas : quatre vérifications
+1. L'état des tunnels : `swanctl --list-sas` doit afficher `ESTABLISHED`.
+2. Les paramètres IPsec : mêmes propositions et même clé des deux côtés.
+3. Les routes : `ip route get` côté site, et la route dans `rt-prive` côté AWS.
+4. Les Security Groups : UDP 500 et 4500 et le protocole ESP doivent passer entre les routeurs, et `sg-app` doit autoriser la source.
 
-Scripts : `scripts/m07-ipsec-sim.ps1 -Site siege|agence`.
-
-## Tableau de configuration IPsec
-| Paramètre | Valeur |
-|---|---|
-| IKE | IKEv2, `aes256-sha256-modp2048`, authentification PSK, DPD 10 s |
-| ESP | `aes256-sha256-modp2048` (PFS), mode tunnel, `start_action = start`, `dpd_action = restart` |
-| Interfaces | `xfrm-siege` (id 11), `xfrm-agence` (id 12) |
-| Routage | site → `10.20.0.0/22` via tunnel ; AWS → `192.168.x.0/24` via tunnel |
-| Autorisations | `sg-app` : siège ICMP + TCP 8080 ; agence TCP 8080 |
-
-## Procédure de diagnostic en quatre étapes
-1. **État des tunnels** : `swanctl --list-sas` (`ESTABLISHED`, octets chiffrés).
-2. **Paramètres IPsec** : identifiants, proposals IKE/ESP identiques des deux côtés, PSK.
-3. **Route** : `ip route get <app>` côté site, route `192.168.x.0/24` côté AWS (`rt-prive` → ENI).
-4. **SG de la cible** : `sg-app` autorise-t-il la source (ICMP/8080) ? Les groupes des routeurs laissent-ils UDP 500/4500 et ESP ?
-
-## Résultats
+## Résultats des tests
 ```
 === Module 7 - tunnel IPsec siege (simulation strongSwan) ===
 rtr-aws : swanctl --list-sas (apres les tests)
@@ -711,14 +593,13 @@ agence -> app-01:8080 (seul flux autorise) : Success	app-01 TP-AC /api/health
 agence -> dev-01 : TEST NON CONCLUANT (dev-01 etait arretee) ; le dev n'est pas annonce aux sites (seul 10.20.0.0/22 est dans le tunnel), a refaire avec dev-01 demarree
 ```
 
+## Limites de notre réalisation
+- Un seul tunnel par site, alors que le VPN d'AWS en donne deux.
+- Nous avons monté le siège puis l'agence l'un après l'autre : le compte est limité à 16 vCPU pour toute la classe.
+- Nous n'avons pas encore prouvé que le siège et l'agence ne voient pas `dev-01`. Notre test était sans valeur, car `dev-01` était arrêtée. Par construction, seule la plage `10.20.0.0/22` est dans les tunnels.
+
 ## Nettoyage
-Le HackMD est contradictoire (conserver / supprimer en fin de séance) : conformément à la consigne du binôme, les routeurs et réseaux simulés sont **conservés jusqu'à la fin du cours** ; ils sont arrêtés quand ils ne servent pas (vCPU partagés par la classe) et supprimés en fin de projet. Les clés restent dans Secrets Manager.
-
-## Écarts et remarques
-* Un seul tunnel par site (au lieu de deux) : le test de bascule entre tunnels du HackMD est remplacé par la bascule DX/VPN du module 8.
-* Quota d'Elastic IP du compte atteint : les routeurs utilisent des IP publiques automatiques (elles changent à l'arrêt/redémarrage ; le script les relit).
-* Quota de 16 vCPU pour toute la classe : un seul site simulé est actif à la fois.
-
+Le sujet est contradictoire sur ce point (garder ou supprimer le VPN). Nous gardons les routeurs jusqu'à la fin du cours, arrêtés quand nous ne les utilisons pas, et nous les supprimerons ensuite.
 
 ## Captures
 
@@ -741,48 +622,46 @@ Le HackMD est contradictoire (conserver / supprimer en fin de séance) : conform
 
 ---
 
-# Module 8 – Direct Connect (concepts et simulation GRE/BGP)
+# Module 8 – Direct Connect
 
-> **Statut : simulé.** AWS Direct Connect est bloqué par la SCP (`directconnect:*` refusé) : la Direct Connect Gateway `dxgw-leman-TP-AC` n'a pas pu être créée. La liaison dédiée est **simulée** par un tunnel **GRE** entre deux routeurs FRRouting (BGP), le VPN IPsec du module 7 servant de secours.
+> Direct Connect est bloqué par l'organisation : nous avons testé `CreateDirectConnectGateway` et `DescribeLocations`, les deux sont refusés. Nous n'avons donc pas créé `dxgw-leman` et nous n'avons pas pu choisir d'emplacement. La liaison dédiée est **simulée** par un tunnel GRE entre deux routeurs qui parlent BGP, le VPN du module 7 servant de secours.
 
 ## Objectif
-Comprendre la connectivité dédiée (dimensionnement, VIF, BGP) et la politique de bascule entre une liaison principale (Direct Connect) et un secours (VPN).
+Comprendre une liaison dédiée (dimensionnement, interface virtuelle, BGP) et la bascule entre une liaison principale et un secours.
 
-## Cours (essentiel)
-* **Direct Connect** : liaison physique (1/10/100 Gbit/s) entre le siège et un emplacement DX ; une **VIF** (interface virtuelle) porte la session **BGP** vers AWS (VIF privée, publique ou de transit).
-* Une **Direct Connect Gateway** (ASN côté AWS) se rattache à un TGW/VGW et diffuse les préfixes autorisés.
-* **BGP** choisit le chemin : on prend la route avec la **local-pref** la plus haute (préférence locale). Pour dissuader un chemin, on allonge l'**AS-path** (*prepending*).
-* Le VPN IPsec sert de **secours** : l'AS-path du VPN est allongé de 3 AS, la local-pref du DX est de 200.
+## Ce qu'il faut savoir
+Direct Connect est un lien physique entre le siège et un point de présence d'AWS (1, 10 ou 100 Gbit/s). Une interface virtuelle y porte la session BGP vers AWS. En BGP, le chemin avec la préférence locale (local-pref) la plus haute gagne ; pour décourager un chemin, on allonge son AS-path. Ici : local-pref 200 sur la liaison dédiée, et l'AS-path du VPN allongé de 3.
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Dimensionnement | 2 To en 8 h = 16 000 Gbit / 28 800 s = **0,556 Gbit/s** → liaison **1 Gbit/s**, marge ≈ 44 % ; le choix de l'emplacement n'a pas pu être fait : `directconnect:DescribeLocations` est refusé par l'organisation (explicit deny SCP, testé le 16/11) ; la création de `dxgw-leman-TP-AC` (ASN 64513) est refusée de la même façon (`CreateDirectConnectGateway`, testé le 16/11) |
-| 2. GRE + BGP | tunnel GRE `169.254.100.0/30` entre `rtr-siege` (AS 65010) et `rtr-aws` (AS 64513), BGP `Established`, `192.168.10.0/24` annoncé, `10.20.0.0/22` reçu, `ping 10.20.1.10` réussi |
-| 3. Politique et bascule | `local-pref 200` sur les routes reçues par DX ; `AS-path prepend ×3` sur le chemin VPN ; coupure du GRE → bascule vers le VPN (délai mesuré) ; rétablissement → retour automatique sur DX |
+## Dimensionnement
+Nous devons transférer 2 To en 8 heures : 16 000 Gbit sur 28 800 s, soit environ 0,56 Gbit/s. Une liaison de 1 Gbit/s suffit avec une marge d'environ 44 %.
+
+## Ce que nous avons fait
+- Un tunnel GRE `169.254.100.0/30` entre `rtr-siege` (AS 65010) et `rtr-aws` (AS 64513), qui joue la « fibre ».
+- Deux sessions BGP, une sur le GRE et une dans le tunnel IPsec du module 7. Le siège annonce `192.168.10.0/24`, la prod annonce `10.20.0.0/22`.
+- `local-pref 200` sur ce qui arrive par le GRE, et un AS-path allongé (`65010` trois fois de plus) sur le chemin VPN.
+- Le GRE est coupé puis remis pendant un ping horodaté, pour mesurer la bascule.
+
+Les routeurs tournent avec FRRouting sur Ubuntu. Le sujet propose GNS3 : nous ne l'avons pas utilisé.
 
 Script : `scripts/m08-bgp-sim.ps1`.
 
-## Architecture
 ![Module 8](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m08-dx.png)
 
-## Tableau de configuration
-| Élément | `rtr-siege` | `rtr-aws` |
+| Élément | rtr-siege | rtr-aws |
 |---|---|---|
 | ASN | 65010 | 64513 |
-| Tunnel GRE (DX simulé) | `169.254.100.2/30` | `169.254.100.1/30` |
-| Tunnel IPsec (VPN) | `169.254.10.2/30` | `169.254.10.1/30` |
-| Préfixe annoncé | `192.168.10.0/24` | `10.20.0.0/22` |
-| Politique | `DX-IN` : local-pref 200 ; `VPN-OUT` : prepend 65010 ×3 | `DX-IN` : local-pref 200 ; `VPN-IN` : défaut (100) |
+| Tunnel GRE | `169.254.100.2/30` | `169.254.100.1/30` |
+| Tunnel IPsec | `169.254.10.2/30` | `169.254.10.1/30` |
+| Annonce | `192.168.10.0/24` | `10.20.0.0/22` |
 | Timers BGP | 3 s / 9 s | 3 s / 9 s |
 
-## Procédure de diagnostic en quatre étapes
-1. **État BGP** : `show bgp summary` (`Established`, nombre de préfixes reçus).
-2. **Préfixes annoncés** : `show ip bgp neighbors <voisin> advertised-routes` / `routes`.
-3. **Local-pref** : `show ip bgp <préfixe>` – quel chemin est `best` et pourquoi.
-4. **Route dans la table AWS** : table `rt-prive` (`192.168.10.0/24` → routeur) et route du kernel du routeur (`ip route get`).
+## Si ça ne marche pas : quatre vérifications
+1. L'état de BGP : `show bgp summary` doit afficher `Established`.
+2. Les préfixes annoncés et reçus.
+3. La local-pref : `show ip bgp <préfixe>` montre quel chemin est le meilleur.
+4. La route dans `rt-prive` vers le routeur, et `ip route get` sur le routeur.
 
-## Résultats
+## Résultats des tests
 ```
 === TP1 : dimensionnement (voir docs/modules/m08) ===
 2 To en 8 h = 16 000 Gbit / 28 800 s = 0,556 Gbit/s -> liaison 1 Gbit/s (marge ~44 %)
@@ -881,16 +760,10 @@ pings_perdus_x0.1s
 ```
 
 ## Mesure de la bascule
-Le ping horodaté (une sonde toutes les 0,1 s avec 1 s de délai maximum) a perdu **9 sondes** lors de la coupure du GRE, soit une interruption d'environ **10 secondes** (détection BGP en 9 s avec les timers 3/9 s), puis le trafic est passé par le VPN ; au rétablissement du GRE, le chemin DX (local-pref 200) est repris automatiquement.
+Pendant la coupure du GRE, 9 sondes sur une série d'une sonde toutes les 0,1 s ont été perdues (chacune attend 1 s au plus) : l'interruption dure une dizaine de secondes, le temps que BGP détecte la perte (9 s). Le trafic passe alors par le VPN, et il revient sur la liaison principale quand le GRE est rétabli.
 
 ## Nettoyage
-Rien n'est facturé à l'heure pour Direct Connect (rien commandé). Les routeurs GNS3/FRR du HackMD correspondent ici à des instances EC2 arrêtées en fin de séance. `dxgw-leman` n'existe pas (SCP) ; la commande de création et d'association est documentée dans `cfn/optional-m06-m08-interconnexion.yaml`.
-
-## Écarts et remarques
-* **GNS3 non utilisé** : FRRouting sur EC2 reproduit les mêmes sessions BGP, est reproductible par script et ne demande aucune installation sur le poste.
-* GRE traverse la NAT 1-pour-1 des IP publiques AWS (protocole 47 autorisé dans les Security Groups).
-
-
+Rien n'est facturé à l'heure pour Direct Connect puisque nous n'avons rien commandé. Les routeurs sont des instances EC2 arrêtées après les tests.
 
 ## Captures
 
@@ -909,49 +782,39 @@ Rien n'est facturé à l'heure pour Direct Connect (rien commandé). Les routeur
 
 ---
 
-# Module 9 – Elastic Load Balancing
+# Module 9 – Load balancer
 
 ## Objectif
-Publier le portail derrière un **Application Load Balancer** HTTPS réparti sur deux zones, avec routage par chemin (`/api/*`) et contrôles de santé, et savoir diagnostiquer une panne.
+Publier le site derrière un Application Load Balancer en HTTPS sur deux zones, avec un chemin `/api/*` vers l'API, et savoir diagnostiquer une panne.
 
-## Cours (essentiel)
-* L'**ALB** (couche 7) a un nœud par zone de disponibilité ; il exige **au moins deux sous-réseaux** dans deux zones. Un **listener** (443) applique des **règles** (chemin, hôte…) qui envoient vers des **groupes cibles**.
-* Le **health check** (`/health`, intervalle 10 s, 2 échecs) retire automatiquement une cible défaillante ; sans cible saine l'ALB répond **503/502**.
-* Le groupe de sécurité de l'ALB est distinct de celui des serveurs : les serveurs n'autorisent que **l'ALB** (référence de SG), jamais Internet.
-* L'ALB est facturé à l'heure (~0,03 USD/h) + LCU.
+## Ce qu'il faut savoir
+L'ALB travaille au niveau applicatif et a un nœud par zone de disponibilité : il faut donc deux sous-réseaux dans deux zones. Un listener (ici le 443) applique des règles (chemin, nom d'hôte) qui envoient vers des groupes cibles. Le contrôle de santé retire tout seul une cible qui ne répond plus ; sans cible saine, le client reçoit une erreur 502 ou 503. Les serveurs ne doivent accepter que l'ALB, pas Internet. L'ALB coûte environ 0,03 USD de l'heure.
 
-## Scénario
-Les clients accèdent à `https://<alb>/` (site web) et `https://<alb>/api/…` (API).
-
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Cibles | `sub-public-1b-TP-AC` `10.20.0.64/26` (`eu-north-1b`) associé à `rt-public` ; `tg-web-TP-AC` (HTTP 80, `/health`) avec `web-01` ; `tg-app-TP-AC` (HTTP 8080, `/api/health`) avec `app-01` |
-| 2. ALB | `alb-prod-leman-TP-AC` internet-facing sur 1a + 1b, `sg-alb-TP-AC` (443 public) ; listener HTTPS 443 avec certificat ACM (auto-signé importé), défaut → `tg-web` ; règle **priorité 10** `/api/*` → `tg-app` |
-| 3. Pannes | nginx arrêté → `unhealthy` / 502 ; 443 fermé dans `sg-alb` → timeout ; rétabli → 200 |
+## Ce que nous avons fait
+- Un deuxième sous-réseau public `10.20.0.64/26` dans `eu-north-1b`.
+- Deux groupes cibles : `tg-web` (HTTP 80, santé `/health`, cible `web-01`) et `tg-app` (HTTP 8080, santé `/api/health`, cible `app-01`).
+- L'ALB `alb-prod-leman-TP-AC` sur les deux zones, avec son propre Security Group `sg-alb` (443 ouvert).
+- Un listener HTTPS 443 avec un certificat auto-signé importé dans ACM, qui envoie par défaut vers `tg-web` ; une règle de priorité 10 envoie `/api/*` vers `tg-app`.
+- Trois pannes : nginx arrêté sur `web-01`, port 443 fermé dans `sg-alb`, puis tout remis.
 
 Script : `scripts/m09-alb.ps1`.
 
-## Diagramme
 ![Module 9](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m09-alb.png)
 
-## Tableau de configuration
-| Ressource | Nom | Valeur |
-|---|---|---|
-| ALB | `alb-prod-leman-TP-AC` | internet-facing, `sub-public-1a` + `sub-public-1b`, `sg-alb-TP-AC` |
-| Listener | HTTPS 443 | politique TLS 1.3/1.2 ; certificat ACM `cert-autosigne-TP-AC` |
-| Règle | priorité 10 | chemin `/api/*` → `tg-app-TP-AC` |
-| Groupe cible | `tg-web-TP-AC` | HTTP 80, santé `/health`, cible `web-01` |
-| Groupe cible | `tg-app-TP-AC` | HTTP 8080, santé `/api/health`, cible `app-01` |
-| SG | `sg-web` / `sg-app` | entrée 80 / 8080 **depuis `sg-alb` uniquement** |
+| Élément | Valeur |
+|---|---|
+| Listener | HTTPS 443, politique TLS 1.3/1.2, certificat auto-signé |
+| Règle | priorité 10, chemin `/api/*` vers `tg-app` |
+| Santé | 10 s d'intervalle, 2 échecs pour retirer, 2 réussites pour remettre |
+| sg-web / sg-app | acceptent le 80 / le 8080 uniquement depuis `sg-alb` |
 
-## Procédure de diagnostic en quatre étapes
-1. **Listener** : le port/protocole et le certificat sont-ils corrects ?
-2. **Règle active** : la règle `/api/*` (priorité 10) précède-t-elle la règle par défaut ?
-3. **État de la cible** : `describe-target-health` (`healthy` / `unhealthy` + motif).
-4. **SG entre ALB et cible** : la cible autorise-t-elle l'ALB sur son port ?
+## Si ça ne marche pas : quatre vérifications
+1. Le listener : bon port et bon certificat ?
+2. La règle `/api/*` passe-t-elle avant la règle par défaut ?
+3. L'état de la cible : `describe-target-health` donne `healthy` ou `unhealthy` avec la raison.
+4. Le Security Group de la cible autorise-t-il l'ALB ?
 
-## Résultats
+## Résultats des tests
 ```
 === TP1/TP2 ===
 tg-web : healthy   tg-app : healthy
@@ -967,11 +830,10 @@ curl https://ALB/ -> web-01 TP-AC  [HTTP 200]
 ```
 
 ## Nettoyage
-`alb-prod-leman-TP-AC`, `tg-web`, `tg-app` conservés (modules 10 à 13) ; instances arrêtées en fin de séance ; l'ALB sera supprimé en fin de projet (`docs/NETTOYAGE.md`).
+Nous gardons l'ALB et les groupes cibles pour les modules suivants, et nous supprimerons l'ALB à la fin du cours.
 
-## Écarts et remarques
-* **Pas de domaine réel** : le HackMD demande un certificat ACM validé ; nous importons un certificat **auto-signé** (clé privée jamais conservée sur disque) – les tests utilisent `curl -k`.
-* Le HackMD réutilise `sg-web` pour l'ALB ; nous avons créé un `sg-alb` dédié (meilleure pratique : les serveurs n'acceptent que l'ALB).
+## Ce qui diffère du sujet
+Nous n'avons pas de domaine, donc le certificat est auto-signé (nos tests utilisent `curl -k`). Le sujet réutilise `sg-web` pour l'ALB ; nous avons préféré un groupe séparé pour que les serveurs n'acceptent que l'ALB.
 
 ## Captures
 
@@ -1006,44 +868,37 @@ curl https://ALB/ -> web-01 TP-AC  [HTTP 200]
 
 ---
 
-# Module 10 – Route 53 : DNS privé et public
+# Module 10 – Route 53
 
 ## Objectif
-Nommer les ressources avec une **zone privée** résolue dans le VPC, publier le portail avec une **zone publique** (alias vers l'ALB) et assurer la continuité par un **failover** piloté par un health check.
+Donner des noms à nos machines avec une zone privée, publier le site avec une zone publique, et prévoir une bascule automatique si le site tombe.
 
-## Cours (essentiel)
-* Une **zone privée** n'est résolue que depuis les VPC auxquels elle est associée (résolveur du VPC à `10.20.0.2`, base + 2). DNS support et hostnames doivent être activés.
-* Une **zone publique** reçoit 4 serveurs de noms (NS) qu'il faut **déléguer** chez le bureau d'enregistrement du domaine.
-* Un enregistrement **alias** pointe vers une ressource AWS (ALB, CloudFront) sans coût de requête et suit les changements d'IP.
-* **Failover** : un enregistrement *primaire* lié à un **health check** et un *secondaire* ; si la santé du primaire échoue, Route 53 répond le secondaire.
+## Ce qu'il faut savoir
+Une zone privée n'est visible que depuis les VPC auxquels on l'associe (le résolveur du VPC est à l'adresse base + 2, ici `10.20.0.2`). Une zone publique donne quatre serveurs de noms qu'il faut déclarer chez le bureau d'enregistrement du domaine. Un enregistrement « alias » pointe vers une ressource AWS. Pour le failover, on relie l'enregistrement principal à un contrôle de santé et on prévoit un enregistrement de secours.
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Zone privée | `prod.leman.internal` associée à `vpc-prod-leman-TP-AC` ; `web.prod.leman.internal → 10.20.0.10`, `app.prod.leman.internal → 10.20.1.10` |
-| 2. Zone publique | `leman-finance.example` ; alias A `portefeuilles.leman-finance.example` → ALB ; 4 NS à reporter |
-| 3. Failover | health check HTTPS `/health` (10 s, 2 échecs) ; primaire = alias ALB (puis CloudFront au module 11), secondaire = `203.0.113.50` |
+## Ce que nous avons fait
+- La zone privée `prod.leman.internal` associée au VPC de prod, avec `web.prod.leman.internal` (`10.20.0.10`) et `app.prod.leman.internal` (`10.20.1.10`).
+- La zone publique `leman-finance.example`, et un alias `portefeuilles.leman-finance.example` vers l'ALB.
+- Un contrôle de santé HTTPS sur `/health` (toutes les 10 s, 2 échecs), l'alias principal qui en dépend, et un enregistrement de secours vers `203.0.113.50`.
 
-Script : `scripts/m10-route53.ps1` (déploiement) et `scripts/m10-tests.ps1` (preuves).
+Scripts : `scripts/m10-route53.ps1` et `scripts/m10-tests.ps1`.
 
-## Diagramme
 ![Module 10](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m10-route53.png)
 
-## Tableau des enregistrements
-| Zone | Type | Nom | Cible |
-|---|---|---|---|
-| `prod.leman.internal` (privée) | A | `web.prod.leman.internal` | `10.20.0.10` |
-| `prod.leman.internal` (privée) | A | `app.prod.leman.internal` | `10.20.1.10` |
-| `leman-finance.example` (publique) | A alias, failover PRIMARY | `portefeuilles` | ALB (puis CloudFront), `EvaluateTargetHealth`, health check |
-| `leman-finance.example` (publique) | A, failover SECONDARY | `portefeuilles` | `203.0.113.50` (TTL 60) |
+| Zone | Nom | Cible |
+|---|---|---|
+| privée | `web.prod.leman.internal` | `10.20.0.10` |
+| privée | `app.prod.leman.internal` | `10.20.1.10` |
+| publique | `portefeuilles` (principal) | alias ALB, plus tard CloudFront, avec contrôle de santé |
+| publique | `portefeuilles` (secours) | `203.0.113.50` |
 
-## Procédure de diagnostic
-1. **Délégation NS** : les NS du bureau d'enregistrement sont-ils ceux de la zone ?
-2. **Enregistrement** : nom, type, politique de routage, alias ?
-3. **État du health check** : `get-health-check-status` (Success / Failure par région).
-4. **Cible de l'ALB** : groupes cibles sains ? (module 9). Pour une zone privée : l'association au VPC.
+## Si ça ne marche pas : quatre vérifications
+1. La délégation : les serveurs de noms du bureau d'enregistrement sont-ils ceux de la zone ?
+2. L'enregistrement : nom, type, politique de routage, alias.
+3. L'état du contrôle de santé (`get-health-check-status`).
+4. La cible : les groupes cibles de l'ALB sont-ils sains ?
 
-## Résultats
+## Résultats des tests
 ```
 === TP1 : zone privee prod.leman.internal (resolveur 10.20.0.2) ===
 web-01 : Success	app -> 10.20.1.10 web -> 10.20.0.10 	
@@ -1061,11 +916,10 @@ nginx relance -> apres 23 s : health check = Success, reponse DNS = 16.192.43.23
 ```
 
 ## Nettoyage
-Zones et enregistrements conservés (modules 11 et 12). Le health check (~0,50 USD/mois) est supprimé en fin de projet.
+Nous gardons les zones et les enregistrements pour les modules 11 et 12. Le contrôle de santé (environ 0,50 USD par mois) sera supprimé à la fin du cours.
 
-## Écarts et remarques
-* **Domaine fictif, rien n'est acheté** : la délégation NS réelle est impossible. Les réponses sont vérifiées avec `route53 test-dns-answer` et par interrogation **directe d'un serveur de noms** de la zone (`Resolve-DnsName -Server ns-…`), puis `curl --resolve` vers l'IP obtenue.
-* Le health check cible le nom DNS de l'ALB (le nom public n'est pas résolvable sans délégation).
+## Ce qui diffère du sujet
+Nous n'avons pas acheté de domaine, donc la délégation réelle est impossible. Nous interrogeons directement un serveur de noms de la zone (`Resolve-DnsName -Server ns-…`) et nous utilisons `route53 test-dns-answer` pour voir la réponse que Route 53 donnerait. Le contrôle de santé vise le nom DNS de l'ALB (puis de CloudFront), car notre nom public n'est pas résolvable.
 
 ## Captures
 
@@ -1099,41 +953,34 @@ Zones et enregistrements conservés (modules 11 et 12). Le health check (~0,50 U
 # Module 11 – CloudFront
 
 ## Objectif
-Placer un **CDN** devant l'ALB : mettre en cache le contenu statique, ne jamais mettre en cache l'API, et interdire l'accès direct à l'ALB.
+Mettre un CDN devant l'ALB : garder en cache le contenu statique, ne jamais mettre l'API en cache, et empêcher l'accès direct à l'ALB.
 
-## Cours (essentiel)
-* CloudFront sert le contenu depuis des **points de présence** proches du visiteur ; l'en-tête `x-amz-cf-pop` indique lequel, `x-cache` indique `Hit` ou `Miss from cloudfront`.
-* Le comportement par chemin (`/static/*`, `/api/*`, défaut) fixe la **politique de cache** (TTL, cookies/en-têtes pris en compte) et la **politique de requête vers l'origine**.
-* Pour qu'un contenu change avant la fin du TTL : **invalidation**.
-* Verrouillage de l'origine : le Security Group de l'ALB n'autorise que la **liste de préfixes gérée** `com.amazonaws.global.cloudfront.origin-facing`.
-* Un certificat ACM pour CloudFront doit être demandé en **us-east-1**.
+## Ce qu'il faut savoir
+CloudFront sert le contenu depuis un point de présence proche du visiteur. Les en-têtes de la réponse le montrent : `x-amz-cf-pop` donne le point de présence, `x-cache` indique `Hit` ou `Miss`. Chaque chemin (`/static/*`, `/api/*`, le reste) a sa politique de cache. Pour changer un fichier avant la fin du délai de cache, on lance une invalidation. Pour fermer l'ALB au reste du monde, son Security Group n'accepte que la liste de préfixes gérée par AWS pour CloudFront.
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Distribution | `d-leman-portail-TP-AC` avec l'ALB pour origine ; attente `Deployed` ; `curl -I` : réponse de l'ALB et `x-amz-cf-pop` |
-| 2. Comportements | défaut `*` : TTL 0 (CachingDisabled) + toutes les requêtes transmises ; `/static/*` : TTL 86 400 s, sans cookies, compression ; `/api/*` : TTL 0, tous en-têtes/cookies, méthodes GET à DELETE |
-| 3. Verrouillage | `sg-alb` limité au préfixe CloudFront ; alias Route 53 déplacé vers CloudFront ; invalidation de `/static/logo.png` |
+## Ce que nous avons fait
+- La distribution `d-leman-portail-TP-AC`, avec l'ALB comme origine.
+- Trois comportements : le défaut (aucun cache, cookies transmis), `/static/*` (cache de 24 h, sans cookies, compression) et `/api/*` (aucun cache, tous les en-têtes et cookies, méthodes GET à DELETE).
+- Un fichier `/static/logo.png` sur `web-01`, qu'on modifie ensuite pour tester l'invalidation.
+- `sg-alb` limité à la liste de préfixes CloudFront, et l'alias Route 53 déplacé vers CloudFront.
 
-Script : `scripts/m11-cloudfront.ps1`.
+Script : `scripts/m11-cloudfront.ps1` (tests : `m11-tests.ps1`).
 
-## Diagramme
 ![Module 11](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m11-cloudfront.png)
 
-## Tableau des comportements
-| Comportement | Chemin | TTL | Cookies | Méthodes | Origine |
-|---|---|---|---|---|---|
-| défaut | `*` | 0 | transmis (+ `Authorization`) | GET…DELETE | `alb-prod-leman` |
-| statique | `/static/*` | 86 400 s | aucun | GET, HEAD | `alb-prod-leman` |
-| API | `/api/*` | 0 | tous | GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE | `alb-prod-leman` |
+| Comportement | Chemin | Cache | Méthodes |
+|---|---|---|---|
+| défaut | `*` | aucun | GET à DELETE |
+| statique | `/static/*` | 86 400 s | GET, HEAD |
+| API | `/api/*` | aucun | GET à DELETE |
 
-## Procédure de diagnostic
-* **403** : Security Group de l'ALB (préfixe CloudFront ?) ou politique de l'origine.
-* **502** : origine injoignable (SG, protocole origine, certificat d'origine invalide).
-* **`x-cache`** : `Hit` attendu sur le statique, jamais sur `/api/*`.
-* **Certificat** : région us-east-1, nom couvert par le certificat.
+## Si ça ne marche pas : quatre vérifications
+1. Une erreur 403 : le Security Group de l'ALB laisse-t-il passer CloudFront ?
+2. Une erreur 502 : l'origine répond-elle (Security Group, protocole, certificat) ?
+3. L'en-tête `x-cache` : `Hit` attendu sur le statique, jamais sur l'API.
+4. Le certificat : il doit couvrir le nom utilisé.
 
-## Résultats
+## Résultats des tests
 ```
 === TP1 : distribution E3HM34P4WV8A3X (domaine d14byb6fexq6px.cloudfront.net) ===
 GET / (comportement par defaut, TTL 0) :
@@ -1169,12 +1016,10 @@ Route 53 : alias primaire -> CloudFront ; reponse DNS : 3.171.102.185	3.171.102.
 ```
 
 ## Nettoyage
-`d-leman-portail-TP-AC` conservée pour le module 12. En fin de projet : désactiver puis supprimer la distribution (`docs/NETTOYAGE.md`). Invalidations notées dans les résultats.
+Nous gardons la distribution pour le module 12 et la désactiverons puis supprimerons à la fin du cours.
 
-## Écarts et remarques
-* **Pas de certificat ACM valide** (pas de domaine) : le visiteur utilise le certificat `*.cloudfront.net` ; l'alias `portefeuilles.leman-finance.example` pointe quand même vers CloudFront.
-* **Origine en HTTP (80)** : un CloudFront en « HTTPS seul » refuserait le certificat auto-signé de l'ALB (502). L'ALB expose donc aussi un listener 80, fermé à Internet (préfixe CloudFront uniquement).
-* Le préfixe géré CloudFront compte pour ~55 règles dans un Security Group (quota 60) : une seule règle (port 80) lui est donc consacrée.
+## Ce qui diffère du sujet
+Sans domaine, nous ne pouvons pas avoir de certificat ACM validé : les visiteurs voient le certificat `*.cloudfront.net`. Pour la même raison, CloudFront joint l'ALB en HTTP (port 80) : il refuserait le certificat auto-signé de l'ALB. L'ALB a donc aussi un listener 80, fermé à Internet. Le préfixe CloudFront compte pour environ 55 règles dans un Security Group (limite 60), nous n'avons pu l'utiliser qu'une fois (port 80).
 
 ## Captures
 
@@ -1193,43 +1038,38 @@ Route 53 : alias primaire -> CloudFront ; reponse DNS : 3.171.102.185	3.171.102.
 
 ---
 
-# Module 12 – CloudWatch et VPC Flow Logs
+# Module 12 – CloudWatch et Flow Logs
 
 ## Objectif
-Superviser le portail (tableau de bord), être alerté (alarme + SNS) et tracer les flux réseau (Flow Logs) pour diagnostiquer un rejet.
+Surveiller le site avec un tableau de bord, être prévenu par une alarme, et garder la trace des flux réseau pour comprendre un rejet.
 
-## Cours (essentiel)
-* **CloudWatch Metrics** : chaque service publie des métriques par dimension (ALB, groupe cible, distribution). Une **alarme** évalue une statistique sur N périodes et passe `OK` → `ALARM` → `OK`.
-* **SNS** diffuse la notification aux abonnés (e-mail, SQS, Lambda…).
-* **VPC Flow Logs** enregistre les connexions acceptées/rejetées (`ACCEPT`/`REJECT`) par interface, avec adresse source, port, protocole. **Logs Insights** permet de les interroger.
-* La rétention des journaux est réglée (3 jours ici) pour limiter les coûts.
+## Ce qu'il faut savoir
+Chaque service envoie des métriques à CloudWatch. Une alarme regarde une statistique sur plusieurs périodes et passe de `OK` à `ALARM` quand le seuil est franchi ; SNS envoie alors le message à ses abonnés. Les Flow Logs enregistrent chaque connexion acceptée (`ACCEPT`) ou refusée (`REJECT`) avec la source, le port et le protocole, et Logs Insights permet de les interroger. Nous gardons les journaux 3 jours pour limiter les coûts.
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Tableau de bord | `db-portail-leman-TP-AC` : `HealthyHostCount` / `UnHealthyHostCount` (tg-web), `TargetResponseTime` (ALB), `HTTPCode_Target_5XX_Count`, `5xxErrorRate` (CloudFront, us-east-1) |
-| 2. Alarme | topic `sns-exploitation-leman-TP-AC` ; `alarm-5xx-portail-TP-AC` : `HTTPCode_Target_5XX_Count` > 5 sur 5 min, 2 périodes ; actions « en alarme » et « retour à la normale » vers SNS ; erreur provoquée par `/api/error` (HTTP 500) |
-| 3. Flow Logs | groupe `/leman/vpc-prod/flow-TP-AC`, rôle IAM `TP-AC-flowlogs-role`, `fl-vpc-prod-leman-TP-AC` (trafic ALL) ; 8 connexions TCP vers le port 22 de l'ALB depuis un poste non autorisé (refusées par `sg-alb`) ; requête Logs Insights sur les `REJECT` : les 8 rejets sont retrouvés avec l'adresse source, le port 22 et l'ENI de l'ALB |
+## Ce que nous avons fait
+- Le tableau de bord `db-portail-leman-TP-AC` : cibles saines et non saines, temps de réponse de l'ALB, erreurs 5xx des cibles, taux d'erreurs 5xx de CloudFront.
+- Le topic SNS `sns-exploitation-leman-TP-AC`, avec deux abonnés : une adresse e-mail de l'équipe et une file SQS qui nous sert de preuve de réception.
+- L'alarme `alarm-5xx-portail-TP-AC` : plus de 5 erreurs 5xx en 5 minutes, pendant 2 périodes de suite ; elle prévient en passant en alarme et en revenant à la normale. Pour la tester, notre API renvoie une erreur 500 sur `/api/error`.
+- Le groupe de logs `/leman/vpc-prod/flow-TP-AC`, un rôle IAM d'écriture et le Flow Log `fl-vpc-prod-leman-TP-AC` (tout le trafic).
+- Une sonde TCP sur le port 22 depuis une machine non autorisée, retrouvée dans les journaux avec Logs Insights.
 
-Scripts : `scripts/m12-monitoring.ps1` (déploiement) et `scripts/m12-tests.ps1` (preuves).
+Scripts : `scripts/m12-monitoring.ps1` (mise en place) et `m12-tests.ps1`, `m12-flowlogs3.ps1`, `m12-flowlogs4.ps1` (preuves).
 
-## Diagramme
 ![Module 12](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m12-monitoring.png)
 
-## Tableau de supervision
-| Élément | Métrique / source | Seuil | Période | Action |
-|---|---|---|---|---|
-| `alarm-5xx-portail-TP-AC` | `AWS/ApplicationELB` `HTTPCode_Target_5XX_Count` (Sum) | > 5 | 5 min × 2 | SNS (ALARM et OK) |
-| Tableau de bord | `HealthyHostCount` = 1 pour `web-01` | – | 1 min | visuel |
-| Flow Logs | `/leman/vpc-prod/flow-TP-AC` | – | – | Logs Insights |
+| Élément | Réglage |
+|---|---|
+| Alarme | `HTTPCode_Target_5XX_Count` supérieur à 5, période de 5 min, 2 périodes |
+| Action | message SNS en alarme et au retour à la normale |
+| Flow Log | tout le trafic, vers CloudWatch Logs, rétention 3 jours |
 
-## Procédure de diagnostic
-1. **Métrique** : quelle série dérive (5xx, latence, hôtes sains) ?
-2. **Alarme** : état, historique, période d'évaluation.
-3. **Journal de flux** : `filter action="REJECT" | stats count(*) by srcAddr, dstPort | sort count desc`.
-4. **SG ou NACL responsable** : relier le rejet au port/source et corriger la règle (module 3).
+## Si ça ne marche pas : quatre vérifications
+1. Quelle métrique dérive : erreurs 5xx, lenteur, cibles saines ?
+2. L'état et l'historique de l'alarme.
+3. Les journaux de flux : `filter action="REJECT" | stats count(*) by srcAddr, dstPort`.
+4. Quelle règle de Security Group ou de NACL a refusé, d'après le port et l'interface.
 
-## Résultats
+## Résultats des tests
 ```
 === TP1 : tableau de bord ===
 Tableau de bord : db-portail-leman-TP-AC
@@ -1260,18 +1100,24 @@ Recherche dans /leman/vpc-prod/flow-TP-AC (source = ce poste, port 22, REJECT) :
 Requete Logs Insights : filter action = "REJECT" and dstPort = 22 and srcAddr = <ce poste> | stats count(*) as n by srcAddr, dstAddr, dstPort | sort n desc
 Resultat : srcAddr=84.226.x.x dstAddr=10.20.0.115 dstPort=22 n=4 | srcAddr=84.226.x.x dstAddr=10.20.0.7 dstPort=22 n=4
 Diagnostic : le rejet vient du Security Group sg-alb (port 22 non ouvert) : source, ENI de l'ALB, port 22 et action REJECT le prouvent.
+
+=== TP3 (web-01) : Flow Logs, sonde SSH vers web-01 ===
+Controle : https vers web-01 (443 ouvert) -> HTTP 000 pendant le script (web-01 venait de demarrer) ; controle refait a part, web-01 demarree : HTTP 200
+10 tentatives TCP vers web-01:22 depuis une machine non autorisee (84.226.x.x) -> 10 timeout (sg-web n'ouvre le 22 qu'a la salle d'exploitation)
+Recherche dans /leman/vpc-prod/flow-TP-AC (source = ce poste, destination 10.20.0.10, port 22, REJECT) :
+  aucune ligne livree dans le delai
+Requete Logs Insights : filter action = "REJECT" and dstPort = 22 and srcAddr = <ce poste> and dstAddr = "10.20.0.10" | stats count(*) as n by srcAddr, dstAddr, dstPort
+Resultat : srcAddr=84.226.x.x dstAddr=10.20.0.10 dstPort=22 n=1
+Diagnostic : rejet par sg-web (port 22 non ouvert a cette source) ; ENI de web-01, port 22, action REJECT.
 ```
 
 ## Nettoyage
-Tableau de bord, alarme, groupe de logs conservés (module 13) ; rétention réduite à 3 jours ; le Flow Log et le groupe de logs seront supprimés en fin de projet.
+Nous gardons le tableau de bord, l'alarme et le groupe de logs pour le module 13, puis nous supprimerons le Flow Log et les journaux à la fin du cours.
 
-## Écarts et remarques
-* **Abonnés SNS** : la file SQS `sqs-exploitation-leman-TP-AC` (preuve de réception automatique) **et** un abonnement e-mail de l'équipe d'exploitation (`t…@git.swiss`, adresse masquée dans ce document), créé avec `aws sns subscribe --protocol email` ; l'abonnement reste `PendingConfirmation` tant que le destinataire n'a pas cliqué sur le lien de confirmation reçu par e-mail.
-* Flow Logs : la livraison dans CloudWatch Logs prend plusieurs minutes. Le groupe de logs avait d'abord échoué à se créer (tags mal formés) : détecté par DeliverLogsStatus=FAILED, corrigé en recréant le groupe puis le Flow Log.
-* La sonde SSH vise l'ALB (toujours actif) plutôt que `web-01`, arrêté faute de vCPU libres dans le compte partagé : le rejet est le même (Security Group fermé sur le port 22) et la trace Flow Logs est identique. Des rejets réels de scanners Internet sur le port 22 apparaissent aussi dans les journaux.
-
-
-
+## Problèmes rencontrés
+- Notre premier groupe de logs n'avait pas été créé (une erreur de notre script) ; le Flow Log affichait `DeliverLogsStatus=FAILED`. Nous avons recréé le groupe puis le Flow Log.
+- La livraison dans CloudWatch Logs prend plusieurs minutes.
+- Une adresse e-mail d'abonné SNS doit être confirmée par un clic sur le message reçu : sans cela, l'abonnement reste en attente.
 
 ## Captures
 
@@ -1310,56 +1156,48 @@ Tableau de bord, alarme, groupe de logs conservés (module 13) ; rétention réd
 
 ---
 
-# Module 13 – Automatisation avec CloudFormation
+# Module 13 – CloudFormation
 
 ## Objectif
-Décrire l'infrastructure dans un **template**, la déployer par **stack**, relire les changements avant exécution (**change set**), détecter les écarts (**drift**) et prouver la reproductibilité (suppression puis redéploiement identique) – objectif O6 du mandat.
+Décrire le réseau dans un template, le déployer en stack, relire les changements avant de les appliquer, détecter les écarts avec la réalité (drift) et prouver qu'on peut tout supprimer puis tout recréer à l'identique.
 
-## Cours (essentiel)
-* Un **template** déclare des ressources, des **paramètres** (`Environnement`, `CidrVpc`…), des **sorties** (exportées pour d'autres stacks).
-* Une **stack** est l'instance déployée du template ; CloudFormation calcule l'ordre des dépendances (`!Ref`, `DependsOn`) et supprime dans l'**ordre inverse**.
-* Un **change set** montre ce qui sera ajouté / modifié / remplacé **avant** exécution (revue obligatoire en production).
-* Le **drift** est l'écart entre l'état réel et le template (modification manuelle à la console) ; la source de vérité reste le template.
-* Fonctions utiles ici : `!Cidr` (découpe automatique des sous-réseaux), `!Select`, `!GetAZs`, `!Sub`, paramètres de type `AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>` (AMI toujours à jour).
+## Ce qu'il faut savoir
+Un template contient des ressources, des paramètres (`Environnement`, `CidrVpc`…) et des sorties. La stack est le template déployé ; CloudFormation calcule l'ordre de création et supprime dans l'ordre inverse. Un change set montre ce qui sera ajouté, modifié ou remplacé avant d'exécuter. Le drift est l'écart entre ce qui existe vraiment et le template, par exemple après une modification à la main dans la console.
 
-## TP
-| Tâche | Réalisation |
-|---|---|
-| 1. Réseau | `cfn/reseau-leman-etape1.yaml` (paramètres `Environnement` prod/dev et `CidrVpc`) : VPC, 3 sous-réseaux, IGW, `rt-public`, `sg-alb`/`sg-web`/`sg-app` ; `validate-template` ; stack `stack-portail-leman-TP-AC` → `CREATE_COMPLETE`, sortie `VpcId` |
-| 2. Applications | `cfn/reseau-leman.yaml` : + `web-01`, `app-01` (adresses fixes), `tg-web`, `tg-app`, ALB HTTPS 443 et règle `/api/*` (priorité 10) ; déployé par **change set** relu avant exécution ; `curl https://<dns-alb>/api/health` répond depuis `app-01` |
-| 3. Drift et reproductibilité | règle SSH ajoutée à la main sur `sg-web` → `DRIFTED` ; corrigée → `IN_SYNC` ; suppression de la stack puis redéploiement identique |
+## Ce que nous avons fait
+- `cfn/reseau-leman-etape1.yaml` : le VPC, trois sous-réseaux, l'IGW, la table publique et les trois Security Groups, avec les paramètres `Environnement` (prod ou dev) et `CidrVpc`. Nous l'avons validé avec `validate-template`, puis créé la stack `stack-portail-leman-TP-AC`.
+- `cfn/reseau-leman.yaml` : le template complet, avec en plus `web-01`, `app-01` (adresses fixes), les deux groupes cibles, l'ALB (HTTPS 443, règle `/api/*`) et le rôle IAM des instances. Nous l'avons appliqué avec un change set que nous avons relu avant de l'exécuter.
+- Un test de drift : une règle SSH ajoutée à la main sur le Security Group web est détectée (`DRIFTED`). Nous retirons la règle manuelle (la pile est de nouveau `IN_SYNC`), puis nous la déclarons dans le template (paramètre `AdminCidr`) et nous redéployons par change set : la règle appartient maintenant à la pile et la pile reste `IN_SYNC`. Un premier essai, où nous déclarions la règle sans retirer la manuelle, laissait la pile en `DRIFTED` (la règle existante n'avait pas la même description).
+- La stack est supprimée, puis recréée à l'identique.
 
-Script : `scripts/m13-cfn.ps1`. Templates : `cfn/reseau-leman.yaml` (complet), `cfn/reseau-leman-etape1.yaml`, `cfn/optional-*.yaml` (modules 4, 6, 7, 8 prêts si la SCP est levée).
+Scripts : `scripts/m13-cfn.ps1` (le scénario complet) et `scripts/m13-deploy.ps1` (tout déployer en une commande, certificat compris).
 
-## Diagramme
 ![Module 13](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m13-cloudformation.png)
 
-## Tableau des paramètres et sorties
-| Élément | Valeur par défaut | Ressource concernée |
-|---|---|---|
-| Paramètre `Environnement` | `prod` (`dev` possible) | tag `Environnement`, noms |
-| Paramètre `CidrVpc` | `10.30.0.0/22` (autre plage que le lab manuel `10.20.0.0/22`) | VPC, sous-réseaux via `!Cidr` |
-| Paramètre `WebPrivateIp` / `AppPrivateIp` | `10.30.0.10` / `10.30.1.10` | `web-01`, `app-01` (adresses fixes) |
-| Paramètre `CertificateArn` | certificat ACM auto-signé importé | listener HTTPS |
-| Paramètre `InstanceProfileName` | `TP-AC-ec2-ssm-profile` | accès SSM, aucun SSH |
-| Sortie `VpcId` | – | export `<stack>-VpcId` |
-| Sortie `AlbDns` | – | export `<stack>-AlbDns` (utilisée pour les `curl`) |
-| Sortie `SgWebId` | – | export `<stack>-SgWebId` |
+| Paramètre | Valeur par défaut |
+|---|---|
+| `Environnement` | `prod` (ou `dev`) |
+| `CidrVpc` | `10.30.0.0/22` (nous avons gardé `10.20.0.0/22` pour le lab fait à la main) |
+| `WebPrivateIp` / `AppPrivateIp` | `10.30.0.10` / `10.30.1.10` |
+| `AdminCidr` | vide (pas de règle SSH) |
+| `CertificateArn` | à fournir (le script de déploiement l'importe) |
 
-## Procédure de diagnostic
-1. **État de la stack** : `describe-stacks` (`*_COMPLETE`, `*_FAILED`, `ROLLBACK_*`).
-2. **Événements en échec** : `describe-stack-events` – première ressource en `CREATE_FAILED` et son motif.
-3. **Drift** : `detect-stack-drift` puis `describe-stack-resource-drifts`.
-4. **Rollback** : `--on-failure DELETE|ROLLBACK`, `continue-update-rollback` ; on ne corrige jamais à la main une ressource gérée : on corrige le template.
+Sorties : `VpcId`, `AlbDns` et `SgWebId`.
 
-## Résultats
+## Si ça ne marche pas : quatre vérifications
+1. L'état de la stack (`*_COMPLETE`, `*_FAILED`, `ROLLBACK_*`).
+2. Les événements : la première ressource en `CREATE_FAILED` donne la raison.
+3. Le drift : `detect-stack-drift` puis `describe-stack-resource-drifts`.
+4. Le rollback : on corrige le template, jamais la ressource à la main.
+
+## Résultats des tests
 ```
 === TP1 : validation et creation de la stack (reseau seul) ===
-validate-template : parametres = CidrVpc	WebPrivateIp	AppPrivateIp	InstanceProfileName	Environnement	InstanceType	CertificateArn	AmiId
-Statut : CREATE_COMPLETE ; sorties : VpcId	vpc-0655b354420d3ec81 SgWebId	sg-0367126b5f778745b
+validate-template : parametres = CidrVpc	WebPrivateIp	AppPrivateIp	AdminCidr	Environnement	InstanceType	CertificateArn	AmiId
+Statut : CREATE_COMPLETE ; sorties : VpcId	vpc-03d732488a1659ebc SgWebId	sg-05ed3128c6be342bb
 
 === TP2 : change set (instances, groupes cibles, ALB) ===
-Change set cs-ajouts-223398302 : 7 changements ; actions = Add
+Change set cs-ajouts-505498746 : 7 changements ; actions = Add
    Add  Alb  AWS::ElasticLoadBalancingV2::LoadBalancer
    Add  App01  AWS::EC2::Instance
    Add  ListenerHttps  AWS::ElasticLoadBalancingV2::Listener
@@ -1369,16 +1207,21 @@ Change set cs-ajouts-223398302 : 7 changements ; actions = Add
    Add  Web01  AWS::EC2::Instance
 Statut apres execution : UPDATE_COMPLETE
 Cibles : tg-web=healthy  tg-app=healthy
-curl -k https://alb-prod-leman-cfn-TP-AC-1962138643.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
-curl -k https://alb-prod-leman-cfn-TP-AC-1962138643.eu-north-1.elb.amazonaws.com/ -> web-01 TP-AC (cfn)
+curl -k https://alb-prod-leman-cfn-TP-AC-1713432283.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
+curl -k https://alb-prod-leman-cfn-TP-AC-1713432283.eu-north-1.elb.amazonaws.com/ -> web-01 TP-AC (cfn)
 
 === TP3 : drift, suppression, redeploiement ===
 Regle SSH ajoutee a la main sur sg-web-cfn -> drift stack : DETECTION_COMPLETE	DRIFTED
 Detail : SgWeb	MODIFIED	/SecurityGroupIngress/1	ADD
-Regle retiree (le template reste la source de verite) -> drift stack : DETECTION_COMPLETE	IN_SYNC
+Regle manuelle retiree -> drift stack : DETECTION_COMPLETE	IN_SYNC
+Change set cs-declaration-template-1149632398 : 1 changements ; actions = Modify
+   Modify  SgWeb  AWS::EC2::SecurityGroup
+Regle declaree dans le template (AdminCidr) puis redeploiement -> statut : UPDATE_COMPLETE
+Apres correction par le template -> drift stack : DETECTION_COMPLETE	IN_SYNC
+Regles de sg-web-cfn : tcp	80	None	sg-018397dd4dbc1dd12 tcp	22	203.0.113.0/24	None
 Suppression de la stack (ordre inverse des dependances) : 2 min -> DELETE_COMPLETE (stack disparue)
 VPC restants avec le tag de la stack : 0
-Change set cs-redeploiement-481960339 : 7 changements ; actions = Add
+Change set cs-redeploiement-222070138 : 7 changements ; actions = Add
    Add  Alb  AWS::ElasticLoadBalancingV2::LoadBalancer
    Add  App01  AWS::EC2::Instance
    Add  ListenerHttps  AWS::ElasticLoadBalancingV2::Listener
@@ -1386,15 +1229,15 @@ Change set cs-redeploiement-481960339 : 7 changements ; actions = Add
    Add  TgApp  AWS::ElasticLoadBalancingV2::TargetGroup
    Add  TgWeb  AWS::ElasticLoadBalancingV2::TargetGroup
    Add  Web01  AWS::EC2::Instance
-Redeploiement : UPDATE_COMPLETE ; cibles tg-web=healthy tg-app=healthy ; curl -k https://alb-prod-leman-cfn-TP-AC-312778712.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
+Redeploiement : UPDATE_COMPLETE ; cibles tg-web=healthy tg-app=healthy ; curl -k https://alb-prod-leman-cfn-TP-AC-267212375.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
 ```
 
 ## Nettoyage
-Le template et la stack sont conservés (le HackMD le demande). La stack (instances + ALB facturés) est supprimée en fin de projet : `aws cloudformation delete-stack --stack-name stack-portail-leman-TP-AC`. Version du template notée dans le journal : voir l'historique Git.
+Nous gardons le template et la stack. La stack contient des instances et un ALB (facturés) : nous la supprimerons à la fin du cours avec `aws cloudformation delete-stack`.
 
-## Écarts et remarques
-* La stack n'inclut pas de NAT (coût) : `app-01` n'a besoin d'aucun paquet (Python 3 est présent dans l'AMI) ; les tests passent par l'ALB.
-* Les modules 4, 6, 7 et 8 ne peuvent pas être inclus dans la stack déployée (services bloqués) : ils sont dans `optional-*.yaml`.
+## Problèmes rencontrés
+Deux erreurs de notre part : les descriptions des Security Groups ne peuvent pas contenir d'apostrophes ni d'accents, et notre premier calcul des sous-réseaux avec `!Cidr` donnait au sous-réseau privé une plage qui ne contenait pas l'adresse fixe d'`app-01`. Nous n'avons pas mis de NAT dans la stack (coût) : `app-01` n'a pas besoin de paquets, mais elle n'est donc pas joignable par SSM.
+
 
 ## Captures
 

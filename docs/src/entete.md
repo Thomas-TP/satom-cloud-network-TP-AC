@@ -1,35 +1,34 @@
-# Satom Cloud Network – Dossier de réalisation (équipe TP-AC)
+# Satom Cloud Network – Dossier du binôme TP-AC
 
-**Client** : Groupe Léman Finance SA – **Intégrateur** : Satom IT & Learning Solutions – **Équipe** : TP-AC (Thomas Prud'homme, Abderahmane Chaouche)
-**Formation** : AWS niveau 300 « Intégrer des services réseau multiplateformes » – Geneva Institute of Technology, promotion E3 – semaine du 16 au 20 novembre 2026
-**Région de travail** : Europe (Stockholm) `eu-north-1` – **Tags** : `Projet=SatomCloudNetwork`, `Equipe=TP-AC`, `Environnement=prod|dev`
+Projet réalisé par Thomas Prud'homme et Abderahmane Chaouche pour le client fictif Groupe Léman Finance SA (formation AWS niveau 300, Geneva Institute of Technology, promo E3, semaine du 16 au 20 novembre 2026).
 
-## Vidéo de rendu
+Tout est fait dans la région de Stockholm (`eu-north-1`). Nos ressources portent le suffixe `-TP-AC` et les tags `Projet=SatomCloudNetwork`, `Equipe=TP-AC` et `Environnement=prod` ou `dev`.
+
+## Vidéo
 <video controls preload="metadata" width="100%" src="https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/video/satom-cloud-network-TP-AC.mp4"></video>
 
-Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/Thomas-TP/satom-cloud-network-TP-AC/blob/main/video/satom-cloud-network-TP-AC.mp4) (durée environ 8 min : schémas, captures de la console AWS et preuves de tests, module par module).
-## Sommaire
-| Module | Sujet | Statut |
+Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/Thomas-TP/satom-cloud-network-TP-AC/blob/main/video/satom-cloud-network-TP-AC.mp4).
+
+## Où nous en sommes
+| Module | Sujet | Ce que nous avons fait |
 |---|---|---|
-| 0 | Cadrage, mandat, équipe, plan d'adressage | ✔ |
-| 1 | VPC et sous-réseaux | ✔ déployé et testé |
-| 2 | Routage : IGW et NAT | ✔ déployé et testé |
-| 3 | Security Groups et NACL | ✔ déployé et testé |
-| 4 | Network Firewall | ◐ bloqué par l'organisation : architecture, template validé, procédure |
-| 5 | VPC Peering | ✔ déployé et testé |
-| 6 | Transit Gateway | ◐ bloqué par l'organisation : architecture, template validé, procédure |
-| 7 | VPN site à site | ✔ simulé (IPsec strongSwan réel) |
-| 8 | Direct Connect | ✔ simulé (GRE + BGP FRRouting) |
-| 9 | Elastic Load Balancing | ✔ déployé et testé |
-| 10 | Route 53 | ✔ déployé et testé |
-| 11 | CloudFront | ✔ déployé et testé |
-| 12 | CloudWatch et Flow Logs | ✔ déployé et testé |
-| 13 | CloudFormation | ✔ déployé, drift, suppression/redéploiement testés |
+| 0 | Cadrage et plan d'adressage | fait |
+| 1 | VPC et sous-réseaux | déployé et testé |
+| 2 | Routage, IGW et NAT | déployé et testé |
+| 3 | Security Groups et NACL | déployé et testé |
+| 4 | Network Firewall | **non déployé** : le service est bloqué sur le compte de formation |
+| 5 | VPC Peering | déployé et testé |
+| 6 | Transit Gateway | **non déployé** : service bloqué |
+| 7 | VPN site à site | **simulé** avec strongSwan (le VPN AWS est bloqué) |
+| 8 | Direct Connect | **simulé** avec un tunnel GRE et du BGP (Direct Connect est bloqué) |
+| 9 | Load balancer | déployé et testé |
+| 10 | Route 53 | déployé et testé |
+| 11 | CloudFront | déployé et testé |
+| 12 | CloudWatch et Flow Logs | déployé et testé |
+| 13 | CloudFormation | déployé et testé |
+
+Les services bloqués le sont par une règle de l'organisation AWS du formateur. Nous avons relevé les erreurs exactes dans le fichier `docs/01-services-bloques.md` du dépôt.
 
 ![Schéma réseau final](../images/global.png)
 
-Dépôt du code, des scripts et des preuves : dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`. Les captures de preuve sont dans `captures/mNN/` : captures **réelles de la console AWS** (fichiers `00-console-*.png`, l'identifiant de compte est masqué), tableaux d'état issus de l'AWS CLI et journaux de tests (`99-preuves-tests.png`).
-
-
-
-
+Tout le code (scripts AWS CLI, templates CloudFormation), les preuves et les captures sont dans le dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`.

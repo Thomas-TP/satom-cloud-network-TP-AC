@@ -9,7 +9,7 @@ $c = New-Object Net.Sockets.TcpClient; $ar = $c.BeginConnect('github.com', 22, $
 $albIps = @(Resolve-DnsName $s.albDns -Type A -DnsOnly | Where-Object Type -eq 'A' | ForEach-Object IPAddress)
 $t0 = [DateTimeOffset]::UtcNow
 $res = New-Object System.Collections.Generic.List[string]
-foreach ($ip in $albIps) { foreach ($i in 1..4) { $c = New-Object Net.Sockets.TcpClient; $ar = $c.BeginConnect($ip, 22, $null, $null); $ok = $ar.AsyncWaitHandle.WaitOne(1500); $c.Close(); $res.Add($(if ($ok) { 'connecte' } else { 'timeout' })); Start-Sleep -Milliseconds 400 } }
+foreach ($ip in $albIps) { foreach ($i in 1..4) { $c = New-Object Net.Sockets.TcpClient; $ar = $c.BeginConnect($ip, 22, $null, $null); $ok = $false; if ($ar.AsyncWaitHandle.WaitOne(1500)) { try { $c.EndConnect($ar); $ok = $true } catch {} }; $c.Close(); $res.Add($(if ($ok) { 'connecte' } else { 'timeout' })); Start-Sleep -Milliseconds 400 } }
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("`n=== TP3 (reel) : Flow Logs ===")
 $lines.Add("Controle : port 22 sortant depuis ce poste (github.com:22) -> $(if ($out22) {'ouvert'} else {'filtre'})")
@@ -33,3 +33,4 @@ $lines.Add("Diagnostic : le rejet vient du Security Group sg-alb (port 22 non ou
 $t = Get-Content $outFile -Raw
 $t = $t -replace '(?s)\r?\n=== TP3 : Flow Logs \(VPC Flow Logs.*$', ''
 ($t.TrimEnd() + "`n" + ($lines -join "`n") + "`n") | Set-Content $outFile -Encoding utf8
+

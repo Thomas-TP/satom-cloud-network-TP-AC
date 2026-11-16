@@ -27,10 +27,10 @@ Parameters:
   CertificateArn:
     Type: String
     Description: ARN du certificat ACM (importe, auto-signe) pour le listener HTTPS de l'ALB
-  InstanceProfileName:
+  AdminCidr:
     Type: String
-    Default: TP-AC-ec2-ssm-profile
-    Description: Profil d'instance existant (SSM Session Manager, pas de SSH ni de cle)
+    Default: ''
+    Description: Plage autorisee a se connecter en SSH (salle d'exploitation). Vide = aucune regle SSH (administration par SSM uniquement).
   InstanceType:
     Type: String
     Default: t3.micro
@@ -40,6 +40,7 @@ Parameters:
 
 Conditions:
   EstProd: !Equals [!Ref Environnement, prod]
+  AvecAdmin: !Not [!Equals [!Ref AdminCidr, '']]
 
 Resources:
   Vpc:
@@ -120,6 +121,10 @@ Resources:
       VpcId: !Ref Vpc
       SecurityGroupIngress:
         - {IpProtocol: tcp, FromPort: 80, ToPort: 80, SourceSecurityGroupId: !Ref SgAlb, Description: HTTP depuis l ALB}
+        - !If
+          - AvecAdmin
+          - {IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref AdminCidr, Description: SSH salle exploitation}
+          - !Ref AWS::NoValue
       Tags:
         - {Key: Name, Value: sg-web-cfn-TP-AC}
   SgApp:
@@ -131,6 +136,20 @@ Resources:
         - {IpProtocol: tcp, FromPort: 8080, ToPort: 8080, SourceSecurityGroupId: !Ref SgAlb, Description: API depuis l ALB}
       Tags:
         - {Key: Name, Value: sg-app-cfn-TP-AC}
+
+  # Role et profil d'instance crees par la stack : acces SSM Session Manager, aucun SSH ni cle
+  SsmRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - {Effect: Allow, Principal: {Service: ec2.amazonaws.com}, Action: 'sts:AssumeRole'}
+      ManagedPolicyArns: ['arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore']
+  SsmProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref SsmRole]
 
 Outputs:
   VpcId:
