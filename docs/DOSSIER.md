@@ -22,7 +22,7 @@
 | 12 | CloudWatch et Flow Logs | ✔ déployé et testé |
 | 13 | CloudFormation | ✔ déployé, drift, suppression/redéploiement testés |
 
-![Schéma réseau final](../images/global.png)
+![Schéma réseau final](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
 
 Dépôt du code, des scripts et des preuves : dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`. Les captures de preuve sont dans `captures/mNN/` : captures **réelles de la console AWS** (fichiers `00-console-*.png`, l'identifiant de compte est masqué), tableaux d'état issus de l'AWS CLI et journaux de tests (`99-preuves-tests.png`).
 
@@ -89,6 +89,20 @@ Toutes les ressources créées portent le suffixe **`-TP-AC`** (convention des a
 * **Crédits du compte** : 100 USD de base ; les 5 activités « Gagnez des crédits AWS » réalisables (EC2, Lambda, DynamoDB, RDS, Budgets) sont validées : **100 USD gagnés sur 100 USD possibles** (plafond atteint, l'activité Bedrock ne rapporte plus). Solde affiché au dernier contrôle : 180 USD (le report des 20 derniers USD peut être différé). Chaque ressource d'activité a été supprimée dès la quête validée.
 * **Budget de projet** : `budget-TP-AC-satom`, 100 USD par mois, alerte à **80 %** des dépenses réelles envoyée au topic SNS `sns-exploitation-leman-TP-AC` (aucune adresse e-mail personnelle). Un second budget `budget-TP-AC-quete` a été créé pour valider l'activité pédagogique (assistant de la console, qui exige une adresse : adresse de test sur domaine réservé `example.com`).
 * Captures : `captures/m00/00-console-credits.png`, `00-console-quetes-credits.png`, `00-console-budgets.png`.
+
+## Captures
+
+**Console AWS (capture réelle) – budgets**
+
+![Console AWS (capture réelle) – budgets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-budgets.png)
+
+**Console AWS (capture réelle) – credits**
+
+![Console AWS (capture réelle) – credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-credits.png)
+
+**Console AWS (capture réelle) – quetes credits**
+
+![Console AWS (capture réelle) – quetes credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-quetes-credits.png)
 
 
 ---
@@ -158,6 +172,36 @@ Note : l'outil Reachability Analyzer (tiros:CreateQuery) est bloque par l'organi
 * Le HackMD utilise SSH ; nous utilisons SSM Session Manager (aucun port 22 ouvert, aucune clé à stocker).
 * L'outil *Reachability Analyzer* est bloqué par l'organisation (`tiros:CreateQuery`) ; les tests passent par de vrais pings.
 
+## Captures
+
+**Console AWS (capture réelle) – instances**
+
+![Console AWS (capture réelle) – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-instances.png)
+
+**Console AWS (capture réelle) – sous reseaux**
+
+![Console AWS (capture réelle) – sous reseaux](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-sous-reseaux.png)
+
+**Console AWS (capture réelle) – vpcs**
+
+![Console AWS (capture réelle) – vpcs](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-vpcs.png)
+
+**Sortie AWS CLI – vpc**
+
+![Sortie AWS CLI – vpc](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/01-vpc.png)
+
+**Sortie AWS CLI – subnets**
+
+![Sortie AWS CLI – subnets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/02-subnets.png)
+
+**Sortie AWS CLI – instances**
+
+![Sortie AWS CLI – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/03-instances.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/99-preuves-tests.png)
+
 
 ---
 
@@ -218,6 +262,32 @@ Conformément au HackMD, **la NAT et son Elastic IP sont supprimées** quand ell
 
 ## Écarts et remarques
 * Quota d'Elastic IP du compte partagé limité (5 par région) : les autres machines du projet utilisent des IP publiques automatiques.
+
+## Captures
+
+**Console AWS (capture réelle) – passerelle nat**
+
+![Console AWS (capture réelle) – passerelle nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelle-nat.png)
+
+**Console AWS (capture réelle) – passerelles internet**
+
+![Console AWS (capture réelle) – passerelles internet](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelles-internet.png)
+
+**Console AWS (capture réelle) – tables routage**
+
+![Console AWS (capture réelle) – tables routage](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-tables-routage.png)
+
+**Sortie AWS CLI – routes**
+
+![Sortie AWS CLI – routes](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/01-routes.png)
+
+**Sortie AWS CLI – nat**
+
+![Sortie AWS CLI – nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/02-nat.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/99-preuves-tests.png)
 
 
 ---
@@ -302,6 +372,28 @@ refus supprime -> curl externe : HTTP 200
 * AWS interdit les noms de groupes commençant par `sg-` : le nom logique `sg-web-TP-AC` est porté par le tag `Name`, le nom technique du groupe est `web-TP-AC`.
 * Les captures « ancien lab » du HackMD ont été remplacées par les nôtres.
 * Le port 22 est ouvert pour la forme prévue au sujet ; l'administration réelle passe par SSM.
+
+## Captures
+
+**Console AWS (capture réelle) – groupes securite**
+
+![Console AWS (capture réelle) – groupes securite](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-groupes-securite.png)
+
+**Console AWS (capture réelle) – nacl**
+
+![Console AWS (capture réelle) – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-nacl.png)
+
+**Sortie AWS CLI – sg**
+
+![Sortie AWS CLI – sg](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/01-sg.png)
+
+**Sortie AWS CLI – nacl**
+
+![Sortie AWS CLI – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/02-nacl.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/99-preuves-tests.png)
 
 
 ---
@@ -419,6 +511,24 @@ dev-01 (via prod = transit, NON transitif) -> tiers-01 10.22.0.10 : Success	2 pa
 ## Écarts et remarques
 * Les captures « ancien lab » du HackMD ont été remplacées par nos preuves de tests.
 * Le VPC « tiers » et celui au CIDR chevauchant sont des ressources de test supprimées dès les mesures faites.
+
+## Captures
+
+**Console AWS (capture réelle) – peering**
+
+![Console AWS (capture réelle) – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/00-console-peering.png)
+
+**Sortie AWS CLI – peering**
+
+![Sortie AWS CLI – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/01-peering.png)
+
+**Sortie AWS CLI – routes dev**
+
+![Sortie AWS CLI – routes dev](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/02-routes-dev.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/99-preuves-tests.png)
 
 
 ---
@@ -609,6 +719,24 @@ Le HackMD est contradictoire (conserver / supprimer en fin de séance) : conform
 * Quota d'Elastic IP du compte atteint : les routeurs utilisent des IP publiques automatiques (elles changent à l'arrêt/redémarrage ; le script les relit).
 * Quota de 16 vCPU pour toute la classe : un seul site simulé est actif à la fois.
 
+## Captures
+
+**Console AWS (capture réelle) – secret vpn**
+
+![Console AWS (capture réelle) – secret vpn](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/00-console-secret-vpn.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-1.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-2.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-3.png)
+
 
 ---
 
@@ -762,6 +890,20 @@ Rien n'est facturé à l'heure pour Direct Connect (rien commandé). Les routeur
 * GRE traverse la NAT 1-pour-1 des IP publiques AWS (protocole 47 autorisé dans les Security Groups).
 
 
+## Captures
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-1.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-2.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-3.png)
+
 
 ---
 
@@ -829,6 +971,36 @@ curl https://ALB/ -> web-01 TP-AC  [HTTP 200]
 * **Pas de domaine réel** : le HackMD demande un certificat ACM validé ; nous importons un certificat **auto-signé** (clé privée jamais conservée sur disque) – les tests utilisent `curl -k`.
 * Le HackMD réutilise `sg-web` pour l'ALB ; nous avons créé un `sg-alb` dédié (meilleure pratique : les serveurs n'acceptent que l'ALB).
 
+## Captures
+
+**Console AWS (capture réelle) – alb**
+
+![Console AWS (capture réelle) – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-alb.png)
+
+**Console AWS (capture réelle) – groupes cibles**
+
+![Console AWS (capture réelle) – groupes cibles](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-groupes-cibles.png)
+
+**Sortie AWS CLI – alb**
+
+![Sortie AWS CLI – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/01-alb.png)
+
+**Sortie AWS CLI – targets web**
+
+![Sortie AWS CLI – targets web](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/02-targets-web.png)
+
+**Sortie AWS CLI – targets app**
+
+![Sortie AWS CLI – targets app](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/03-targets-app.png)
+
+**Sortie AWS CLI – rules**
+
+![Sortie AWS CLI – rules](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/04-rules.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/99-preuves-tests.png)
+
 
 ---
 
@@ -892,6 +1064,32 @@ Zones et enregistrements conservés (modules 11 et 12). Le health check (~0,50 U
 ## Écarts et remarques
 * **Domaine fictif, rien n'est acheté** : la délégation NS réelle est impossible. Les réponses sont vérifiées avec `route53 test-dns-answer` et par interrogation **directe d'un serveur de noms** de la zone (`Resolve-DnsName -Server ns-…`), puis `curl --resolve` vers l'IP obtenue.
 * Le health check cible le nom DNS de l'ALB (le nom public n'est pas résolvable sans délégation).
+
+## Captures
+
+**Console AWS (capture réelle) – enregistrements**
+
+![Console AWS (capture réelle) – enregistrements](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-enregistrements.png)
+
+**Console AWS (capture réelle) – zones**
+
+![Console AWS (capture réelle) – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-zones.png)
+
+**Sortie AWS CLI – zones**
+
+![Sortie AWS CLI – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/01-zones.png)
+
+**Sortie AWS CLI – records**
+
+![Sortie AWS CLI – records](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/02-records.png)
+
+**Sortie AWS CLI – records privee**
+
+![Sortie AWS CLI – records privee](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/03-records-privee.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/99-preuves-tests.png)
 
 
 ---
@@ -976,6 +1174,20 @@ Route 53 : alias primaire -> CloudFront ; reponse DNS : 3.171.102.185	3.171.102.
 * **Origine en HTTP (80)** : un CloudFront en « HTTPS seul » refuserait le certificat auto-signé de l'ALB (502). L'ALB expose donc aussi un listener 80, fermé à Internet (préfixe CloudFront uniquement).
 * Le préfixe géré CloudFront compte pour ~55 règles dans un Security Group (quota 60) : une seule règle (port 80) lui est donc consacrée.
 
+## Captures
+
+**Console AWS (capture réelle) – cloudfront**
+
+![Console AWS (capture réelle) – cloudfront](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/00-console-cloudfront.png)
+
+**Sortie AWS CLI – distribution**
+
+![Sortie AWS CLI – distribution](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/01-distribution.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/99-preuves-tests.png)
+
 
 ---
 
@@ -1057,6 +1269,40 @@ Tableau de bord, alarme, groupe de logs conservés (module 13) ; rétention réd
 * La sonde SSH vise l'ALB (toujours actif) plutôt que `web-01`, arrêté faute de vCPU libres dans le compte partagé : le rejet est le même (Security Group fermé sur le port 22) et la trace Flow Logs est identique. Des rejets réels de scanners Internet sur le port 22 apparaissent aussi dans les journaux.
 
 
+
+## Captures
+
+**Console AWS (capture réelle) – alarme**
+
+![Console AWS (capture réelle) – alarme](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-alarme.png)
+
+**Console AWS (capture réelle) – tableau de bord**
+
+![Console AWS (capture réelle) – tableau de bord](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-tableau-de-bord.png)
+
+**Sortie AWS CLI – alarm**
+
+![Sortie AWS CLI – alarm](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/01-alarm.png)
+
+**Sortie AWS CLI – flowlog**
+
+![Sortie AWS CLI – flowlog](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/02-flowlog.png)
+
+**Sortie AWS CLI – sns**
+
+![Sortie AWS CLI – sns](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/03-sns.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-1.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-2.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests.png)
 
 
 ---
@@ -1146,3 +1392,21 @@ Le template et la stack sont conservés (le HackMD le demande). La stack (instan
 ## Écarts et remarques
 * La stack n'inclut pas de NAT (coût) : `app-01` n'a besoin d'aucun paquet (Python 3 est présent dans l'AMI) ; les tests passent par l'ALB.
 * Les modules 4, 6, 7 et 8 ne peuvent pas être inclus dans la stack déployée (services bloqués) : ils sont dans `optional-*.yaml`.
+
+## Captures
+
+**Console AWS (capture réelle) – piles cloudformation**
+
+![Console AWS (capture réelle) – piles cloudformation](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/00-console-piles-cloudformation.png)
+
+**Sortie AWS CLI – stack**
+
+![Sortie AWS CLI – stack](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/01-stack.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-1.png)
+
+**Preuves de tests (journal)**
+
+![Preuves de tests (journal)](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-2.png)
