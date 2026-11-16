@@ -1,0 +1,15 @@
+=== TP1 : Security Groups ===
+curl https depuis Internet vers web-01 : HTTP 200
+ping depuis Internet vers web-01 (ICMP non autorise) : pas de reponse (attendu)
+app-01 n'a pas d'IP publique : None
+
+=== TP2 : SG (avec etat) vs NACL (sans etat) ===
+web-01 -> app-01:8080 : Success	app-01 TP-AC /api/health 	
+NACL : regle de retour (sortie ephemere 1024-65535) retiree -> curl externe : HTTP 000 ECHEC (code curl 28 : timeout/refus)
+NACL : regle de retour retablie -> curl externe : HTTP 200
+
+=== TP3 : diagnostic ===
+8080 retire de sg-app -> web-01 -> app-01:8080 : Success	ECHEC 	
+8080 retabli -> web-01 -> app-01:8080 : Success	app-01 TP-AC /api/health 	
+NACL : refus explicite regle 50 (avant l'autorisation 100) -> curl externe : HTTP 000 ECHEC (code curl 28 : timeout/refus)  [la regle au numero le plus bas gagne]
+refus supprime -> curl externe : HTTP 200

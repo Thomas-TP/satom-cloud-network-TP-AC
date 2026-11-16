@@ -1,0 +1,13 @@
+=== TP1 : zone privee prod.leman.internal (resolveur 10.20.0.2) ===
+web-01 : Success	app -> 10.20.1.10 web -> 10.20.0.10 	
+web-01 : Success	serveur DNS utilise : nameserver 10.20.0.2 	
+
+=== TP2 : zone publique leman-finance.example (domaine fictif : pas de delegation NS reelle) ===
+Serveurs NS de la zone : ns-905.awsdns-49.net, ns-1255.awsdns-28.org, ns-345.awsdns-43.com, ns-1952.awsdns-52.co.uk
+Interrogation directe de ns-905.awsdns-49.net -> 16.192.43.233, 13.62.193.147
+curl https://portefeuilles.leman-finance.example/ (resolution forcee vers l'ALB) -> web-01 TP-AC
+
+=== TP3 : health check + failover ===
+Health check 85a1e433-8d08-5102-09a7-699b813f0412 : Success   | reponse DNS : 16.192.43.233	13.62.193.147  (primaire = ALB)
+nginx arrete sur web-01 -> apres 34 s : health check = Failure, reponse DNS = 203.0.113.50 (secondaire statique)
+nginx relance -> apres 23 s : health check = Success, reponse DNS = 16.192.43.233	13.62.193.147 (retour au primaire)

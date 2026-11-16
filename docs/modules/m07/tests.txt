@@ -1,0 +1,81 @@
+=== Module 7 - tunnel IPsec siege (simulation strongSwan) ===
+rtr-aws : swanctl --list-sas (apres les tests)
+Success  siege: #3, ESTABLISHED, IKEv2, 86ce1374cfee168c_i 4d3fa39eb5010b95_r*
+  local  '16.171.33.204' @ 10.20.0.74[4500]
+  remote '16.171.233.38' @ 16.171.233.38[4500]
+  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
+  established 49s ago, rekeying in 14332s
+  siege: #2, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+    installed 49s ago, rekeying in 3321s, expires in 3911s
+    in  c4658670 (-|0x0000000b),      0 bytes,     0 packets
+    out c84a9f39 (-|0x0000000b),      0 bytes,     0 packets
+    local  0.0.0.0/0
+    remote 0.0.0.0/0
+siege: #1, ESTABLISHED, IKEv2, 539dbbd3258372a5_i* 3200bb556dbda525_r
+  local  '16.171.33.204' @ 10.20.0.74[4500]
+  remote '16.171.233.38' @ 16.171.233.38[4500]
+xfrm-siege@ens5  UNKNOWN        169.254.10.1/30 fe80::fe5a:d22f:66df:1fa2/64 
+192.168.10.0/24 dev xfrm-siege scope link metric 200 
+  
+rtr-siege : swanctl --list-sas
+Success  siege: #2, ESTABLISHED, IKEv2, 539dbbd3258372a5_i 3200bb556dbda525_r*
+  local  '16.171.233.38' @ 192.168.10.10[4500]
+  remote '16.171.33.204' @ 16.171.33.204[4500]
+  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
+  established 9s ago, rekeying in 14382s
+  siege: #2, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+    installed 9s ago, rekeying in 3413s, expires in 3951s
+    in  c957f44c (-|0x0000000b),      0 bytes,     0 packets
+    out c7ad7116 (-|0x0000000b),      0 bytes,     0 packets
+    local  0.0.0.0/0
+    remote 0.0.0.0/0
+siege: #1, ESTABLISHED, IKEv2, 86ce1374cfee168c_i* 4d3fa39eb5010b95_r
+  local  '16.171.233.38' @ 192.168.10.10[4500]
+  remote '16.171.33.204' @ 16.171.33.204[4500]
+
+siege -> app-01 (10.20.1.10) ping : 
+Success  --- 10.20.1.10 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 2.426/2.551/2.787/0.166 ms
+  
+siege -> app-01:8080 : Success  app-01 TP-AC /api/health
+  
+siege -> dev-01 (10.21.0.10) : Success  2 packets transmitted, 0 received, 100% packet loss, time 1017ms
+
+exit=0
+    (aucune route : la prod seule est annoncee)
+=== Module 7 - tunnel IPsec agence (simulation strongSwan) ===
+rtr-aws : swanctl --list-sas
+Success	siege: #2, CONNECTING, IKEv2, 46d24f38fb1cec9c_i* 0000000000000000_r
+  local  '%any' @ 10.20.0.74[500]
+  remote '%any' @ 16.171.233.38[500]
+  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+agence: #1, CONNECTING, IKEv2, da793526fe55fb7b_i* 0000000000000000_r
+  local  '%any' @ 10.20.0.74[500]
+  remote '%any' @ 13.60.86.14[500]
+  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+
+rtr-agence : swanctl --list-sas
+Success	agence: #1, ESTABLISHED, IKEv2, 5fb2db85da6aec7a_i* afa4530cbd0d1f05_r
+  local  '13.60.86.14' @ 192.168.20.10[4500]
+  remote '16.171.33.204' @ 16.171.33.204[4500]
+  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
+  established 11s ago, rekeying in 13912s
+  agence: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+    installed 11s ago, rekeying in 3390s, expires in 3949s
+    in  cb7908ec (-|0x0000000c),      0 bytes,     0 packets
+    out c082e22a (-|0x0000000c),      0 bytes,     0 packets
+    local  0.0.0.0/0
+    remote 0.0.0.0/0
+	
+agence -> app-01 ping (ICMP non autorise pour l'agence) : 
+Success	2 packets transmitted, 0 received, 100% packet loss, time 1054ms
+
+exit=0
+	
+agence -> app-01:8080 (seul flux autorise) : Success	app-01 TP-AC /api/health
+	
+agence -> dev-01 (10.21.0.10) : Success	2 packets transmitted, 0 received, 100% packet loss, time 1009ms
+
+exit=0
+	  (aucune route : la prod seule est annoncee)

@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Module 4 (TP-AC) - AWS Network Firewall pour vpc-prod-leman-TP-AC. NON DEPLOYE : network-firewall:* est bloque par la SCP
+  de l'organisation (voir docs/01-services-bloques.md). Template valide par validate-template, pret si la SCP est levee.
+Parameters:
+  VpcId: {Type: 'AWS::EC2::VPC::Id'}
+  FirewallSubnetCidr: {Type: String, Default: 10.20.2.0/28}
+  PrivateRouteTableId: {Type: String, Description: rt-prive-leman-TP-AC}
+  PublicRouteTableId: {Type: String, Description: rt-public-leman-TP-AC}
+  NatGatewayId: {Type: String}
+  VpcCidr: {Type: String, Default: 10.20.0.0/22}
+  PrivateSubnetCidr: {Type: String, Default: 10.20.1.0/26}
+Resources:
+  SubFw:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcId
+      CidrBlock: !Ref FirewallSubnetCidr
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags: [{Key: Name, Value: sub-fw-1a-TP-AC}]
+  RtFw:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags: [{Key: Name, Value: rt-fw-leman-TP-AC}]
+  RtFwAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref SubFw, RouteTableId: !Ref RtFw}
+  RtFwDefault:
+    Type: AWS::EC2::Route
+    Properties: {RouteTableId: !Ref RtFw, DestinationCidrBlock: 0.0.0.0/0, NatGatewayId: !Ref NatGatewayId}
+  RgVpcPass:
+    Type: AWS::NetworkFirewall::RuleGroup
+    Properties:
+      RuleGroupName: rg-vpc-pass-TP-AC
+      Type: STATEFUL
+      Capacity: 10
+      RuleGroup:
+        StatefulRuleOptions: {RuleOrder: STRICT_ORDER}
+        RulesSource:
+          RulesString: !Sub 'pass ip ${VpcCidr} any -> ${VpcCidr} any (msg:"intra-VPC TP-AC"; sid:100001; rev:1;)'
+  RgDepots:
+    Type: AWS::NetworkFirewall::RuleGroup
+    Properties:
+      RuleGroupName: rg-depots-autorises-TP-AC
+      Type: STATEFUL
+      Capacity: 100
+      RuleGroup:
+        StatefulRuleOptions: {RuleOrder: STRICT_ORDER}
+        RulesSource:
+          RulesSourceList:
+            GeneratedRulesType: ALLOWLIST
+            TargetTypes: [HTTP_HOST, TLS_SNI]
+            Targets: [.amazonlinux.com, .amazonaws.com]
+  Policy:
+    Type: AWS::NetworkFirewall::FirewallPolicy
+    Properties:
+      FirewallPolicyName: policy-prod-leman-TP-AC
+      FirewallPolicy:
+        StatelessDefaultActions: ['aws:forward_to_sfe']
+        StatelessFragmentDefaultActions: ['aws:forward_to_sfe']
+        StatefulEngineOptions: {RuleOrder: STRICT_ORDER}
+        StatefulDefaultActions: ['aws:drop_established', 'aws:alert_established']
+        StatefulRuleGroupReferences:
+          - {ResourceArn: !Ref RgVpcPass, Priority: 1}
+          - {ResourceArn: !Ref RgDepots, Priority: 2}
+  AlertLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: {LogGroupName: /leman/nfw-alert-TP-AC, RetentionInDays: 3}
+  Firewall:
+    Type: AWS::NetworkFirewall::Firewall
+    Properties:
+      FirewallName: nfw-prod-leman-TP-AC
+      FirewallPolicyArn: !Ref Policy
+      VpcId: !Ref VpcId
+      SubnetMappings: [{SubnetId: !Ref SubFw}]
+  Logging:
+    Type: AWS::NetworkFirewall::LoggingConfiguration
+    Properties:
+      FirewallArn: !Ref Firewall
+      LoggingConfiguration:
+        LogDestinationConfigs:
+          - {LogType: ALERT, LogDestinationType: CloudWatchLogs, LogDestination: {logGroup: !Ref AlertLogs}}
+  # Chemin sortant : sub-prive -> endpoint du pare-feu -> NAT ; retour symetrique via rt-public
+  RoutePrivateViaFw:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableId
+      DestinationCidrBlock: 0.0.0.0/0
+      VpcEndpointId: !Select [1, !Split [':', !Select [0, !GetAtt Firewall.EndpointIds]]]
+  RouteReturnViaFw:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTableId
+      DestinationCidrBlock: !Ref PrivateSubnetCidr
+      VpcEndpointId: !Select [1, !Split [':', !Select [0, !GetAtt Firewall.EndpointIds]]]
+Outputs:
+  FirewallArn: {Value: !Ref Firewall}

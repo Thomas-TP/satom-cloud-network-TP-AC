@@ -1,0 +1,9 @@
+dev-01 SSM en ligne : True
+=== TP2 : peering pcx-lab (prod <-> dev) ===
+dev-01 -> app-01:8080 : Success	app-01 TP-AC /api/health 	
+dev-01 -> app-01:22 (non ouvert depuis dev) : Success	FERME 	
+
+=== TP3 : limites du peering ===
+Acceptation du peering avec un VPC en 10.20.0.0/24 (chevauche 10.20.0.0/22) -> aws: [ERROR]: An error occurred (InvalidStateTransition) when calling the AcceptVpcPeeringConnection operation: Invalid state transition for pcx-0b30499bae7844bdf, attempted to transition from failed to provisioning
+app-01 (prod, peering direct) -> tiers-01 10.22.0.10 : Success	2 packets transmitted, 2 received, 0% packet loss, time 1002ms rtt min/avg/max/mdev = 0.170/0.294/0.419/0.124 ms 	
+dev-01 (via prod = transit, NON transitif) -> tiers-01 10.22.0.10 : Success	2 packets transmitted, 0 received, 100% packet loss, time 1043ms  exit=0 	

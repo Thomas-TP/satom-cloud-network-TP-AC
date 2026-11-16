@@ -1,0 +1,9 @@
+$ aws route53 list-resource-record-sets (zone privee)
+--------------------------------------------
+|          ListResourceRecordSets          |
++---------------------------+--------------+
+|            Nom            |   Valeur     |
++---------------------------+--------------+
+|  app.prod.leman.internal. |  10.20.1.10  |
+|  web.prod.leman.internal. |  10.20.0.10  |
++---------------------------+--------------+

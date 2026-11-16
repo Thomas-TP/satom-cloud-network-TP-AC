@@ -1,0 +1,8 @@
+*.pem
+*.key
+.env
+credentials
+*.tfstate
+captures-raw/
+
+scripts/state.json

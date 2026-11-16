@@ -1,0 +1,33 @@
+=== TP1 : validation et creation de la stack (reseau seul) ===
+validate-template : parametres = CidrVpc	WebPrivateIp	AppPrivateIp	InstanceProfileName	Environnement	InstanceType	CertificateArn	AmiId
+Statut : CREATE_COMPLETE ; sorties : VpcId	vpc-0655b354420d3ec81 SgWebId	sg-0367126b5f778745b
+
+=== TP2 : change set (instances, groupes cibles, ALB) ===
+Change set cs-ajouts-223398302 : 7 changements ; actions = Add
+   Add  Alb  AWS::ElasticLoadBalancingV2::LoadBalancer
+   Add  App01  AWS::EC2::Instance
+   Add  ListenerHttps  AWS::ElasticLoadBalancingV2::Listener
+   Add  RuleApi  AWS::ElasticLoadBalancingV2::ListenerRule
+   Add  TgApp  AWS::ElasticLoadBalancingV2::TargetGroup
+   Add  TgWeb  AWS::ElasticLoadBalancingV2::TargetGroup
+   Add  Web01  AWS::EC2::Instance
+Statut apres execution : UPDATE_COMPLETE
+Cibles : tg-web=healthy  tg-app=healthy
+curl -k https://alb-prod-leman-cfn-TP-AC-1962138643.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
+curl -k https://alb-prod-leman-cfn-TP-AC-1962138643.eu-north-1.elb.amazonaws.com/ -> web-01 TP-AC (cfn)
+
+=== TP3 : drift, suppression, redeploiement ===
+Regle SSH ajoutee a la main sur sg-web-cfn -> drift stack : DETECTION_COMPLETE	DRIFTED
+Detail : SgWeb	MODIFIED	/SecurityGroupIngress/1	ADD
+Regle retiree (le template reste la source de verite) -> drift stack : DETECTION_COMPLETE	IN_SYNC
+Suppression de la stack (ordre inverse des dependances) : 2 min -> DELETE_COMPLETE (stack disparue)
+VPC restants avec le tag de la stack : 0
+Change set cs-redeploiement-481960339 : 7 changements ; actions = Add
+   Add  Alb  AWS::ElasticLoadBalancingV2::LoadBalancer
+   Add  App01  AWS::EC2::Instance
+   Add  ListenerHttps  AWS::ElasticLoadBalancingV2::Listener
+   Add  RuleApi  AWS::ElasticLoadBalancingV2::ListenerRule
+   Add  TgApp  AWS::ElasticLoadBalancingV2::TargetGroup
+   Add  TgWeb  AWS::ElasticLoadBalancingV2::TargetGroup
+   Add  Web01  AWS::EC2::Instance
+Redeploiement : UPDATE_COMPLETE ; cibles tg-web=healthy tg-app=healthy ; curl -k https://alb-prod-leman-cfn-TP-AC-312778712.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health

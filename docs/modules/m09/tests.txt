@@ -1,0 +1,11 @@
+=== TP1/TP2 ===
+tg-web : healthy   tg-app : healthy
+curl https://ALB/            -> web-01 TP-AC  [HTTP 200]
+curl https://ALB/api/health  -> app-01 TP-AC /api/health  [HTTP 200]
+
+=== TP3 : pannes ===
+nginx arrete sur web-01 : tg-web = unhealthy ; curl https://ALB/ -> <html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</h1></center> </body> </html>  [HTTP 502]
+nginx relance : tg-web = healthy
+curl https://ALB/ -> web-01 TP-AC  [HTTP 200]
+443 ferme dans sg-alb -> curl https://ALB/ -> ECHEC (curl 28)
+443 retabli -> curl https://ALB/ -> web-01 TP-AC  [HTTP 200]

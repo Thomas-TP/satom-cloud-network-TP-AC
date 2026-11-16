@@ -1,0 +1,253 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Satom Cloud Network - equipe TP-AC. Reseau prod (ou dev) du portail Groupe Leman Finance SA :
+  VPC, sous-reseaux, IGW, routage, Security Groups, web-01 / app-01, groupes cibles et ALB (HTTPS 443, regle /api/*).
+  Les modules 4 (Network Firewall), 6 (Transit Gateway), 7 (VPN) et 8 (Direct Connect) sont fournis dans
+  optional-*.yaml car bloques par l'organisation sur la plateforme de formation.
+
+Parameters:
+  Environnement:
+    Type: String
+    Default: prod
+    AllowedValues: [prod, dev]
+    Description: Environnement (tag Environnement et suffixe des noms)
+  CidrVpc:
+    Type: String
+    Default: 10.30.0.0/22
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/(2[0-2]|1[6-9])$'
+    Description: CIDR du VPC (de /16 a /22). Les adresses fixes ci-dessous doivent en faire partie.
+  WebPrivateIp:
+    Type: String
+    Default: 10.30.0.10
+    Description: Adresse fixe de web-01 (sous-reseau public 1a, premier /26 du VPC)
+  AppPrivateIp:
+    Type: String
+    Default: 10.30.1.10
+    Description: Adresse fixe de app-01 (sous-reseau prive 1a, deuxieme /26 du VPC)
+  CertificateArn:
+    Type: String
+    Description: ARN du certificat ACM (importe, auto-signe) pour le listener HTTPS de l'ALB
+  InstanceProfileName:
+    Type: String
+    Default: TP-AC-ec2-ssm-profile
+    Description: Profil d'instance existant (SSM Session Manager, pas de SSH ni de cle)
+  InstanceType:
+    Type: String
+    Default: t3.micro
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Conditions:
+  EstProd: !Equals [!Ref Environnement, prod]
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref CidrVpc
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - {Key: Name, Value: !Sub 'vpc-${Environnement}-leman-cfn-TP-AC'}
+
+  SubPublic1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Select [0, !Cidr [!Ref CidrVpc, 16, 6]]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - {Key: Name, Value: !Sub 'sub-public-1a-${Environnement}-cfn-TP-AC'}
+  SubPrive1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Select [4, !Cidr [!Ref CidrVpc, 16, 6]]   # 10.30.1.0/26 (blocs de 64 : indice 4 = +256)
+      Tags:
+        - {Key: Name, Value: !Sub 'sub-prive-1a-${Environnement}-cfn-TP-AC'}
+  SubPublic1b:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Select [2, !Cidr [!Ref CidrVpc, 16, 6]]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - {Key: Name, Value: !Sub 'sub-public-1b-${Environnement}-cfn-TP-AC'}
+
+  Igw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - {Key: Name, Value: !Sub 'igw-${Environnement}-leman-cfn-TP-AC'}
+  IgwAttach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: {VpcId: !Ref Vpc, InternetGatewayId: !Ref Igw}
+
+  RtPublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - {Key: Name, Value: !Sub 'rt-public-leman-cfn-TP-AC'}
+  RoutePublicDefault:
+    Type: AWS::EC2::Route
+    DependsOn: IgwAttach
+    Properties: {RouteTableId: !Ref RtPublic, DestinationCidrBlock: 0.0.0.0/0, GatewayId: !Ref Igw}
+  AssocPublic1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref SubPublic1a, RouteTableId: !Ref RtPublic}
+  AssocPublic1b:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref SubPublic1b, RouteTableId: !Ref RtPublic}
+
+  SgAlb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: TP-AC ALB (HTTPS public)
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0, Description: HTTPS public}
+      Tags:
+        - {Key: Name, Value: sg-alb-cfn-TP-AC}
+  SgWeb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: TP-AC web (80 limite a l ALB)
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 80, ToPort: 80, SourceSecurityGroupId: !Ref SgAlb, Description: HTTP depuis l ALB}
+      Tags:
+        - {Key: Name, Value: sg-web-cfn-TP-AC}
+  SgApp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: TP-AC app (8080 depuis l ALB)
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 8080, ToPort: 8080, SourceSecurityGroupId: !Ref SgAlb, Description: API depuis l ALB}
+      Tags:
+        - {Key: Name, Value: sg-app-cfn-TP-AC}
+
+  Web01:
+    Type: AWS::EC2::Instance
+    DependsOn: RoutePublicDefault
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref SubPublic1a
+      PrivateIpAddress: !Ref WebPrivateIp
+      SecurityGroupIds: [!Ref SgWeb]
+      IamInstanceProfile: !Ref InstanceProfileName
+      Tags:
+        - {Key: Name, Value: web-01-cfn-TP-AC}
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          dnf install -y nginx
+          cat > /etc/nginx/conf.d/tpac.conf <<'EOC'
+          server { listen 80; location /health { return 200 "ok\n"; } location / { return 200 "web-01 TP-AC (cfn)\n"; } }
+          EOC
+          systemctl enable --now nginx
+  App01:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref SubPrive1a
+      PrivateIpAddress: !Ref AppPrivateIp
+      SecurityGroupIds: [!Ref SgApp]
+      IamInstanceProfile: !Ref InstanceProfileName
+      Tags:
+        - {Key: Name, Value: app-01-cfn-TP-AC}
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          mkdir -p /opt/tpac
+          cat > /opt/tpac/app.py <<'EOP'
+          from http.server import BaseHTTPRequestHandler, HTTPServer
+          class H(BaseHTTPRequestHandler):
+              def do_GET(self):
+                  self.send_response(200 if self.path in ('/health','/api/health','/') else 404)
+                  self.end_headers(); self.wfile.write(b'app-01 TP-AC (cfn) ' + self.path.encode() + b'\n')
+          HTTPServer(('0.0.0.0', 8080), H).serve_forever()
+          EOP
+          cat > /etc/systemd/system/tpac-app.service <<'EOS'
+          [Unit]
+          Description=TP-AC app
+          [Service]
+          ExecStart=/usr/bin/python3 /opt/tpac/app.py
+          Restart=always
+          [Install]
+          WantedBy=multi-user.target
+          EOS
+          systemctl daemon-reload && systemctl enable --now tpac-app
+
+  TgWeb:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub 'tg-web-cfn-TP-AC'
+      VpcId: !Ref Vpc
+      Protocol: HTTP
+      Port: 80
+      HealthCheckPath: /health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Targets: [{Id: !Ref Web01, Port: 80}]
+  TgApp:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub 'tg-app-cfn-TP-AC'
+      VpcId: !Ref Vpc
+      Protocol: HTTP
+      Port: 8080
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Targets: [{Id: !Ref App01, Port: 8080}]
+
+  Alb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DependsOn: IgwAttach
+    Properties:
+      Name: !Sub 'alb-${Environnement}-leman-cfn-TP-AC'
+      Type: application
+      Scheme: internet-facing
+      Subnets: [!Ref SubPublic1a, !Ref SubPublic1b]
+      SecurityGroups: [!Ref SgAlb]
+  ListenerHttps:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Alb
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates: [{CertificateArn: !Ref CertificateArn}]
+      DefaultActions: [{Type: forward, TargetGroupArn: !Ref TgWeb}]
+  RuleApi:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ListenerHttps
+      Priority: 10
+      Conditions: [{Field: path-pattern, Values: [/api/*]}]
+      Actions: [{Type: forward, TargetGroupArn: !Ref TgApp}]
+
+Outputs:
+  VpcId:
+    Description: ID du VPC
+    Value: !Ref Vpc
+    Export: {Name: !Sub '${AWS::StackName}-VpcId'}
+  AlbDns:
+    Description: Nom DNS de l'ALB (curl -k https://<valeur>/api/health)
+    Value: !GetAtt Alb.DNSName
+    Export: {Name: !Sub '${AWS::StackName}-AlbDns'}
+  SgWebId:
+    Value: !Ref SgWeb
+    Export: {Name: !Sub '${AWS::StackName}-SgWebId'}
+
+

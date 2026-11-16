@@ -1,0 +1,31 @@
+=== TP1 : distribution E3HM34P4WV8A3X (domaine d14byb6fexq6px.cloudfront.net) ===
+GET / (comportement par defaut, TTL 0) :
+   HTTP/1.1 200 OK
+   X-Cache: Miss from cloudfront
+   X-Amz-Cf-Pop: ZRH52-P1
+
+=== TP2 : comportements ===
+/static/logo.png 1re requete (apres invalidation initiale) :
+   HTTP/1.1 200 OK
+   X-Cache: Miss from cloudfront
+   X-Amz-Cf-Pop: ZRH52-P1
+/static/logo.png 2e requete :
+   HTTP/1.1 200 OK
+   X-Cache: Hit from cloudfront
+   X-Amz-Cf-Pop: ZRH52-P1
+/api/health 1re :
+   HTTP/1.1 200 OK
+   X-Cache: Miss from cloudfront
+   X-Amz-Cf-Pop: ZRH52-P1
+/api/health 2e (jamais servi depuis le cache) :
+   HTTP/1.1 200 OK
+   X-Cache: Miss from cloudfront
+   X-Amz-Cf-Pop: ZRH52-P1
+
+=== TP3 : verrouillage de l'origine et invalidation ===
+acces direct a l'ALB depuis Internet : http -> HTTP 000 (bloque : timeout) ; https -> HTTP 000 (bloque : timeout)
+via CloudFront : web-01 TP-AC
+origine modifiee en 'v2', sans invalidation, CloudFront sert encore : logo v1
+apres invalidation IE26QTNMXYDW4LNLD4T9LXYDBL : logo v2
+
+Route 53 : alias primaire -> CloudFront ; reponse DNS : 3.171.102.185	3.171.102.186	3.171.102.187	3.171.102.43
