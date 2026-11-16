@@ -4,6 +4,10 @@
 **Formation** : AWS niveau 300 « Intégrer des services réseau multiplateformes » – Geneva Institute of Technology, promotion E3 – semaine du 16 au 20 novembre 2026
 **Région de travail** : Europe (Stockholm) `eu-north-1` – **Tags** : `Projet=SatomCloudNetwork`, `Equipe=TP-AC`, `Environnement=prod|dev`
 
+## Vidéo de rendu
+<video controls preload="metadata" width="100%" src="https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/video/satom-cloud-network-TP-AC.mp4"></video>
+
+Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/Thomas-TP/satom-cloud-network-TP-AC/blob/main/video/satom-cloud-network-TP-AC.mp4) (durée 7 min 30 : schémas, captures de la console AWS et preuves de tests, module par module).
 ## Sommaire
 | Module | Sujet | Statut |
 |---|---|---|
@@ -25,6 +29,7 @@
 ![Schéma réseau final](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
 
 Dépôt du code, des scripts et des preuves : dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`. Les captures de preuve sont dans `captures/mNN/` : captures **réelles de la console AWS** (fichiers `00-console-*.png`, l'identifiant de compte est masqué), tableaux d'état issus de l'AWS CLI et journaux de tests (`99-preuves-tests.png`).
+
 
 
 
@@ -1264,9 +1269,10 @@ Diagnostic : le rejet vient du Security Group sg-alb (port 22 non ouvert) : sour
 Tableau de bord, alarme, groupe de logs conservés (module 13) ; rétention réduite à 3 jours ; le Flow Log et le groupe de logs seront supprimés en fin de projet.
 
 ## Écarts et remarques
-* **Abonné SNS** : une file SQS (`sqs-exploitation-leman-TP-AC`) joue le rôle de l'équipe d'exploitation ; un abonnement e-mail s'ajoute avec `aws sns subscribe --protocol email` (non fait pour ne pas exposer d'adresse personnelle sur le compte partagé).
+* **Abonnés SNS** : la file SQS `sqs-exploitation-leman-TP-AC` (preuve de réception automatique) **et** un abonnement e-mail de l'équipe d'exploitation (`t…@git.swiss`, adresse masquée dans ce document), créé avec `aws sns subscribe --protocol email` ; l'abonnement reste `PendingConfirmation` tant que le destinataire n'a pas cliqué sur le lien de confirmation reçu par e-mail.
 * Flow Logs : la livraison dans CloudWatch Logs prend plusieurs minutes. Le groupe de logs avait d'abord échoué à se créer (tags mal formés) : détecté par DeliverLogsStatus=FAILED, corrigé en recréant le groupe puis le Flow Log.
 * La sonde SSH vise l'ALB (toujours actif) plutôt que `web-01`, arrêté faute de vCPU libres dans le compte partagé : le rejet est le même (Security Group fermé sur le port 22) et la trace Flow Logs est identique. Des rejets réels de scanners Internet sur le port 22 apparaissent aussi dans les journaux.
+
 
 
 
