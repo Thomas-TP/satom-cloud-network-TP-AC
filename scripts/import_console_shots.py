@@ -3,7 +3,7 @@ L'identifiant de compte AWS est masque (rectangles) sur les ecrans qui l'affiche
 import os, glob
 from PIL import Image, ImageDraw
 
-SRC = r"C:\Users\leole\.claude\projects\C--Perso-AWS\e6211ef7-161d-47bf-ae48-6ffb08ba1527\tool-results"
+SRC = os.path.join(os.path.expanduser('~'), '.claude', 'projects', 'C--Perso-AWS', '*', 'tool-results')   # toutes les sessions
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 # (module, nom, identifiant du fichier source, rectangles a masquer)
 SHOTS = [
@@ -19,6 +19,13 @@ SHOTS = [
  ('m04', 'pare-feu-details', '1794904325479-0qnq5i', [(700, 395, 1080, 428)]),
  ('m04', 'paquets-bloques', '1794904345738-qgx0e7', []),
  ('m04', 'politique-regles', '1794904374724-8mgpgg', []),
+ ('m06', 'passerelle-transit', '1794911892646-0aebux', [(790, 218, 885, 260)]),
+ ('m06', 'attachements', '1794911892646-qfnps0', [(1290, 4, 1558, 40)]),
+ ('m06', 'tables-tgw', '1794911892646-0ndl7z', [(1290, 4, 1558, 40)]),
+ ('m06', 'routes-tgw-prod', '1794912004841-ewzefx', [(1290, 4, 1558, 40)]),
+ ('m07', 'connexions-vpn', '1794911916777-egl6rd', [(1290, 4, 1558, 40)]),
+ ('m07', 'tunnels-vpn', '1794911940223-a5zd2c', [(1290, 4, 1558, 40)]),
+ ('m08', 'dx-gateway', '1794912039308-kxwimo', [(1290, 4, 1558, 40), (237, 88, 1548, 142), (687, 308, 780, 325), (715, 530, 805, 548)]),
  ('m05', 'peering', '1794835192249-dfv47j', []),
  ('m09', 'alb', '1794835246547-xzo4au', []),
  ('m09', 'groupes-cibles', '1794835246547-8mun7r', []),

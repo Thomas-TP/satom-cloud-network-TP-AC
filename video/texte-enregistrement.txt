@@ -1,0 +1,29 @@
+TEXTE À LIRE POUR AMÉLIORER LE CLONAGE DE VOIX (environ 2 minutes 30)
+
+Conditions : pièce calme, même micro et même distance que pour ton premier enregistrement (15 à 20 cm), pas de musique, pas d'écho.
+Lis d'un ton naturel, comme si tu expliquais à un collègue. Respire entre les paragraphes. Si tu te trompes, reprends la phrase calmement et continue : je garderai ce qui est propre.
+Lis exactement le texte, mot pour mot. Formats acceptés : m4a ou wav.
+
+---
+
+Bonjour, je m'appelle Thomas et voici le projet Satom Cloud Network, réalisé avec Abderahmane pour le groupe Léman Finance.
+
+Notre mission est simple à dire, plus longue à construire : relier le siège, l'agence et le cloud par un réseau sûr, mesuré et facile à rejouer.
+
+Première étape, le VPC. Nous découpons un grand réseau en sous-réseaux publics et privés, avec une passerelle Internet et une passerelle NAT. Ensuite, les tables de routage décident où va chaque paquet.
+
+Pour la sécurité, nous utilisons des Security Groups qui retiennent l'état des connexions, et des listes de contrôle d'accès réseau qui filtrent dans les deux sens. Un pare-feu filtre aussi les noms de domaine qui sortent du sous-réseau privé.
+
+Que se passe-t-il quand le réseau grandit ? Le peering ne suffit plus. Nous passons donc au Transit Gateway, un point central avec une table de routage pour chaque environnement.
+
+Le siège et l'agence se connectent par deux tunnels chiffrés IPsec. Si un tunnel tombe, le trafic continue sur l'autre. Et pour une liaison dédiée, le protocole BGP choisit le meilleur chemin et bascule vers le secours en quelques secondes.
+
+Côté application, un répartiteur de charge distribue les requêtes, Route 53 répond aux noms, et CloudFront garde les pages en cache près des utilisateurs.
+
+Enfin, tout est surveillé : des journaux, un tableau de bord, une alarme qui envoie un message. Et tout peut être redéployé depuis un seul modèle CloudFormation.
+
+Vingt-quatre heures par jour, trois sites, un seul réseau. Voilà ce que nous avons construit, étape par étape, et ce que nous allons vous montrer maintenant.
+
+Pour finir, quelques chiffres et quelques sigles à bien prononcer : dix point vingt point zéro point zéro, barre vingt-deux. Quarante-huit processeurs virtuels. Huit mille quatre-vingts. Zéro virgule cinquante-six gigabit par seconde. Le tunnel est établi, la session B-G-P est active, le ping répond en trois millisecondes.
+
+Merci de nous avoir suivis. Bon visionnage !

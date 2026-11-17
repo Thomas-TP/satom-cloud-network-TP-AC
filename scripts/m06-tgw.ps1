@@ -4,20 +4,24 @@ $ErrorActionPreference = 'Stop'
 $s = Get-State
 $outFile = Join-Path $PSScriptRoot '..\docs\modules\m06\tests.txt'; New-Item -ItemType Directory -Force (Split-Path $outFile) | Out-Null
 $log = New-Object System.Collections.Generic.List[string]; function L($t) { $log.Add($t); Write-Host $t }
-function Wait-State($cmd, $want) { do { Start-Sleep 10; $st = Invoke-Expression $cmd } while ($st -ne $want); }
+function Wait-State($cmd, $want) { do { Start-Sleep 10; $st = ((Invoke-Expression $cmd) -join ',') -replace '\s+', ',' } while ($st -ne $want); }
+function Find-Id($cmd) { $r = Invoke-Expression $cmd; if ($r -and $r -ne 'None') { $r } else { $null } }
 
 # TP1 : TGW (association et propagation par defaut desactivees) + 2 attachements
-$s.tgw = Aws ec2 create-transit-gateway --description 'tgw-leman TP-AC' --options 'AmazonSideAsn=64512,DefaultRouteTableAssociation=disable,DefaultRouteTablePropagation=disable,DnsSupport=enable,VpnEcmpSupport=enable' --tag-specifications (Tags 'transit-gateway' 'tgw-leman-TP-AC') --query TransitGateway.TransitGatewayId
+$s.tgw = Find-Id "Aws ec2 describe-transit-gateways --filters 'Name=tag:Name,Values=tgw-leman-TP-AC' 'Name=state,Values=available,pending' --query 'TransitGateways[0].TransitGatewayId'"
+if (-not $s.tgw) { $s.tgw = Aws ec2 create-transit-gateway --description 'tgw-leman TP-AC' --options 'AmazonSideAsn=64512,DefaultRouteTableAssociation=disable,DefaultRouteTablePropagation=disable,DnsSupport=enable,VpnEcmpSupport=enable' --tag-specifications (Tags 'transit-gateway' 'tgw-leman-TP-AC') --query TransitGateway.TransitGatewayId }
 Wait-State "Aws ec2 describe-transit-gateways --transit-gateway-ids $($s.tgw) --query 'TransitGateways[0].State'" 'available'
-$s.tgwaProd = Aws ec2 create-transit-gateway-vpc-attachment --transit-gateway-id $s.tgw --vpc-id $s.vpc --subnet-ids $s.subPrive --tag-specifications (Tags 'transit-gateway-attachment' 'tgwa-prod-TP-AC') --query TransitGatewayVpcAttachment.TransitGatewayAttachmentId
-$s.tgwaDev  = Aws ec2 create-transit-gateway-vpc-attachment --transit-gateway-id $s.tgw --vpc-id $s.vpcDev --subnet-ids $s.subDev --tag-specifications (Tags 'transit-gateway-attachment' 'tgwa-dev-TP-AC' 'dev') --query TransitGatewayVpcAttachment.TransitGatewayAttachmentId
-Wait-State "Aws ec2 describe-transit-gateway-vpc-attachments --transit-gateway-attachment-ids $($s.tgwaProd) $($s.tgwaDev) --query 'join(``,`,`,TransitGatewayVpcAttachments[].State)'" 'available,available'
+$s.tgwaProd = Find-Id "Aws ec2 describe-transit-gateway-vpc-attachments --filters 'Name=tag:Name,Values=tgwa-prod-TP-AC' 'Name=state,Values=available,pending' --query 'TransitGatewayVpcAttachments[0].TransitGatewayAttachmentId'"
+if (-not $s.tgwaProd) { $s.tgwaProd = Aws ec2 create-transit-gateway-vpc-attachment --transit-gateway-id $s.tgw --vpc-id $s.vpc --subnet-ids $s.subPrive --tag-specifications (Tags 'transit-gateway-attachment' 'tgwa-prod-TP-AC') --query TransitGatewayVpcAttachment.TransitGatewayAttachmentId }
+$s.tgwaDev = Find-Id "Aws ec2 describe-transit-gateway-vpc-attachments --filters 'Name=tag:Name,Values=tgwa-dev-TP-AC' 'Name=state,Values=available,pending' --query 'TransitGatewayVpcAttachments[0].TransitGatewayAttachmentId'"
+if (-not $s.tgwaDev) { $s.tgwaDev = Aws ec2 create-transit-gateway-vpc-attachment --transit-gateway-id $s.tgw --vpc-id $s.vpcDev --subnet-ids $s.subDev --tag-specifications (Tags 'transit-gateway-attachment' 'tgwa-dev-TP-AC' 'dev') --query TransitGatewayVpcAttachment.TransitGatewayAttachmentId }
+Wait-State "Aws ec2 describe-transit-gateway-vpc-attachments --transit-gateway-attachment-ids $($s.tgwaProd) $($s.tgwaDev) --query 'TransitGatewayVpcAttachments[].State'" 'available,available'
 Save-State $s
 
 # TP2 : tables TGW dediees + propagation croisee
 $s.tgwRtProd = Aws ec2 create-transit-gateway-route-table --transit-gateway-id $s.tgw --tag-specifications (Tags 'transit-gateway-route-table' 'tgw-rt-prod-TP-AC') --query TransitGatewayRouteTable.TransitGatewayRouteTableId
 $s.tgwRtDev  = Aws ec2 create-transit-gateway-route-table --transit-gateway-id $s.tgw --tag-specifications (Tags 'transit-gateway-route-table' 'tgw-rt-dev-TP-AC' 'dev') --query TransitGatewayRouteTable.TransitGatewayRouteTableId
-Wait-State "Aws ec2 describe-transit-gateway-route-tables --transit-gateway-route-table-ids $($s.tgwRtProd) $($s.tgwRtDev) --query 'join(``,`,`,TransitGatewayRouteTables[].State)'" 'available,available'
+Wait-State "Aws ec2 describe-transit-gateway-route-tables --transit-gateway-route-table-ids $($s.tgwRtProd) $($s.tgwRtDev) --query 'TransitGatewayRouteTables[].State'" 'available,available'
 Aws ec2 associate-transit-gateway-route-table --transit-gateway-route-table-id $s.tgwRtProd --transit-gateway-attachment-id $s.tgwaProd | Out-Null
 Aws ec2 associate-transit-gateway-route-table --transit-gateway-route-table-id $s.tgwRtDev  --transit-gateway-attachment-id $s.tgwaDev | Out-Null
 Start-Sleep 20

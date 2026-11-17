@@ -16,18 +16,18 @@ Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/
 | 1 | VPC et sous-réseaux | déployé et testé |
 | 2 | Routage, IGW et NAT | déployé et testé |
 | 3 | Security Groups et NACL | déployé et testé |
-| 4 | Network Firewall | **non déployé** : le service est bloqué sur le compte de formation |
-| 5 | VPC Peering | déployé et testé |
-| 6 | Transit Gateway | **non déployé** : service bloqué |
-| 7 | VPN site à site | **simulé** avec strongSwan (le VPN AWS est bloqué) |
-| 8 | Direct Connect | **simulé** avec un tunnel GRE et du BGP (Direct Connect est bloqué) |
+| 4 | Network Firewall | déployé et testé (service débloqué le 17/11) |
+| 5 | VPC Peering | déployé et testé, puis remplacé par le Transit Gateway au module 6 |
+| 6 | Transit Gateway | déployé et testé |
+| 7 | VPN site à site | vrai VPN AWS, 2 tunnels par site ; les deux sites sont des routeurs strongSwan simulés |
+| 8 | Direct Connect | vrai Direct Connect Gateway associé au Transit Gateway ; la liaison dédiée est simulée (GRE et BGP) |
 | 9 | Load balancer | déployé et testé |
 | 10 | Route 53 | déployé et testé |
 | 11 | CloudFront | déployé et testé |
 | 12 | CloudWatch et Flow Logs | déployé et testé |
 | 13 | CloudFormation | déployé et testé |
 
-Les services bloqués le sont par une règle de l'organisation AWS du formateur. Nous avons relevé les erreurs exactes dans le fichier `docs/01-services-bloques.md` du dépôt.
+Au début de la semaine, Network Firewall, Transit Gateway, VPN et Direct Connect étaient refusés par une règle de l'organisation AWS du formateur. Cette règle a été levée le 17/11/2026, et nous avons alors fait les modules 4, 6, 7 et 8 pour de vrai. Les erreurs relevées avant cette date sont dans le fichier `docs/01-services-bloques.md` du dépôt.
 
 ![Schéma réseau final](../images/global.png)
 
@@ -469,7 +469,7 @@ dev-01 (via prod = transit, NON transitif) -> tiers-01 10.22.0.10 : Success	2 pa
 ```
 
 ## Nettoyage
-Le sujet supprime le peering au module 6, mais le Transit Gateway est bloqué : nous gardons donc le peering pour relier prod et dev. `dev-01` est arrêtée après les tests, les VPC de test sont supprimés.
+Comme le sujet le demande, le peering `pcx-lab-TP-AC` est supprimé au module 6 : le Transit Gateway relie ensuite la prod et le dev. `dev-01` est arrêtée après les tests, les VPC de test sont supprimés.
 
 ## Captures
 
@@ -494,260 +494,195 @@ Le sujet supprime le peering au module 6, mais le Transit Gateway est bloqué : 
 
 # Module 6 – Transit Gateway
 
-> Nous n'avons pas pu faire ce module : la création d'un Transit Gateway (`ec2:CreateTransitGateway`) est refusée par l'organisation AWS du formateur. Rien n'a été déployé ni testé. Le template CloudFormation préparé a seulement passé `validate-template`. La liaison prod et dev reste assurée par le peering du module 5.
+> Le Transit Gateway était d'abord refusé par l'organisation AWS (`ec2:CreateTransitGateway`). Le blocage a été levé le 17/11/2026 : nous avons alors fait le module pour de vrai.
 
 ## Objectif
-Remplacer les liaisons une à une par un point central : un Transit Gateway relie plusieurs VPC, avec une table de routage par environnement.
+Remplacer le peering du module 5 par un point central : `tgw-leman-TP-AC` relie la prod et le dev, avec une table de routage par environnement, puis accueille les VPN du module 7.
 
 ## Ce qu'il faut savoir
-Chaque VPC se branche au Transit Gateway par un attachement. Avec le peering il faut un lien par paire de réseaux ; avec le Transit Gateway, un seul par réseau. Un attachement est associé à une table de routage (celle qui décide où il peut aller) et peut publier sa plage dans une autre table (propagation). En coupant l'association et la propagation par défaut, on décide à la main qui voit qui. Les routes dans les tables des VPC restent nécessaires. Il coûte environ 0,05 USD de l'heure par attachement.
+Chaque VPC se branche au Transit Gateway par un attachement. Avec le peering il faut un lien par paire de réseaux ; avec le Transit Gateway, un seul par réseau. Un attachement est associé à **une** table de routage (celle qui décide où il peut aller) et peut publier sa plage dans d'autres tables (propagation). Nous avons coupé l'association et la propagation par défaut, pour décider à la main qui voit qui. Les routes dans les tables des VPC restent nécessaires. Chaque attachement coûte environ 0,05 USD de l'heure.
 
-## Ce que nous avons prévu
-Un Transit Gateway `tgw-leman-TP-AC` (ASN 64512), deux attachements `tgwa-prod` et `tgwa-dev`, deux tables `tgw-rt-prod` et `tgw-rt-dev` avec propagation croisée, et des routes `10.21.0.0/24` et `10.20.0.0/22` dans les tables des deux VPC.
+## Ce que nous avons fait
+- `tgw-leman-TP-AC` (ASN 64512), association et propagation par défaut désactivées.
+- Deux attachements : `tgwa-prod-TP-AC` (sous-réseau `sub-prive-1a`) et `tgwa-dev-TP-AC` (sous-réseau `sub-dev-1a`).
+- Deux tables : `tgw-rt-prod-TP-AC` (associée à la prod, elle apprend le CIDR du dev) et `tgw-rt-dev-TP-AC` (associée au dev, elle apprend le CIDR de la prod).
+- Dans les VPC : `10.21.0.0/24` vers le Transit Gateway dans `rt-prive`, et `10.20.0.0/22` vers le Transit Gateway dans la table du dev. Le peering `pcx-lab` a ensuite été supprimé.
+
+Script : `scripts/m06-tgw.ps1`. Nos plages sont `10.20.0.0/22` (prod) et `10.21.0.0/24` (dev), pas les `10.0.0.0/16` et `10.1.0.0/16` du sujet.
 
 ![Module 6](../images/m06-tgw.png)
 
-Fichiers prêts : `cfn/optional-m06-m08-interconnexion.yaml` (template validé, jamais déployé) et `scripts/m06-tgw.ps1` (jamais exécuté avec succès).
+| Élément | Valeur |
+|---|---|
+| Transit Gateway | `tgw-leman-TP-AC`, ASN 64512 |
+| Attachements | `tgwa-prod-TP-AC`, `tgwa-dev-TP-AC` |
+| Tables | `tgw-rt-prod-TP-AC`, `tgw-rt-dev-TP-AC` (plus `tgw-rt-sites-TP-AC` au module 7) |
+| Coût | environ 0,05 USD de l'heure par attachement |
 
-## Ce que nous testerions
-1. Les deux attachements passent à `available`.
-2. `dev-01` joint `app-01` sur 8080 par le Transit Gateway.
-3. On retire la propagation de `tgwa-dev` vers `tgw-rt-prod` : le `curl` échoue (le retour n'a plus de route). On la remet : il refonctionne.
+## Si ça ne marche pas : quatre vérifications
+1. L'association de l'attachement : à quelle table de routage est-il rattaché ?
+2. La route propagée dans la table de **l'autre** environnement : le chemin de retour existe-t-il ?
+3. La route dans la table du VPC, qui vise le Transit Gateway.
+4. Le Security Group de la cible (ici `sg-app`, port 8080).
 
-## Ce que nous avons essayé
-`aws ec2 create-transit-gateway` renvoie « explicit deny in a service control policy » (le détail est dans `01-services-bloques.md`). La lecture reste autorisée, pas la création.
+## Résultats des tests
+```
+=== TP1/TP2 : tgw-leman ===
+Attachements : tgwa-prod-TP-AC	available tgwa-dev-TP-AC	available
+pcx-lab present ? : 0 (0 = supprime)
+Routes tgw-rt-prod : 10.21.0.0/24	propagated
+Routes tgw-rt-dev  : 10.20.0.0/22	propagated
+dev-01 -> app-01:8080 via TGW : Success	app-01 TP-AC /api/health 	
+
+=== TP3 : propagation retiree ===
+Propagation tgwa-dev -> tgw-rt-prod retiree (la prod ne sait plus repondre au dev) : Success	ECHEC 	
+Propagation retablie : Success	app-01 TP-AC /api/health
+```
+Quand nous retirons la propagation de `tgwa-dev` vers `tgw-rt-prod`, le `curl` depuis `dev-01` échoue : la requête arrive jusqu'à `app-01`, mais la réponse n'a plus de route pour revenir. Dès que la propagation est remise, il refonctionne.
+
+## Ce qui a mal tourné
+Notre script attendait la fin de la création avec une requête mal écrite et tournait sans fin. Sa deuxième exécution a créé un **second** Transit Gateway au lieu de reprendre le premier. Nous avons supprimé le doublon (et ses deux attachements) et rendu le script capable de reprendre sur ce qui existe déjà.
+
+## Nettoyage
+Facturé à l'heure : nous supprimons les attachements, puis les tables, puis le Transit Gateway à la fin du projet.
+
+## Captures
+
+**Console AWS – attachements**
+
+![Console AWS – attachements](../../captures/m06/00-console-attachements.png)
+
+**Console AWS – passerelle transit**
+
+![Console AWS – passerelle transit](../../captures/m06/00-console-passerelle-transit.png)
+
+**Console AWS – routes tgw prod**
+
+![Console AWS – routes tgw prod](../../captures/m06/00-console-routes-tgw-prod.png)
+
+**Console AWS – tables tgw**
+
+![Console AWS – tables tgw](../../captures/m06/00-console-tables-tgw.png)
+
+**Journal des tests**
+
+![Journal des tests](../../captures/m06/99-preuves-tests.png)
 
 
 ---
 
 # Module 7 – VPN site à site (siège et agence)
 
-> Le VPN géré d'AWS est bloqué par l'organisation (`CreateCustomerGateway`, `CreateVpnGateway` et `CreateVpnConnection` sont refusés, le Transit Gateway aussi). Nous avons donc **simulé** les trois routeurs avec strongSwan sur des instances EC2 : le tunnel IPsec est réel, mais ce n'est pas le service VPN d'AWS.
+> Les trois actions du VPN (`CreateCustomerGateway`, `CreateVpnGateway`, `CreateVpnConnection`) étaient refusées par l'organisation AWS. Le blocage a été levé le 17/11/2026 : nous avons refait ce module avec le **vrai VPN d'AWS**. Les deux « sites » restent simulés : ce sont deux instances EC2 avec strongSwan qui jouent l'équipement du client.
 
 ## Objectif
-Relier le siège (`192.168.10.0/24`) et l'agence (`192.168.20.0/24`) au VPC de production par des tunnels chiffrés. Le siège doit pouvoir joindre `app-01` (ping et 8080), l'agence seulement le port 8080.
+Relier le siège (`192.168.10.0/24`) et l'agence (`192.168.20.0/24`) au cloud par des tunnels chiffrés qui passent par `tgw-leman-TP-AC`. Le siège et l'agence joignent `app-01` sur le port 8080 (le siège peut aussi pinger), et aucun des deux ne voit le dev.
 
 ## Ce qu'il faut savoir
-IPsec en version 2 fonctionne en deux temps : une phase d'authentification (ici une clé partagée et un échange Diffie-Hellman), puis un tunnel ESP qui chiffre le trafic (nous utilisons `aes256-sha256-modp2048`). Le VPN d'AWS fournit deux tunnels par connexion et des adresses de tunnel en `169.254.x.x/30`. Nous avons fait du « route-based » : le tunnel est une interface et ce sont les routes qui décident ce qui y passe. La clé partagée ne doit jamais traîner dans un document : la nôtre est dans Secrets Manager (`Projet/SatomCloudNetwork/vpn`), les routeurs la lisent avec leur rôle IAM.
+Une connexion VPN AWS donne **deux tunnels** IPsec, vers deux adresses publiques d'AWS, avec des adresses de tunnel en `169.254.x.x/30`. Du côté du client, il faut un équipement qui parle IPsec : le Customer Gateway n'est que sa description (son adresse publique). Nous utilisons le routage statique. Pour un VPN rattaché à un Transit Gateway, les routes statiques ne se déclarent pas sur le VPN mais dans la table de routage du Transit Gateway : AWS nous l'a rappelé par une erreur. Les clés partagées ne doivent jamais traîner dans un document : les nôtres sont dans Secrets Manager (`Projet/SatomCloudNetwork/vpn`), une par tunnel, et les routeurs les lisent avec leur rôle IAM.
 
 ## Ce que nous avons fait
-- `rtr-aws-TP-AC` dans le sous-réseau public 1b (`10.20.0.74`), qui joue la passerelle côté AWS.
-- `rtr-siege-TP-AC` (`192.168.10.10`) et `rtr-agence-TP-AC` (`192.168.20.10`), chacun dans son propre petit VPC simulé.
-- Des routes dans `rt-prive` vers `192.168.10.0/24` et `192.168.20.0/24` qui passent par le routeur AWS.
-- Dans `sg-app`, le ping et le 8080 pour le siège, le 8080 seulement pour l'agence.
+- Deux Elastic IP, une par routeur (`rtr-siege-TP-AC`, `rtr-agence-TP-AC`) : c'est l'adresse de chaque Customer Gateway (`cgw-siege-TP-AC`, `cgw-agence-TP-AC`). Les adresses du sujet (`203.0.113.10`) sont des adresses de documentation, inutilisables pour un vrai tunnel.
+- Deux connexions `vpn-siege-TP-AC` et `vpn-agence-TP-AC`, en routage statique, rattachées au Transit Gateway (IKEv2, AES-256, SHA-256, groupe Diffie-Hellman 14).
+- Une table `tgw-rt-sites-TP-AC` pour les deux attachements VPN : elle ne contient que la prod, donc les sites ne voient pas le dev. Les routes `192.168.10.0/24` et `192.168.20.0/24` sont dans `tgw-rt-prod-TP-AC`, avec les attachements VPN comme cible. `tgw-rt-dev-TP-AC` n'en reçoit aucune.
+- Dans `rt-prive`, les deux plages des sites visent le Transit Gateway.
+- Chaque routeur monte ses deux tunnels (`xfrm-siege1` et `xfrm-siege2`, `xfrm-agence1` et `xfrm-agence2`). Le premier tunnel a la préférence (métrique 100), le second sert de secours (200).
+- Dans `sg-app` : ping et 8080 pour le siège, 8080 seulement pour l'agence.
 
-Script : `scripts/m07-ipsec-sim.ps1 -Site siege` ou `-Site agence`.
+Scripts : `scripts/m07-vpn-aws.ps1` avec `-Stage 1` (ressources AWS), `-Stage 2` (routeurs et tests) et `-Stage 3` (bascule).
 
 ![Module 7](../images/m07-vpn.png)
 
 | Élément | Valeur |
 |---|---|
-| IKE et ESP | `aes256-sha256-modp2048`, authentification par clé partagée |
-| Interfaces de tunnel | `xfrm-siege` (`169.254.10.0/30`), `xfrm-agence` (`169.254.20.0/30`) |
-| Adresses publiques | automatiques, car le quota d'Elastic IP du compte est plein |
+| IKE et ESP | IKEv2, `aes256-sha256-modp2048`, clé partagée |
+| Routage | statique, routes déclarées dans `tgw-rt-prod-TP-AC` |
+| Tunnels | 2 par site, 4 en tout, tous `UP` |
+| ASN du Customer Gateway | 65000 (obligatoire à la création, sans effet en statique) |
 
 ## Si ça ne marche pas : quatre vérifications
-1. L'état des tunnels : `swanctl --list-sas` doit afficher `ESTABLISHED`.
+1. L'état des tunnels : `UP` dans la console (ou `describe-vpn-connections`), et `swanctl --list-sas` doit afficher `ESTABLISHED`.
 2. Les paramètres IPsec : mêmes propositions et même clé des deux côtés.
-3. Les routes : `ip route get` côté site, et la route dans `rt-prive` côté AWS.
-4. Les Security Groups : UDP 500 et 4500 et le protocole ESP doivent passer entre les routeurs, et `sg-app` doit autoriser la source.
+3. La route `192.168.x.0/24` dans `tgw-rt-prod`, et la route retour dans `rt-prive`.
+4. Le Security Group de la cible (`sg-app`) et ceux des routeurs (UDP 500 et 4500 depuis les quatre adresses AWS).
 
 ## Résultats des tests
 ```
-=== Module 7 - tunnel IPsec siege (simulation strongSwan) ===
-rtr-aws : swanctl --list-sas (apres les tests)
-Success  siege: #3, ESTABLISHED, IKEv2, 86ce1374cfee168c_i 4d3fa39eb5010b95_r*
-  local  '16.171.33.204' @ 10.20.0.74[4500]
-  remote '16.171.233.38' @ 16.171.233.38[4500]
-  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
-  established 49s ago, rekeying in 14332s
-  siege: #2, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-    installed 49s ago, rekeying in 3321s, expires in 3911s
-    in  c4658670 (-|0x0000000b),      0 bytes,     0 packets
-    out c84a9f39 (-|0x0000000b),      0 bytes,     0 packets
-    local  0.0.0.0/0
-    remote 0.0.0.0/0
-siege: #1, ESTABLISHED, IKEv2, 539dbbd3258372a5_i* 3200bb556dbda525_r
-  local  '16.171.33.204' @ 10.20.0.74[4500]
-  remote '16.171.233.38' @ 16.171.233.38[4500]
-xfrm-siege@ens5  UNKNOWN        169.254.10.1/30 fe80::fe5a:d22f:66df:1fa2/64 
-192.168.10.0/24 dev xfrm-siege scope link metric 200 
-  
-rtr-siege : swanctl --list-sas
-Success  siege: #2, ESTABLISHED, IKEv2, 539dbbd3258372a5_i 3200bb556dbda525_r*
-  local  '16.171.233.38' @ 192.168.10.10[4500]
-  remote '16.171.33.204' @ 16.171.33.204[4500]
-  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
-  established 9s ago, rekeying in 14382s
-  siege: #2, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-    installed 9s ago, rekeying in 3413s, expires in 3951s
-    in  c957f44c (-|0x0000000b),      0 bytes,     0 packets
-    out c7ad7116 (-|0x0000000b),      0 bytes,     0 packets
-    local  0.0.0.0/0
-    remote 0.0.0.0/0
-siege: #1, ESTABLISHED, IKEv2, 86ce1374cfee168c_i* 4d3fa39eb5010b95_r
-  local  '16.171.233.38' @ 192.168.10.10[4500]
-  remote '16.171.33.204' @ 16.171.33.204[4500]
+=== Module 7 - etape 1 : etat des VPN avant configuration des routeurs ===
+vpn-siege-TP-AC : available ipsec.1 True
+  tunnels (adresse AWS, etat) : 13.48.14.139 DOWN | 16.192.201.171 DOWN
+vpn-agence-TP-AC : available ipsec.1 True
+  tunnels (adresse AWS, etat) : 16.192.26.24 DOWN | 51.21.21.145 DOWN
 
-siege -> app-01 (10.20.1.10) ping : 
-Success  --- 10.20.1.10 ping statistics ---
+=== Module 7 - etape 2 : tunnels, flux et segmentation ===
+siege : swanctl --list-sas (cote routeur)
+siege-t2: #2, ESTABLISHED, IKEv2, 7715eee1bf6cb7d9_i* 207cbdc434e743c0_r
+  siege-t2: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+siege-t1: #1, ESTABLISHED, IKEv2, c01a613693cec6ac_i* 0a606cb63546e3dd_r
+  siege-t1: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+agence : swanctl --list-sas (cote routeur)
+agence-t2: #2, ESTABLISHED, IKEv2, 6ece0791ffe16043_i* 7754fd3d6d5e44c8_r
+  agence-t2: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+agence-t1: #1, ESTABLISHED, IKEv2, 1bda37dff36ddac9_i* 919dbf129234fc88_r
+  agence-t1: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+vpn-siege-TP-AC, etat des tunnels vu par AWS : 13.48.14.139 UP  | 16.192.201.171 UP 
+vpn-agence-TP-AC, etat des tunnels vu par AWS : 16.192.26.24 DOWN  | 51.21.21.145 DOWN    <- lecture faite trop tot : AWS mettait quelques secondes a passer UP (voir etat final)
+tgw-rt-prod (routes actives) : 10.21.0.0/24 propagated vpc | 192.168.10.0/24 static vpn | 192.168.20.0/24 static vpn
+tgw-rt-dev  (routes actives) : 10.20.0.0/22 propagated
+tgw-rt-sites (routes actives) : 10.20.0.0/22 propagated
+-- siege -> app-01 (10.20.1.10)
+ping : --- 10.20.1.10 ping statistics ---
 3 packets transmitted, 3 received, 0% packet loss, time 2003ms
-rtt min/avg/max/mdev = 2.426/2.551/2.787/0.166 ms
-  
-siege -> app-01:8080 : Success  app-01 TP-AC /api/health
-  
-siege -> dev-01 : premier essai NON CONCLUANT (dev-01 etait arretee) ; refait plus bas avec dev-01 demarree
-=== Module 7 - tunnel IPsec agence (simulation strongSwan) ===
-rtr-aws : swanctl --list-sas
-Success	siege: #2, CONNECTING, IKEv2, 46d24f38fb1cec9c_i* 0000000000000000_r
-  local  '%any' @ 10.20.0.74[500]
-  remote '%any' @ 16.171.233.38[500]
-  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
-agence: #1, CONNECTING, IKEv2, da793526fe55fb7b_i* 0000000000000000_r
-  local  '%any' @ 10.20.0.74[500]
-  remote '%any' @ 13.60.86.14[500]
-  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+rtt min/avg/max/mdev = 2.729/3.175/3.841/0.479 ms
+8080 : app-01 TP-AC /api/health
+-- agence -> app-01 (seul le 8080 est autorise)
+8080 : app-01 TP-AC /api/health
+ping (doit echouer) : 2 packets transmitted, 0 received, 100% packet loss, time 1028ms
+-- segmentation : aucun site ne joint dev-01 (10.21.0.10), dev-01 ne joint pas les sites (dev-01 SSM : Online)
+siege -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2042ms
+agence -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2034ms
+dev-01 -> siege : 3 packets transmitted, 0 received, 100% packet loss, time 2101ms
+dev-01 -> agence : 3 packets transmitted, 0 received, 100% packet loss, time 2117ms
 
-rtr-agence : swanctl --list-sas
-Success	agence: #1, ESTABLISHED, IKEv2, 5fb2db85da6aec7a_i* afa4530cbd0d1f05_r
-  local  '13.60.86.14' @ 192.168.20.10[4500]
-  remote '16.171.33.204' @ 16.171.33.204[4500]
-  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
-  established 11s ago, rekeying in 13912s
-  agence: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-    installed 11s ago, rekeying in 3390s, expires in 3949s
-    in  cb7908ec (-|0x0000000c),      0 bytes,     0 packets
-    out c082e22a (-|0x0000000c),      0 bytes,     0 packets
-    local  0.0.0.0/0
-    remote 0.0.0.0/0
-	
-agence -> app-01 ping (ICMP non autorise pour l'agence) : 
-Success	2 packets transmitted, 0 received, 100% packet loss, time 1054ms
+=== Module 7 - etape 3 : bascule entre les deux tunnels du siege ===
+T+10 s : coupure du tunnel 1 (siege-t1)
+T+70 s : tunnel 1 retabli
+--- resultat du ping horodate (une sonde toutes les 0,5 s, 200 sondes)
+200 packets transmitted, 160 received, 20% packet loss, time 99838ms
+rtt min/avg/max/mdev = 2.340/2.535/3.768/0.187 ms
+interruption de 20.7 s, de T+10.0 s a T+30.7 s (sondes 22 a 61 perdues)
+sessions IKE etablies : 2
+etat vu par AWS : 13.48.14.139 UP | 16.192.201.171 UP
 
-exit=0
-	
-agence -> app-01:8080 (seul flux autorise) : Success	app-01 TP-AC /api/health
-	
-agence -> dev-01 : premier essai NON CONCLUANT (dev-01 etait arretee) ; refait plus bas avec dev-01 demarree
-
-=== Module 7 - tunnel IPsec siege (simulation strongSwan) ===
-rtr-aws : swanctl --list-sas
-Success	agence: #1, CONNECTING, IKEv2, 395d821a9697a878_i* 0000000000000000_r
-  local  '%any' @ 10.20.0.74[500]
-  remote '%any' @ 13.60.86.14[500]
-  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
-	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
-plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
-plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
-plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
-plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
-plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
-plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
-plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
-plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
-plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
-plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
-plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
-plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
-
-rtr-siege : swanctl --list-sas
-Success	siege: #1, ESTABLISHED, IKEv2, b535252c8726a847_i* fdcc7f92d6069070_r
-  local  '51.20.144.158' @ 192.168.10.10[4500]
-  remote '16.171.171.189' @ 16.171.171.189[4500]
-  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
-  established 11s ago, rekeying in 14194s
-  siege: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-    installed 11s ago, rekeying in 3286s, expires in 3949s
-    in  c78f150b (-|0x0000000b),      0 bytes,     0 packets
-    out c1856d9b (-|0x0000000b),      0 bytes,     0 packets
-    local  0.0.0.0/0
-    remote 0.0.0.0/0
-	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
-plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
-plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
-plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
-plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
-plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
-plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
-plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
-plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
-plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
-plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
-plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
-plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
-
-(mode DevOnly : app-01 arretee, seuls l'etat du tunnel et le test dev-01 sont executes)
-siege -> dev-01 (10.21.0.10), dev-01 en cours d'execution (SSM : Online) : Success	3 packets transmitted, 0 received, 100% packet loss, time 2061ms
-
-code retour=0
-	  (le tunnel ne contient que 10.20.0.0/22)
-=== Module 7 - tunnel IPsec agence (simulation strongSwan) ===
-rtr-aws : swanctl --list-sas
-Success	siege: #2, CONNECTING, IKEv2, 7fadf2f20e07735e_i* 0000000000000000_r
-  local  '%any' @ 10.20.0.74[500]
-  remote '%any' @ 51.20.144.158[500]
-  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
-	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
-plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
-plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
-plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
-plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
-plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
-plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
-plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
-plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
-plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
-plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
-plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
-plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
-
-rtr-agence : swanctl --list-sas
-Success	agence: #1, ESTABLISHED, IKEv2, 54b21ff5d5cbddfd_i* fb535af7b613e7e5_r
-  local  '13.62.50.97' @ 192.168.20.10[4500]
-  remote '16.171.171.189' @ 16.171.171.189[4500]
-  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
-  established 11s ago, rekeying in 13121s
-  agence: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-    installed 11s ago, rekeying in 3449s, expires in 3949s
-    in  c5ff0eeb (-|0x0000000c),      0 bytes,     0 packets
-    out c468260c (-|0x0000000c),      0 bytes,     0 packets
-    local  0.0.0.0/0
-    remote 0.0.0.0/0
-	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
-plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
-plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
-plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
-plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
-plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
-plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
-plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
-plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
-plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
-plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
-plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
-plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
-
-(mode DevOnly : app-01 arretee, seuls l'etat du tunnel et le test dev-01 sont executes)
-agence -> dev-01 (10.21.0.10), dev-01 en cours d'execution (SSM : Online) : Success	3 packets transmitted, 0 received, 100% packet loss, time 2024ms
-
-code retour=0
-	  (le tunnel ne contient que 10.20.0.0/22)
+=== Etat final des 4 tunnels (vu par AWS, apres tous les tests) ===
+vpn-siege-TP-AC : 13.48.14.139 UP | 16.192.201.171 UP
+vpn-agence-TP-AC : 16.192.26.24 UP | 51.21.21.145 UP
+tgw-rt-prod : 10.21.0.0/24 propagated | 192.168.10.0/24 static | 192.168.20.0/24 static
 ```
 
+## Bascule entre les deux tunnels
+Nous coupons le premier tunnel du siège pendant un ping horodaté (une sonde toutes les 0,5 s). L'interruption dure environ **21 secondes** : c'est le délai de détection d'AWS (le temps d'abandonner le tunnel qu'il croit encore vivant). Ensuite le trafic passe par le second tunnel, et quand nous remettons le premier, rien ne se coupe. Le sujet parle d'une bascule « sans coupure » : nous ne l'avons pas obtenue, nous avons mesuré 21 secondes.
+
 ## Limites de notre réalisation
-- Un seul tunnel par site, alors que le VPN d'AWS en donne deux.
-- Nous avons monté le siège puis l'agence l'un après l'autre : le compte est limité à 16 vCPU pour toute la classe.
-- Pour vérifier que ni le siège ni l'agence ne voient `dev-01`, nous avons d'abord fait un test sans valeur (`dev-01` était arrêtée). Nous l'avons refait avec `dev-01` démarrée (SSM « Online ») : le ping vers `10.21.0.10` perd 100 % des paquets depuis le siège et depuis l'agence, car seule la plage `10.20.0.0/22` est dans les tunnels. Ces tests ont été faits un site à la fois, sans `app-01` allumée (manque de vCPU).
+- Les sites sont simulés : deux instances EC2 dans deux petits VPC (`vpc-siege-sim`, `vpc-agence-sim`), pas du vrai matériel ni du GNS3.
+- Nous avons un premier essai avec une simulation complète de la passerelle AWS (strongSwan des deux côtés) : ses résultats sont dans `docs/modules/m07/tests-simulation-initiale.txt`. Il n'est plus utilisé.
 
 ## Nettoyage
-Le sujet est contradictoire sur ce point (garder ou supprimer le VPN). Nous gardons les routeurs jusqu'à la fin du cours, arrêtés quand nous ne les utilisons pas, et nous les supprimerons ensuite.
-
+Les deux connexions VPN sont facturées à l'heure : nous les supprimons à la fin du projet avec leurs Customer Gateways et leurs Elastic IP (`scripts/m06-m08-cleanup.ps1`).
 
 ## Captures
+
+**Console AWS – connexions vpn**
+
+![Console AWS – connexions vpn](../../captures/m07/00-console-connexions-vpn.png)
 
 **Console AWS – secret vpn**
 
 ![Console AWS – secret vpn](../../captures/m07/00-console-secret-vpn.png)
+
+**Console AWS – tunnels vpn**
+
+![Console AWS – tunnels vpn](../../captures/m07/00-console-tunnels-vpn.png)
 
 **Journal des tests**
 
@@ -778,109 +713,80 @@ Le sujet est contradictoire sur ce point (garder ou supprimer le VPN). Nous gard
 
 # Module 8 – Direct Connect
 
-> Direct Connect est bloqué par l'organisation : nous avons testé `CreateDirectConnectGateway` et `DescribeLocations`, les deux sont refusés. Nous n'avons donc pas créé `dxgw-leman` et nous n'avons pas pu choisir d'emplacement. La liaison dédiée est **simulée** par un tunnel GRE entre deux routeurs qui parlent BGP, le VPN du module 7 servant de secours.
+> Direct Connect était d'abord refusé par l'organisation AWS. Le blocage a été levé le 17/11/2026 : nous avons créé le **vrai Direct Connect Gateway** et l'avons associé au Transit Gateway. Comme nous ne commandons pas de fibre, la liaison elle-même est **simulée** par un tunnel GRE et du BGP, comme le sujet le prévoit.
 
 ## Objectif
-Comprendre une liaison dédiée (dimensionnement, interface virtuelle, BGP) et la bascule entre une liaison principale et un secours.
+Comprendre une liaison dédiée (dimensionnement, passerelle, BGP) et la bascule entre une liaison principale et un secours.
 
 ## Ce qu'il faut savoir
-Direct Connect est un lien physique entre le siège et un point de présence d'AWS (1, 10 ou 100 Gbit/s). Une interface virtuelle y porte la session BGP vers AWS. En BGP, le chemin avec la préférence locale (local-pref) la plus haute gagne ; pour décourager un chemin, on allonge son AS-path. Ici : local-pref 200 sur la liaison dédiée, et l'AS-path du VPN allongé de 3.
+Direct Connect est un lien physique entre le siège et un point de présence d'AWS (1, 10 ou 100 Gbit/s). Une interface virtuelle y porte la session BGP vers AWS ; derrière, un Direct Connect Gateway se branche sur un Transit Gateway. En BGP, le chemin avec la préférence locale (local-pref) la plus haute gagne ; pour décourager un chemin, on allonge son AS-path (le « prepend »). Ici : local-pref 200 sur la liaison dédiée, et un prepend de 3 sur le chemin VPN.
 
 ## Dimensionnement
-Nous devons transférer 2 To en 8 heures : 16 000 Gbit sur 28 800 s, soit environ 0,56 Gbit/s. Une liaison de 1 Gbit/s suffit avec une marge d'environ 44 %.
+Nous devons transférer 2 To en 8 heures : 16 000 Gbit sur 28 800 s, soit environ 0,56 Gbit/s. Une liaison de 1 Gbit/s suffit avec une marge d'environ 44 %. Parmi les emplacements Direct Connect de notre région, nous retenons **EQSK1** (Equinix Sweden SK1), qui propose du 1 Gbit/s. Nous ne commandons rien. Il n'y a pas d'emplacement près de Genève dans la région de Stockholm.
 
 ## Ce que nous avons fait
-- Un tunnel GRE `169.254.100.0/30` entre `rtr-siege` (AS 65010) et `rtr-aws` (AS 64513), qui joue la « fibre ».
-- Deux sessions BGP, une sur le GRE et une dans le tunnel IPsec du module 7. Le siège annonce `192.168.10.0/24`, la prod annonce `10.20.0.0/22`.
-- `local-pref 200` sur ce qui arrive par le GRE, et un AS-path allongé (`65010` trois fois de plus) sur le chemin VPN.
-- Le GRE est coupé puis remis pendant un ping horodaté, pour mesurer la bascule.
+**Partie réelle :**
+- `dxgw-leman-TP-AC`, ASN 64513. Notre premier essai avait pris par erreur le même ASN que le Transit Gateway (64512), et AWS refuse alors l'association : nous l'avons supprimé et recréé avec le bon ASN.
+- L'association de `dxgw-leman-TP-AC` à `tgw-leman-TP-AC`, avec les préfixes autorisés `10.20.0.0/22` et `192.168.10.0/24`. Elle passe à `associated`, et AWS crée de lui-même un attachement « Direct Connect Gateway » dans le Transit Gateway.
+
+**Partie simulée :**
+- Un tunnel GRE `gre-dx` (`169.254.100.0/30`) sur Internet entre `rtr-siege-TP-AC` (AS 65010) et `rtr-aws-TP-AC` (AS 64513, qui joue l'équipement côté AWS) : c'est notre « fibre ».
+- Un second tunnel GRE `gre-vpn` (`169.254.101.0/30`) qui traverse **le vrai VPN** du module 7 : c'est le chemin de secours. Un VPN statique ne parle pas BGP, c'est pourquoi nous faisons passer la session BGP dans ce GRE, ce qui nous permet de montrer un vrai prepend.
+- Deux sessions BGP, timers 3 s / 9 s. Le siège annonce `192.168.10.0/24`, la prod annonce `10.20.0.0/22`.
+- `local-pref 200` sur ce qui arrive par `gre-dx`, et un prepend de `65010` trois fois en plus sur ce qui part par `gre-vpn`.
+- `rtr-aws` traduit l'adresse source (NAT) pour que `app-01` réponde au routeur, sans toucher aux tables des VPC.
 
 Les routeurs tournent avec FRRouting sur Ubuntu. Le sujet propose GNS3 : nous ne l'avons pas utilisé.
 
-Script : `scripts/m08-bgp-sim.ps1`.
+Script : `scripts/m08-dx-sim.ps1` (option `-TestOnly` pour rejouer les tests).
 
 ![Module 8](../images/m08-dx.png)
 
 | Élément | rtr-siege | rtr-aws |
 |---|---|---|
 | ASN | 65010 | 64513 |
-| Tunnel GRE | `169.254.100.2/30` | `169.254.100.1/30` |
-| Tunnel IPsec | `169.254.10.2/30` | `169.254.10.1/30` |
+| GRE « DX » | `169.254.100.2/30` | `169.254.100.1/30` |
+| GRE dans le VPN | `169.254.101.2/30` | `169.254.101.1/30` |
 | Annonce | `192.168.10.0/24` | `10.20.0.0/22` |
 | Timers BGP | 3 s / 9 s | 3 s / 9 s |
 
+| Politique | Valeur |
+|---|---|
+| Direct Connect (`gre-dx`) | `local-pref 200` |
+| VPN (`gre-vpn`) | prepend `65010` ×3 à l'envoi |
+| Préfixes autorisés du DXGW | `10.20.0.0/22`, `192.168.10.0/24` |
+
 ## Si ça ne marche pas : quatre vérifications
-1. L'état de BGP : `show bgp summary` doit afficher `Established`.
-2. Les préfixes annoncés et reçus.
-3. La local-pref : `show ip bgp <préfixe>` montre quel chemin est le meilleur.
-4. La route dans `rt-prive` vers le routeur, et `ip route get` sur le routeur.
+1. L'état de BGP : `show bgp summary` doit afficher le nombre de préfixes reçus (pas `Active` ni `Connect`).
+2. Les préfixes annoncés et reçus des deux côtés.
+3. La local-pref : `show ip bgp 10.20.0.0/22` montre le meilleur chemin (« best »).
+4. La route dans `tgw-rt-prod` côté AWS, et `ip route get` sur le routeur.
 
 ## Résultats des tests
 ```
-=== TP1 : dimensionnement (voir docs/modules/m08) ===
+=== TP1 : dimensionnement et Direct Connect Gateway (reel) ===
 2 To en 8 h = 16 000 Gbit / 28 800 s = 0,556 Gbit/s -> liaison 1 Gbit/s (marge ~44 %)
+Emplacement retenu (non commande) : EQSK1, Equinix Sweden SK1 (vitesses 1G / 10G / 100G), le plus proche disponible dans la region eu-north-1
+dxgw : dxgw-leman-TP-AC 64513 available
+association avec tgw-leman : associated 192.168.10.0/24 10.20.0.0/22
 
 === TP2 : GRE + BGP ===
-rtr-aws : show bgp summary
-Success	
+rtr-siege : show bgp summary
+
 IPv4 Unicast Summary (VRF default):
-BGP router identifier 10.20.0.74, local AS number 64513 vrf-id 0
-BGP table version 2
+BGP router identifier 192.168.10.10, local AS number 65010 vrf-id 0
+BGP table version 14
 RIB entries 3, using 576 bytes of memory
 Peers 2, using 1448 KiB of memory
 
 Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt Desc
-169.254.10.2    4      65010        21        18        0    0    0 00:00:29            1        2 VPN-IPsec
-169.254.100.2   4      65010        19        18        0    0    0 00:00:29            1        2 DX-simule-GRE
+169.254.100.1   4      64513       117       118        0    0    0 00:01:38            1        2 DX-simule-GRE
+169.254.101.1   4      64513       130       151        0    0    0 00:01:43            1        2 VPN-GRE-dans-IPsec
 
 Total number of neighbors 2
-	
-rtr-aws : show ip bgp 192.168.10.0/24
-Success	BGP routing table entry for 192.168.10.0/24, version 2
-Paths: (2 available, best #1, table default)
-  Advertised to non peer-group peers:
-  169.254.10.2 169.254.100.2
-  65010
-    169.254.100.2 from 169.254.100.2 (192.168.10.10)
-      Origin IGP, metric 0, localpref 200, valid, external, best (Local Pref)
-      Last update: Mon Nov 16 12:54:16 2026
-  65010 65010 65010 65010
-    169.254.10.2 from 169.254.10.2 (192.168.10.10)
-      Origin IGP, metric 0, valid, external
-      Last update: Mon Nov 16 12:54:16 2026
-	
-rtr-siege : show ip route 10.20.0.0/22
-Success	Routing entry for 10.20.0.0/22
-  Known via "bgp", distance 20, metric 0, best
-  Last update 00:00:39 ago
-  * 169.254.100.1, via gre-dx, weight 1
 
-	
-siege -> app-01 (chemin DX) :
-Success	10.20.1.10 from 192.168.10.10 via 169.254.100.1 dev gre-dx uid 0 
-    cache 
---- 10.20.1.10 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2003ms
-rtt min/avg/max/mdev = 2.354/2.409/2.504/0.067 ms
-	
-
-=== TP3 : politique et bascule ===
-rtr-siege : show ip bgp 10.20.0.0/22 (local-pref 200 sur DX, 100 sur VPN)
-Success	BGP routing table entry for 10.20.0.0/22, version 2
-Paths: (2 available, best #1, table default)
-  Advertised to non peer-group peers:
-  169.254.10.1 169.254.100.1
-  64513
-    169.254.100.1 from 169.254.100.1 (10.20.0.74)
-      Origin IGP, metric 0, localpref 200, valid, external, best (Local Pref)
-      Last update: Mon Nov 16 12:54:16 2026
-  64513
-    169.254.10.1 from 169.254.10.1 (10.20.0.74)
-      Origin IGP, metric 0, valid, external
-      Last update: Mon Nov 16 12:54:16 2026
-	
-rtr-aws : chemin VPN annonce par le siege avec AS-path prepend x3 (65010 65010 65010 65010) :
-Success	BGP table version is 2, local router ID is 10.20.0.74, vrf id 0
+rtr-aws : show ip bgp (prefixes recus du siege)
+BGP table version is 16, local router ID is 10.20.0.74, vrf id 0
 Default local pref 100, local AS 64513
 Status codes:  s suppressed, d damped, h history, * valid, > best, = multipath,
                i internal, r RIB-failure, S Stale, R Removed
@@ -889,37 +795,79 @@ Origin codes:  i - IGP, e - EGP, ? - incomplete
 RPKI validation codes: V valid, I invalid, N Not found
 
    Network          Next Hop            Metric LocPrf Weight Path
-*  192.168.10.0/24  169.254.10.2             0             0 65010 65010 65010 65010 i
+*> 10.20.0.0/22     0.0.0.0                  0         32768 i
+*> 192.168.10.0/24  169.254.100.2            0             0 65010 i
+*                   169.254.101.2            0             0 65010 65010 65010 65010 i
 
-Displayed  1 routes and 3 total paths
-	
-GRE coupe -> route apres bascule :
-Success	10.20.1.10 from 192.168.10.10 via 169.254.10.1 dev xfrm-siege uid 0 
-    cache 
+Displayed  2 routes and 3 total paths
+
+siege -> app-01 (chemin choisi) :
+10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0
+    cache expires 492sec mtu 8977
+--- 10.20.1.10 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 2.411/2.489/2.596/0.078 ms
+app-01 TP-AC /api/health
+
+=== TP3 : politique et bascule ===
+rtr-siege : show ip bgp 10.20.0.0/22 (local-pref 200 sur DX, 100 sur VPN)
+BGP routing table entry for 10.20.0.0/22, version 14
+Paths: (2 available, best #1, table default)
+  Advertised to non peer-group peers:
+  169.254.100.1 169.254.101.1
+  64513
+    169.254.100.1 from 169.254.100.1 (10.20.0.74)
+      Origin IGP, metric 0, localpref 200, valid, external, best (Local Pref)
+      Last update: Tue Nov 17 10:33:33 2026
+  64513
+    169.254.101.1 from 169.254.101.1 (10.20.0.74)
+      Origin IGP, metric 0, valid, external
+      Last update: Tue Nov 17 10:33:29 2026
+
+rtr-aws : show ip bgp 192.168.10.0/24 (le chemin VPN arrive avec AS-path prepend x3)
+BGP routing table entry for 192.168.10.0/24, version 16
+Paths: (2 available, best #1, table default)
+  Advertised to non peer-group peers:
+  169.254.100.2 169.254.101.2
+  65010
+    169.254.100.2 from 169.254.100.2 (192.168.10.10)
+      Origin IGP, metric 0, valid, external, best (AS Path)
+      Last update: Tue Nov 17 10:33:32 2026
+  65010 65010 65010 65010
+    169.254.101.2 from 169.254.101.2 (192.168.10.10)
+      Origin IGP, metric 0, valid, external
+      Last update: Tue Nov 17 10:33:27 2026
+
+T+10 s : panne de la liaison DX (le GRE vers 51.21.77.112 est perdu, sans coupure de l'interface)
+route : 10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0
+T+40 s (DX en panne) route : 10.20.1.10 from 192.168.10.50 via 169.254.101.1 dev gre-vpn uid 0
 Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt Desc
-169.254.10.1    4      64513        48        51        0    0    0 00:01:54            1        2 VPN-IPsec
-169.254.100.1   4      64513        35        36        0    0    0 00:00:36       Active        0 DX-simule-GRE
-	
-GRE retabli -> retour sur DX :
-Success	10.20.1.10 from 192.168.10.10 via 169.254.100.1 dev gre-dx uid 0 
-    cache 
-	
-Journal de continuite (pings toutes les 0,1 s ; KO = perdus) :
-Success	    130 OK
-      9 KO
-    261 OK
----
-9
-pings_perdus_x0.1s
+169.254.100.1   4      64513       130       135        0    0    0 00:00:23      Connect        0 DX-simule-GRE
+169.254.101.1   4      64513       153       185        0    0    0 00:00:06            1        2 VPN-GRE-dans-IPsec
+T+40 s : liaison DX retablie
+T+70 s (DX retablie) route : 10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0
+--- ping horodate depuis 192.168.10.50 (une sonde toutes les 0,5 s, 180 sondes)
+180 packets transmitted, 166 received, 7.77778% packet loss, time 89745ms
+rtt min/avg/max/mdev = 2.351/2.864/45.264/3.319 ms
+interruption de 7.6 s, de T+9.5 s a T+17.1 s (sondes 21 a 34 perdues)
 ```
 
 ## Mesure de la bascule
-Pendant la coupure du GRE, 9 sondes sur une série d'une sonde toutes les 0,1 s ont été perdues (chacune attend 1 s au plus) : l'interruption dure une dizaine de secondes, le temps que BGP détecte la perte (9 s). Le trafic passe alors par le VPN, et il revient sur la liaison principale quand le GRE est rétabli.
+Pour simuler une vraie panne, nous supprimons les paquets GRE du chemin DX **sans couper l'interface** : BGP doit s'en apercevoir lui-même. Sur un ping horodaté (une sonde toutes les 0,5 s, depuis un poste du LAN du siège), l'interruption dure **7,6 secondes** : c'est le temps de détection de BGP (délai de 9 s moins quelques instants). Le trafic passe alors par le chemin VPN. Quand nous rétablissons le GRE, le trafic revient seul sur la liaison dédiée, sans nouvelle coupure.
+
+Au premier essai nous avions pingué depuis l'adresse du routeur lui-même, qui répond par une route directe : la mesure était trop belle (une seule sonde perdue) et ne passait pas par BGP. Nous l'avons refaite depuis un poste du LAN.
+
+## Console AWS
+La console Direct Connect affiche un bandeau d'erreur (`DescribeLocations` refusé) : elle appelle un point d'accès global situé dans une région que l'organisation interdit. Le service fonctionne bien par la ligne de commande.
 
 ## Nettoyage
-Rien n'est facturé à l'heure pour Direct Connect puisque nous n'avons rien commandé. Les routeurs sont des instances EC2 arrêtées après les tests.
+Le Direct Connect Gateway ne coûte rien ; son association au Transit Gateway ajoute un attachement facturé 0,05 USD de l'heure. Les routeurs sont des instances EC2 arrêtées après les tests.
 
 ## Captures
+
+**Console AWS – dx gateway**
+
+![Console AWS – dx gateway](../../captures/m08/00-console-dx-gateway.png)
 
 **Journal des tests**
 

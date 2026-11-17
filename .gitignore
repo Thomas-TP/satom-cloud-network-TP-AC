@@ -6,3 +6,7 @@ credentials
 captures-raw/
 
 scripts/state.json
+
+# journaux de travail locaux
+/*.out
+/*.err

@@ -1,0 +1,10 @@
+=== TP1/TP2 : tgw-leman ===
+Attachements : tgwa-prod-TP-AC	available tgwa-dev-TP-AC	available
+pcx-lab present ? : 0 (0 = supprime)
+Routes tgw-rt-prod : 10.21.0.0/24	propagated
+Routes tgw-rt-dev  : 10.20.0.0/22	propagated
+dev-01 -> app-01:8080 via TGW : Success	app-01 TP-AC /api/health 	
+
+=== TP3 : propagation retiree ===
+Propagation tgwa-dev -> tgw-rt-prod retiree (la prod ne sait plus repondre au dev) : Success	ECHEC 	
+Propagation retablie : Success	app-01 TP-AC /api/health 	

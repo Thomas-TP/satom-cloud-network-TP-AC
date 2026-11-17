@@ -1,2 +1,0 @@
-
-aws: [ERROR]: An error occurred (InvalidRequestException) when calling the DeleteFirewall operation: Cannot delete firewall with a logging configuration
