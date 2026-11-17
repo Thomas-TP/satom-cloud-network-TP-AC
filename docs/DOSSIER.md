@@ -29,7 +29,7 @@ Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/
 
 Les services bloqués le sont par une règle de l'organisation AWS du formateur. Nous avons relevé les erreurs exactes dans le fichier `docs/01-services-bloques.md` du dépôt.
 
-![Schéma réseau final](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
+![Schéma réseau final](../images/global.png)
 
 Tout le code (scripts AWS CLI, templates CloudFormation), les preuves et les captures sont dans le dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`.
 
@@ -64,7 +64,7 @@ Le compte AWS est partagé avec toute la classe et l'organisation du formateur i
 | siège (simulé) | 192.168.10.0/24 | selon le sujet |
 | agence (simulée) | 192.168.20.0/24 | selon le sujet |
 
-![Plan global](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
+![Plan global](../images/global.png)
 
 ## Crédits et budget
 Le compte part avec 100 USD. Les activités « Gagnez des crédits AWS » nous ont rapporté 100 USD de plus (EC2, Lambda, DynamoDB, RDS et Budgets). Nous les avons faites en ligne de commande et supprimé les ressources juste après. L'écran de la console affichait encore 180 USD au dernier contrôle ; le report des derniers crédits peut prendre du temps.
@@ -78,15 +78,15 @@ Nous avons tout scripté avec l'AWS CLI (un script par module dans `scripts/`). 
 
 **Console AWS – budgets**
 
-![Console AWS – budgets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-budgets.png)
+![Console AWS – budgets](../../captures/m00/00-console-budgets.png)
 
 **Console AWS – credits**
 
-![Console AWS – credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-credits.png)
+![Console AWS – credits](../../captures/m00/00-console-credits.png)
 
 **Console AWS – quetes credits**
 
-![Console AWS – quetes credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-quetes-credits.png)
+![Console AWS – quetes credits](../../captures/m00/00-console-quetes-credits.png)
 
 
 ---
@@ -111,7 +111,7 @@ Le sujet propose un /16. Le prof nous a dit que c'était trop large pour deux se
 
 Script : `scripts/m01-vpc.ps1`.
 
-![Module 1](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m01-vpc.png)
+![Module 1](../images/m01-vpc.png)
 
 | Ressource | Valeur |
 |---|---|
@@ -157,31 +157,31 @@ L'outil Reachability Analyzer est bloqué par l'organisation. Et SSM a besoin d'
 
 **Console AWS – instances**
 
-![Console AWS – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-instances.png)
+![Console AWS – instances](../../captures/m01/00-console-instances.png)
 
 **Console AWS – sous reseaux**
 
-![Console AWS – sous reseaux](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-sous-reseaux.png)
+![Console AWS – sous reseaux](../../captures/m01/00-console-sous-reseaux.png)
 
 **Console AWS – vpcs**
 
-![Console AWS – vpcs](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-vpcs.png)
+![Console AWS – vpcs](../../captures/m01/00-console-vpcs.png)
 
 **Terminal – vpc**
 
-![Terminal – vpc](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/01-vpc.png)
+![Terminal – vpc](../../captures/m01/01-vpc.png)
 
 **Terminal – subnets**
 
-![Terminal – subnets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/02-subnets.png)
+![Terminal – subnets](../../captures/m01/02-subnets.png)
 
 **Terminal – instances**
 
-![Terminal – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/03-instances.png)
+![Terminal – instances](../../captures/m01/03-instances.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/99-preuves-tests.png)
+![Journal des tests](../../captures/m01/99-preuves-tests.png)
 
 
 ---
@@ -202,7 +202,7 @@ Un sous-réseau est public quand sa table de routage envoie `0.0.0.0/0` vers une
 
 Script : `scripts/m02-routage.ps1`.
 
-![Module 2](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m02-routage.png)
+![Module 2](../images/m02-routage.png)
 
 | Table | Routes |
 |---|---|
@@ -243,27 +243,27 @@ Le compte n'autorise que 5 Elastic IP pour toute la classe. Les autres machines 
 
 **Console AWS – passerelle nat**
 
-![Console AWS – passerelle nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelle-nat.png)
+![Console AWS – passerelle nat](../../captures/m02/00-console-passerelle-nat.png)
 
 **Console AWS – passerelles internet**
 
-![Console AWS – passerelles internet](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelles-internet.png)
+![Console AWS – passerelles internet](../../captures/m02/00-console-passerelles-internet.png)
 
 **Console AWS – tables routage**
 
-![Console AWS – tables routage](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-tables-routage.png)
+![Console AWS – tables routage](../../captures/m02/00-console-tables-routage.png)
 
 **Terminal – routes**
 
-![Terminal – routes](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/01-routes.png)
+![Terminal – routes](../../captures/m02/01-routes.png)
 
 **Terminal – nat**
 
-![Terminal – nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/02-nat.png)
+![Terminal – nat](../../captures/m02/02-nat.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/99-preuves-tests.png)
+![Journal des tests](../../captures/m02/99-preuves-tests.png)
 
 
 ---
@@ -285,7 +285,7 @@ Un Security Group garde l'état des connexions : si l'aller est autorisé, le re
 
 Scripts : `scripts/m03-securite.ps1` et `scripts/m03-tests.ps1`.
 
-![Module 3](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m03-securite.png)
+![Module 3](../images/m03-securite.png)
 
 | Groupe | Sens | Port | Source |
 |---|---|---|---|
@@ -330,30 +330,30 @@ AWS interdit les noms de groupe qui commencent par `sg-`. Le nom `sg-web-TP-AC` 
 
 **Console AWS – groupes securite**
 
-![Console AWS – groupes securite](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-groupes-securite.png)
+![Console AWS – groupes securite](../../captures/m03/00-console-groupes-securite.png)
 
 **Console AWS – nacl**
 
-![Console AWS – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-nacl.png)
+![Console AWS – nacl](../../captures/m03/00-console-nacl.png)
 
 **Terminal – sg**
 
-![Terminal – sg](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/01-sg.png)
+![Terminal – sg](../../captures/m03/01-sg.png)
 
 **Terminal – nacl**
 
-![Terminal – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/02-nacl.png)
+![Terminal – nacl](../../captures/m03/02-nacl.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/99-preuves-tests.png)
+![Journal des tests](../../captures/m03/99-preuves-tests.png)
 
 
 ---
 
 # Module 4 – Network Firewall
 
-> Nous n'avons pas pu faire ce module. Toutes les actions `network-firewall:*` sont refusées par une règle de l'organisation AWS du formateur : rien n'a été déployé et rien n'a été testé. Nous avons préparé l'architecture, les règles et un template CloudFormation, mais celui-ci a seulement passé `validate-template` (vérification de syntaxe) et n'a jamais été déployé.
+> Ce module a d'abord été refusé par l'organisation AWS (`network-firewall:*`). Ce blocage a été levé le 17/11/2026 (nous ne savons pas qui l’a levé) : nous avons alors réalisé et testé le module pour de vrai.
 
 ## Objectif
 Filtrer ce qui sort du sous-réseau privé : n'autoriser que des dépôts de mises à jour, bloquer le reste du web et garder les alertes dans CloudWatch Logs.
@@ -361,30 +361,68 @@ Filtrer ce qui sort du sous-réseau privé : n'autoriser que des dépôts de mis
 ## Ce qu'il faut savoir
 Network Firewall est un pare-feu managé placé dans un sous-réseau à part. On y envoie le trafic avec des routes qui visent son endpoint. Il a un moteur sans état (par paquet) et un moteur avec état (domaines HTTP et TLS, règles Suricata). Il faut que le retour d'un flux repasse par le même endpoint, sinon le pare-feu perd l'état. Il coûte environ 0,40 USD de l'heure : on le supprime après les tests.
 
-## Ce que nous avons prévu
-Le trafic de `app-01` irait vers l'endpoint du pare-feu (`sub-fw-1a`, `10.20.2.0/28`), puis vers la NAT, puis vers Internet. Au retour, une route dans la table publique renverrait le trafic vers le pare-feu.
+## Ce que nous avons fait
+Le trafic de `app-01` passe par l'endpoint du pare-feu (`sub-fw-1a`, `10.20.2.0/28`), puis vers la NAT, puis vers Internet. Au retour, une route dans la table publique renvoie le trafic vers le pare-feu.
 
-![Module 4](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m04-firewall.png)
+![Module 4](../images/m04-firewall.png)
 
-Règles prévues, en ordre strict :
+Règles, en ordre strict :
 1. laisser passer tout le trafic interne du VPC (`10.20.0.0/22`) pour ne pas casser les autres modules ;
 2. autoriser seulement `.amazonlinux.com` et `.amazonaws.com` ;
 3. par défaut, bloquer et journaliser (`drop_established` et `alert_established`) dans `/leman/nfw-alert-TP-AC`.
 
-Les routes prévues sont : `rt-prive` avec `0.0.0.0/0` vers l'endpoint ; `rt-fw` avec `0.0.0.0/0` vers la NAT ; `rt-public` avec `10.20.1.0/26` vers l'endpoint pour le retour.
+Les routes sont : `rt-prive` avec `0.0.0.0/0` vers l'endpoint ; `rt-fw` avec `0.0.0.0/0` vers la NAT ; `rt-public` avec `10.20.1.0/26` vers l'endpoint pour le retour.
 
-Fichiers prêts : `cfn/optional-m04-network-firewall.yaml` et `scripts/m04-firewall.ps1` (jamais exécutés avec succès).
+Script : `scripts/m04-firewall.ps1`. Le template `cfn/optional-m04-network-firewall.yaml` reste une variante CloudFormation, non déployée.
 
-## Ce que nous testerions
+## Résultats des tests
+```
+Module 4 - Network Firewall (17/11/2026, eu-north-1, depuis app-01-TP-AC via SSM)
+
+Pare-feu : nfw-prod-leman-TP-AC, statut READY, endpoint vpce-08c28b6db9885db5b (sub-fw-1a-TP-AC, 10.20.2.0/28)
+Routes : rt-prive 0.0.0.0/0 -> endpoint ; rt-public 10.20.1.0/26 -> endpoint ; rt-fw 0.0.0.0/0 -> NAT
+
+[autorise] curl https://cdn.amazonlinux.com/             -> HTTP 403 (le serveur repond : la connexion passe)
+[autorise] curl https://ssm.eu-north-1.amazonaws.com/    -> HTTP 400 (le serveur repond : la connexion passe)
+[bloque]   curl https://example.com/                     -> Connection timed out after 15002 ms
+[bloque]   curl https://www.wikipedia.org/               -> Connection timed out after 15003 ms
+
+Journal /leman/nfw-alert-TP-AC (extrait) :
+  "src_ip":"10.20.1.10","app_proto":"tls","alert":{"signature":"aws:alert_established action","action":"blocked"}
+```
+
+## Ce que nous avons vérifié
 1. Le pare-feu passe à `Ready` et son endpoint apparaît dans la zone.
 2. Depuis `app-01`, `curl https://cdn.amazonlinux.com` fonctionne, `curl https://example.com` échoue.
 3. L'alerte du deuxième test apparaît dans les journaux.
 
-## Ce que nous avons essayé
-Nous avons créé le sous-réseau du pare-feu puis tenté de créer les groupes de règles, la politique et le pare-feu : refusé par l'organisation (message « explicit deny in a service control policy »). Nous avons supprimé le sous-réseau devenu inutile.
+## Ce qui a moins bien marché
+Le script a créé le pare-feu mais a échoué sur trois étapes : le groupe de journaux (les étiquettes passées à la création), la journalisation qui en dépend, et les routes (l'identifiant d'endpoint n'avait pas été lu). Nous avons relu l'endpoint avec `describe-firewall`, créé le groupe sans étiquettes puis étiqueté à part, et posé les routes à la main. Les routes n'avaient pas été modifiées entre-temps.
 
-## Nettoyage prévu
+## Nettoyage
 Supprimer d'abord le pare-feu, puis la politique et les groupes de règles, et remettre `0.0.0.0/0` vers la NAT dans `rt-prive`.
+
+## Captures
+
+**Console AWS – paquets bloques**
+
+![Console AWS – paquets bloques](../../captures/m04/00-console-paquets-bloques.png)
+
+**Console AWS – pare feu details**
+
+![Console AWS – pare feu details](../../captures/m04/00-console-pare-feu-details.png)
+
+**Console AWS – pare feux**
+
+![Console AWS – pare feux](../../captures/m04/00-console-pare-feux.png)
+
+**Console AWS – politique regles**
+
+![Console AWS – politique regles](../../captures/m04/00-console-politique-regles.png)
+
+**Journal des tests**
+
+![Journal des tests](../../captures/m04/99-preuves-tests.png)
 
 
 ---
@@ -405,7 +443,7 @@ Un peering relie deux VPC par le réseau privé d'AWS. Il faut faire la demande,
 
 Scripts : `scripts/m05-peering.ps1` et `scripts/m05-tests.ps1`.
 
-![Module 5](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m05-peering.png)
+![Module 5](../images/m05-peering.png)
 
 | Élément | Valeur |
 |---|---|
@@ -437,19 +475,19 @@ Le sujet supprime le peering au module 6, mais le Transit Gateway est bloqué : 
 
 **Console AWS – peering**
 
-![Console AWS – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/00-console-peering.png)
+![Console AWS – peering](../../captures/m05/00-console-peering.png)
 
 **Terminal – peering**
 
-![Terminal – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/01-peering.png)
+![Terminal – peering](../../captures/m05/01-peering.png)
 
 **Terminal – routes dev**
 
-![Terminal – routes dev](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/02-routes-dev.png)
+![Terminal – routes dev](../../captures/m05/02-routes-dev.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/99-preuves-tests.png)
+![Journal des tests](../../captures/m05/99-preuves-tests.png)
 
 
 ---
@@ -467,7 +505,7 @@ Chaque VPC se branche au Transit Gateway par un attachement. Avec le peering il 
 ## Ce que nous avons prévu
 Un Transit Gateway `tgw-leman-TP-AC` (ASN 64512), deux attachements `tgwa-prod` et `tgwa-dev`, deux tables `tgw-rt-prod` et `tgw-rt-dev` avec propagation croisée, et des routes `10.21.0.0/24` et `10.20.0.0/22` dans les tables des deux VPC.
 
-![Module 6](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m06-tgw.png)
+![Module 6](../images/m06-tgw.png)
 
 Fichiers prêts : `cfn/optional-m06-m08-interconnexion.yaml` (template validé, jamais déployé) et `scripts/m06-tgw.ps1` (jamais exécuté avec succès).
 
@@ -500,7 +538,7 @@ IPsec en version 2 fonctionne en deux temps : une phase d'authentification (ici 
 
 Script : `scripts/m07-ipsec-sim.ps1 -Site siege` ou `-Site agence`.
 
-![Module 7](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m07-vpn.png)
+![Module 7](../images/m07-vpn.png)
 
 | Élément | Valeur |
 |---|---|
@@ -558,7 +596,7 @@ rtt min/avg/max/mdev = 2.426/2.551/2.787/0.166 ms
   
 siege -> app-01:8080 : Success  app-01 TP-AC /api/health
   
-siege -> dev-01 : TEST NON CONCLUANT (dev-01 etait arretee) ; le dev n'est pas annonce aux sites (seul 10.20.0.0/22 est dans le tunnel), a refaire avec dev-01 demarree
+siege -> dev-01 : premier essai NON CONCLUANT (dev-01 etait arretee) ; refait plus bas avec dev-01 demarree
 === Module 7 - tunnel IPsec agence (simulation strongSwan) ===
 rtr-aws : swanctl --list-sas
 Success	siege: #2, CONNECTING, IKEv2, 46d24f38fb1cec9c_i* 0000000000000000_r
@@ -590,34 +628,150 @@ exit=0
 	
 agence -> app-01:8080 (seul flux autorise) : Success	app-01 TP-AC /api/health
 	
-agence -> dev-01 : TEST NON CONCLUANT (dev-01 etait arretee) ; le dev n'est pas annonce aux sites (seul 10.20.0.0/22 est dans le tunnel), a refaire avec dev-01 demarree
+agence -> dev-01 : premier essai NON CONCLUANT (dev-01 etait arretee) ; refait plus bas avec dev-01 demarree
+
+=== Module 7 - tunnel IPsec siege (simulation strongSwan) ===
+rtr-aws : swanctl --list-sas
+Success	agence: #1, CONNECTING, IKEv2, 395d821a9697a878_i* 0000000000000000_r
+  local  '%any' @ 10.20.0.74[500]
+  remote '%any' @ 13.60.86.14[500]
+  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+
+rtr-siege : swanctl --list-sas
+Success	siege: #1, ESTABLISHED, IKEv2, b535252c8726a847_i* fdcc7f92d6069070_r
+  local  '51.20.144.158' @ 192.168.10.10[4500]
+  remote '16.171.171.189' @ 16.171.171.189[4500]
+  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
+  established 11s ago, rekeying in 14194s
+  siege: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+    installed 11s ago, rekeying in 3286s, expires in 3949s
+    in  c78f150b (-|0x0000000b),      0 bytes,     0 packets
+    out c1856d9b (-|0x0000000b),      0 bytes,     0 packets
+    local  0.0.0.0/0
+    remote 0.0.0.0/0
+	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+
+(mode DevOnly : app-01 arretee, seuls l'etat du tunnel et le test dev-01 sont executes)
+siege -> dev-01 (10.21.0.10), dev-01 en cours d'execution (SSM : Online) : Success	3 packets transmitted, 0 received, 100% packet loss, time 2061ms
+
+code retour=0
+	  (le tunnel ne contient que 10.20.0.0/22)
+=== Module 7 - tunnel IPsec agence (simulation strongSwan) ===
+rtr-aws : swanctl --list-sas
+Success	siege: #2, CONNECTING, IKEv2, 7fadf2f20e07735e_i* 0000000000000000_r
+  local  '%any' @ 10.20.0.74[500]
+  remote '%any' @ 51.20.144.158[500]
+  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+
+rtr-agence : swanctl --list-sas
+Success	agence: #1, ESTABLISHED, IKEv2, 54b21ff5d5cbddfd_i* fb535af7b613e7e5_r
+  local  '13.62.50.97' @ 192.168.20.10[4500]
+  remote '16.171.171.189' @ 16.171.171.189[4500]
+  AES_CBC-256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
+  established 11s ago, rekeying in 13121s
+  agence: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+    installed 11s ago, rekeying in 3449s, expires in 3949s
+    in  c5ff0eeb (-|0x0000000c),      0 bytes,     0 packets
+    out c468260c (-|0x0000000c),      0 bytes,     0 packets
+    local  0.0.0.0/0
+    remote 0.0.0.0/0
+	plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+
+(mode DevOnly : app-01 arretee, seuls l'etat du tunnel et le test dev-01 sont executes)
+agence -> dev-01 (10.21.0.10), dev-01 en cours d'execution (SSM : Online) : Success	3 packets transmitted, 0 received, 100% packet loss, time 2024ms
+
+code retour=0
+	  (le tunnel ne contient que 10.20.0.0/22)
 ```
 
 ## Limites de notre réalisation
 - Un seul tunnel par site, alors que le VPN d'AWS en donne deux.
 - Nous avons monté le siège puis l'agence l'un après l'autre : le compte est limité à 16 vCPU pour toute la classe.
-- Nous n'avons pas encore prouvé que le siège et l'agence ne voient pas `dev-01`. Notre test était sans valeur, car `dev-01` était arrêtée. Par construction, seule la plage `10.20.0.0/22` est dans les tunnels.
+- Pour vérifier que ni le siège ni l'agence ne voient `dev-01`, nous avons d'abord fait un test sans valeur (`dev-01` était arrêtée). Nous l'avons refait avec `dev-01` démarrée (SSM « Online ») : le ping vers `10.21.0.10` perd 100 % des paquets depuis le siège et depuis l'agence, car seule la plage `10.20.0.0/22` est dans les tunnels. Ces tests ont été faits un site à la fois, sans `app-01` allumée (manque de vCPU).
 
 ## Nettoyage
 Le sujet est contradictoire sur ce point (garder ou supprimer le VPN). Nous gardons les routeurs jusqu'à la fin du cours, arrêtés quand nous ne les utilisons pas, et nous les supprimerons ensuite.
+
 
 ## Captures
 
 **Console AWS – secret vpn**
 
-![Console AWS – secret vpn](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/00-console-secret-vpn.png)
+![Console AWS – secret vpn](../../captures/m07/00-console-secret-vpn.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-1.png)
+![Journal des tests](../../captures/m07/99-preuves-tests-1.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-2.png)
+![Journal des tests](../../captures/m07/99-preuves-tests-2.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-3.png)
+![Journal des tests](../../captures/m07/99-preuves-tests-3.png)
+
+**Journal des tests**
+
+![Journal des tests](../../captures/m07/99-preuves-tests-4.png)
+
+**Journal des tests**
+
+![Journal des tests](../../captures/m07/99-preuves-tests-5.png)
+
+**Journal des tests**
+
+![Journal des tests](../../captures/m07/99-preuves-tests-6.png)
 
 
 ---
@@ -645,7 +799,7 @@ Les routeurs tournent avec FRRouting sur Ubuntu. Le sujet propose GNS3 : nous ne
 
 Script : `scripts/m08-bgp-sim.ps1`.
 
-![Module 8](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m08-dx.png)
+![Module 8](../images/m08-dx.png)
 
 | Élément | rtr-siege | rtr-aws |
 |---|---|---|
@@ -769,15 +923,15 @@ Rien n'est facturé à l'heure pour Direct Connect puisque nous n'avons rien com
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-1.png)
+![Journal des tests](../../captures/m08/99-preuves-tests-1.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-2.png)
+![Journal des tests](../../captures/m08/99-preuves-tests-2.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-3.png)
+![Journal des tests](../../captures/m08/99-preuves-tests-3.png)
 
 
 ---
@@ -799,7 +953,7 @@ L'ALB travaille au niveau applicatif et a un nœud par zone de disponibilité : 
 
 Script : `scripts/m09-alb.ps1`.
 
-![Module 9](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m09-alb.png)
+![Module 9](../images/m09-alb.png)
 
 | Élément | Valeur |
 |---|---|
@@ -839,31 +993,31 @@ Nous n'avons pas de domaine, donc le certificat est auto-signé (nos tests utili
 
 **Console AWS – alb**
 
-![Console AWS – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-alb.png)
+![Console AWS – alb](../../captures/m09/00-console-alb.png)
 
 **Console AWS – groupes cibles**
 
-![Console AWS – groupes cibles](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-groupes-cibles.png)
+![Console AWS – groupes cibles](../../captures/m09/00-console-groupes-cibles.png)
 
 **Terminal – alb**
 
-![Terminal – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/01-alb.png)
+![Terminal – alb](../../captures/m09/01-alb.png)
 
 **Terminal – targets web**
 
-![Terminal – targets web](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/02-targets-web.png)
+![Terminal – targets web](../../captures/m09/02-targets-web.png)
 
 **Terminal – targets app**
 
-![Terminal – targets app](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/03-targets-app.png)
+![Terminal – targets app](../../captures/m09/03-targets-app.png)
 
 **Terminal – rules**
 
-![Terminal – rules](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/04-rules.png)
+![Terminal – rules](../../captures/m09/04-rules.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/99-preuves-tests.png)
+![Journal des tests](../../captures/m09/99-preuves-tests.png)
 
 
 ---
@@ -883,7 +1037,7 @@ Une zone privée n'est visible que depuis les VPC auxquels on l'associe (le rés
 
 Scripts : `scripts/m10-route53.ps1` et `scripts/m10-tests.ps1`.
 
-![Module 10](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m10-route53.png)
+![Module 10](../images/m10-route53.png)
 
 | Zone | Nom | Cible |
 |---|---|---|
@@ -925,27 +1079,27 @@ Nous n'avons pas acheté de domaine, donc la délégation réelle est impossible
 
 **Console AWS – enregistrements**
 
-![Console AWS – enregistrements](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-enregistrements.png)
+![Console AWS – enregistrements](../../captures/m10/00-console-enregistrements.png)
 
 **Console AWS – zones**
 
-![Console AWS – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-zones.png)
+![Console AWS – zones](../../captures/m10/00-console-zones.png)
 
 **Terminal – zones**
 
-![Terminal – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/01-zones.png)
+![Terminal – zones](../../captures/m10/01-zones.png)
 
 **Terminal – records**
 
-![Terminal – records](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/02-records.png)
+![Terminal – records](../../captures/m10/02-records.png)
 
 **Terminal – records privee**
 
-![Terminal – records privee](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/03-records-privee.png)
+![Terminal – records privee](../../captures/m10/03-records-privee.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/99-preuves-tests.png)
+![Journal des tests](../../captures/m10/99-preuves-tests.png)
 
 
 ---
@@ -966,7 +1120,7 @@ CloudFront sert le contenu depuis un point de présence proche du visiteur. Les 
 
 Script : `scripts/m11-cloudfront.ps1` (tests : `m11-tests.ps1`).
 
-![Module 11](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m11-cloudfront.png)
+![Module 11](../images/m11-cloudfront.png)
 
 | Comportement | Chemin | Cache | Méthodes |
 |---|---|---|---|
@@ -1025,15 +1179,15 @@ Sans domaine, nous ne pouvons pas avoir de certificat ACM validé : les visiteur
 
 **Console AWS – cloudfront**
 
-![Console AWS – cloudfront](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/00-console-cloudfront.png)
+![Console AWS – cloudfront](../../captures/m11/00-console-cloudfront.png)
 
 **Terminal – distribution**
 
-![Terminal – distribution](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/01-distribution.png)
+![Terminal – distribution](../../captures/m11/01-distribution.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/99-preuves-tests.png)
+![Journal des tests](../../captures/m11/99-preuves-tests.png)
 
 
 ---
@@ -1055,7 +1209,7 @@ Chaque service envoie des métriques à CloudWatch. Une alarme regarde une stati
 
 Scripts : `scripts/m12-monitoring.ps1` (mise en place) et `m12-tests.ps1`, `m12-flowlogs3.ps1`, `m12-flowlogs4.ps1` (preuves).
 
-![Module 12](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m12-monitoring.png)
+![Module 12](../images/m12-monitoring.png)
 
 | Élément | Réglage |
 |---|---|
@@ -1123,35 +1277,35 @@ Nous gardons le tableau de bord, l'alarme et le groupe de logs pour le module 13
 
 **Console AWS – alarme**
 
-![Console AWS – alarme](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-alarme.png)
+![Console AWS – alarme](../../captures/m12/00-console-alarme.png)
 
 **Console AWS – tableau de bord**
 
-![Console AWS – tableau de bord](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-tableau-de-bord.png)
+![Console AWS – tableau de bord](../../captures/m12/00-console-tableau-de-bord.png)
 
 **Terminal – alarm**
 
-![Terminal – alarm](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/01-alarm.png)
+![Terminal – alarm](../../captures/m12/01-alarm.png)
 
 **Terminal – flowlog**
 
-![Terminal – flowlog](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/02-flowlog.png)
+![Terminal – flowlog](../../captures/m12/02-flowlog.png)
 
 **Terminal – sns**
 
-![Terminal – sns](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/03-sns.png)
+![Terminal – sns](../../captures/m12/03-sns.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-1.png)
+![Journal des tests](../../captures/m12/99-preuves-tests-1.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-2.png)
+![Journal des tests](../../captures/m12/99-preuves-tests-2.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests.png)
+![Journal des tests](../../captures/m12/99-preuves-tests.png)
 
 
 ---
@@ -1172,7 +1326,7 @@ Un template contient des ressources, des paramètres (`Environnement`, `CidrVpc`
 
 Scripts : `scripts/m13-cfn.ps1` (le scénario complet) et `scripts/m13-deploy.ps1` (tout déployer en une commande, certificat compris).
 
-![Module 13](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m13-cloudformation.png)
+![Module 13](../images/m13-cloudformation.png)
 
 | Paramètre | Valeur par défaut |
 |---|---|
@@ -1243,16 +1397,16 @@ Deux erreurs de notre part : les descriptions des Security Groups ne peuvent pas
 
 **Console AWS – piles cloudformation**
 
-![Console AWS – piles cloudformation](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/00-console-piles-cloudformation.png)
+![Console AWS – piles cloudformation](../../captures/m13/00-console-piles-cloudformation.png)
 
 **Terminal – stack**
 
-![Terminal – stack](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/01-stack.png)
+![Terminal – stack](../../captures/m13/01-stack.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-1.png)
+![Journal des tests](../../captures/m13/99-preuves-tests-1.png)
 
 **Journal des tests**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-2.png)
+![Journal des tests](../../captures/m13/99-preuves-tests-2.png)

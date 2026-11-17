@@ -1,0 +1,12 @@
+Module 4 - Network Firewall (17/11/2026, eu-north-1, depuis app-01-TP-AC via SSM)
+
+Pare-feu : nfw-prod-leman-TP-AC, statut READY, endpoint vpce-08c28b6db9885db5b (sub-fw-1a-TP-AC, 10.20.2.0/28)
+Routes : rt-prive 0.0.0.0/0 -> endpoint ; rt-public 10.20.1.0/26 -> endpoint ; rt-fw 0.0.0.0/0 -> NAT
+
+[autorise] curl https://cdn.amazonlinux.com/             -> HTTP 403 (le serveur repond : la connexion passe)
+[autorise] curl https://ssm.eu-north-1.amazonaws.com/    -> HTTP 400 (le serveur repond : la connexion passe)
+[bloque]   curl https://example.com/                     -> Connection timed out after 15002 ms
+[bloque]   curl https://www.wikipedia.org/               -> Connection timed out after 15003 ms
+
+Journal /leman/nfw-alert-TP-AC (extrait) :
+  "src_ip":"10.20.1.10","app_proto":"tls","alert":{"signature":"aws:alert_established action","action":"blocked"}

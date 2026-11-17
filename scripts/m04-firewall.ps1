@@ -30,11 +30,14 @@ Save-State $s
 Aws network-firewall create-firewall --firewall-name nfw-prod-leman-TP-AC --firewall-policy-arn $s.nfwPolicy --vpc-id $s.vpc --subnet-mappings "SubnetId=$($s.subFw)" --tags $tags | Out-Null
 Write-Host 'Attente du pare-feu (5-10 min)...'
 do { Start-Sleep 20; $st = Aws network-firewall describe-firewall --firewall-name nfw-prod-leman-TP-AC --query FirewallStatus.Status } while ($st -ne 'READY')
-$s.nfwEndpoint = Aws network-firewall describe-firewall --firewall-name nfw-prod-leman-TP-AC --query 'FirewallStatus.SyncStates.*.Attachment.EndpointId | [0]'
+# l'endpoint se lit en JSON (la fonction Aws force --output text)
+$fw = & $script:aws network-firewall describe-firewall --firewall-name nfw-prod-leman-TP-AC --profile TP-AC --region eu-north-1 --output json | ConvertFrom-Json
+$s | Add-Member -NotePropertyName nfwEndpoint -NotePropertyValue (($fw.FirewallStatus.SyncStates.PSObject.Properties | Select-Object -First 1).Value.Attachment.EndpointId) -Force
 Save-State $s
 
 # Journalisation des alertes -> CloudWatch Logs
-Aws logs create-log-group --log-group-name /leman/nfw-alert-TP-AC --tags Equipe=TP-AC,Projet=SatomCloudNetwork
+Aws logs create-log-group --log-group-name /leman/nfw-alert-TP-AC
+Aws logs tag-log-group --log-group-name /leman/nfw-alert-TP-AC --tags "Equipe=TP-AC,Projet=SatomCloudNetwork"
 Aws logs put-retention-policy --log-group-name /leman/nfw-alert-TP-AC --retention-in-days 3
 $log = @{ LogDestinationConfigs = @(@{ LogType='ALERT'; LogDestinationType='CloudWatchLogs'; LogDestination=@{ logGroup='/leman/nfw-alert-TP-AC' } }) }
 Aws network-firewall update-logging-configuration --firewall-name nfw-prod-leman-TP-AC --logging-configuration (J 'log' $log) | Out-Null
