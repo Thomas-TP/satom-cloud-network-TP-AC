@@ -1,10 +1,12 @@
-=== TP1/TP2 : tgw-leman ===
-Attachements : tgwa-prod-TP-AC	available tgwa-dev-TP-AC	available
-pcx-lab present ? : 0 (0 = supprime)
-Routes tgw-rt-prod : 10.21.0.0/24	propagated
+=== Module 6 : Transit Gateway deploye par la stack stack-interconnexion-leman-TP-AC ===
+Attachements : tgwa-prod-TP-AC	vpc	available | tgwa-dev-TP-AC	vpc	available | None	vpn	available | tgwa-vpn-agence-TP-AC	vpn	available | None	direct-connect-gateway	available
+Peering pcx-lab encore actif ? : 0 (0 = supprime)
+Tables : tgw-rt-prod-TP-AC	available | tgw-rt-dev-TP-AC	available | tgw-rt-sites-TP-AC	available
+Routes tgw-rt-prod : 10.21.0.0/24	propagated | 192.168.10.0/24	static | 192.168.20.0/24	static
 Routes tgw-rt-dev  : 10.20.0.0/22	propagated
-dev-01 -> app-01:8080 via TGW : Success	app-01 TP-AC /api/health 	
+dev-01 -> app-01:8080 par le Transit Gateway : Success	app-01 TP-AC /api/health 	
 
-=== TP3 : propagation retiree ===
-Propagation tgwa-dev -> tgw-rt-prod retiree (la prod ne sait plus repondre au dev) : Success	ECHEC 	
+=== TP3 : propagation de tgwa-dev vers tgw-rt-prod retiree ===
+Routes tgw-rt-prod apres retrait : 192.168.10.0/24	static | 192.168.20.0/24	static
+dev-01 -> app-01:8080 (la reponse n'a plus de route) : Success	ECHEC 	
 Propagation retablie : Success	app-01 TP-AC /api/health 	

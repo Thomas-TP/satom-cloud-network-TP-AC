@@ -1,9 +1,0 @@
-$ aws elbv2 describe-load-balancers
-----------------------------------------------------------------------------
-|                           DescribeLoadBalancers                          |
-+--------+-----------------------------------------------------------------+
-|  DNS   |  alb-prod-leman-TP-AC-2126648303.eu-north-1.elb.amazonaws.com   |
-|  Etat  |  active                                                         |
-|  Nom   |  alb-prod-leman-TP-AC                                           |
-|  Schema|  internet-facing                                                |
-+--------+-----------------------------------------------------------------+

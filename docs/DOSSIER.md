@@ -45,7 +45,7 @@ Nous sommes deux sur le projet. Le sujet prévoit une répartition en binômes a
 Le compte AWS est partagé avec toute la classe et l'organisation du formateur impose des limites. Voilà ce que nous avons dû adapter.
 
 - **Région** : le sujet parle de Zurich, mais seule Stockholm est utilisable (Zurich n'est pas activée, Francfort est refusée).
-- **Services bloqués** : Network Firewall, Transit Gateway, VPN et Direct Connect sont refusés. Nous avons relevé les messages d'erreur (voir `01-services-bloques.md`).
+- **Services bloqués** : Network Firewall, Transit Gateway, VPN et Direct Connect étaient refusés par l'organisation jusqu'au 17/11/2026 ; ils sont maintenant autorisés (voir `01-services-bloques.md`).
 - **Budget** : le sujet annonce 150 CHF par équipe, mais le compte dispose de 100 USD de crédits partagés. Nous avons créé un budget de 100 USD par mois avec une alerte à 80 %.
 - **Domaine et certificats** : nous n'avons pas acheté de domaine. Le certificat du load balancer est donc auto-signé, et la zone publique `leman-finance.example` n'est pas réellement déléguée.
 - **Adresses IP** : les autres équipes utilisent déjà `10.0.0.0/16`, et le prof nous a dit qu'un /16 était trop grand. Nous avons pris des plages plus petites.
@@ -71,6 +71,37 @@ Le compte part avec 100 USD. Les activités « Gagnez des crédits AWS » nous o
 
 Le budget `budget-TP-AC-satom` envoie son alerte à 80 % vers le topic SNS d'exploitation.
 
+## Questions au client
+Pour son rôle, chacun de nous a écrit trois questions, qui doivent permettre de vérifier si l'exigence est mesurable, qui décide, et quel est le risque. Le client est fictif : nous n'avons pas de réponses, et le binôme de contrôle doit encore valider cette liste en classe.
+
+**Architecte réseau**
+1. Combien d'utilisateurs, au siège et à l'agence, et quel débit maximal faut-il prévoir vers le cloud (c'est ce qui décide du dimensionnement des liaisons) ?
+2. Qui décide de la région définitive (Zurich ou Francfort) et de la date à laquelle l'application quitte la salle serveur ?
+3. Quelle durée de coupure est tolérable si une liaison tombe, et qui accepte ce risque ?
+
+**Ingénieur sécurité**
+1. Quelles règles précises s'appliquent à ces données (FINMA, LPD…), et combien de temps faut-il conserver les journaux pour le prouver ?
+2. Qui valide l'ajout d'un nouveau domaine autorisé dans le pare-feu, et dans quel délai ?
+3. Que se passe-t-il si un accès du développement atteint la production : quelle est la séparation minimale exigée (réseaux seulement, ou comptes séparés) ?
+
+## Estimation du budget
+Nous avons relevé les tarifs de la région de Stockholm avec l'API de prix d'AWS (le calculateur en ligne n'a pas été utilisé : c'est la même source). L'API ne donne pas le prix de l'attachement Transit Gateway ni du VPN pour Stockholm : nous prenons le tarif public de 0,05 USD de l'heure. Le taux de change retenu est 1 USD = 0,90 CHF (hypothèse).
+
+| Poste | USD par heure | USD par mois (730 h) | Source |
+|---|---|---|---|
+| Instances `t3.micro` (8) | 0.0864 | 63 |  API de prix |
+| NAT Gateway | 0.0460 | 34 |  API de prix |
+| Load balancer (ALB) | 0.0239 | 17 |  API de prix |
+| Network Firewall (1 endpoint) | 0.3950 | 288 |  API de prix |
+| Transit Gateway (4 attachements) | 0.2000 | 146 |  tarif public |
+| VPN (2 connexions) | 0.1000 | 73 |  tarif public |
+| Adresses IPv4 publiques (9) | 0.0450 | 33 |  API de prix |
+| **Total** | **0.90** | **654** | |
+
+* Allumé en permanence, l'ensemble coûte environ **654 USD par mois, soit 589 CHF** : bien au-delà des 150 CHF de budget.
+* Allumé seulement pendant les séances (environ 40 heures par semaine), il coûte environ **36 USD, soit 32 CHF** : c'est tenable.
+* Notre réduction : le pare-feu, le Transit Gateway et les VPN (plus de 90 % du coût) ne tournent que le temps des tests et des captures, puis nous les supprimons. Les routeurs et les instances sont arrêtés hors séance.
+
 ## Méthode
 Nous avons tout scripté avec l'AWS CLI (un script par module dans `scripts/`). Chaque test écrit son résultat dans un fichier du dépôt, que l'on retrouve dans la partie « Résultats des tests » de chaque module.
 
@@ -87,6 +118,14 @@ Nous avons tout scripté avec l'AWS CLI (un script par module dans `scripts/`). 
 **Console AWS – quetes credits**
 
 ![Console AWS – quetes credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-quetes-credits.png)
+
+**Terminal**
+
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/10-terminal-1.png)
+
+**Terminal**
+
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/10-terminal-2.png)
 
 
 ---
@@ -167,21 +206,21 @@ L'outil Reachability Analyzer est bloqué par l'organisation. Et SSM a besoin d'
 
 ![Console AWS – vpcs](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-vpcs.png)
 
-**Terminal – vpc**
+**Terminal**
 
-![Terminal – vpc](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/01-vpc.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/10-terminal-1.png)
 
-**Terminal – subnets**
+**Terminal**
 
-![Terminal – subnets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/02-subnets.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/10-terminal-2.png)
 
-**Terminal – instances**
+**Terminal – journal du test**
 
-![Terminal – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/03-instances.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/99-journal-1.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/99-preuves-tests.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/99-journal-2.png)
 
 
 ---
@@ -253,17 +292,9 @@ Le compte n'autorise que 5 Elastic IP pour toute la classe. Les autres machines 
 
 ![Console AWS – tables routage](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-tables-routage.png)
 
-**Terminal – routes**
+**Terminal – journal du test**
 
-![Terminal – routes](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/01-routes.png)
-
-**Terminal – nat**
-
-![Terminal – nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/02-nat.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/99-preuves-tests.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/99-journal-1.png)
 
 
 ---
@@ -336,17 +367,9 @@ AWS interdit les noms de groupe qui commencent par `sg-`. Le nom `sg-web-TP-AC` 
 
 ![Console AWS – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-nacl.png)
 
-**Terminal – sg**
+**Terminal – journal du test**
 
-![Terminal – sg](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/01-sg.png)
-
-**Terminal – nacl**
-
-![Terminal – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/02-nacl.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/99-preuves-tests.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/99-journal-1.png)
 
 
 ---
@@ -369,35 +392,53 @@ Le trafic de `app-01` passe par l'endpoint du pare-feu (`sub-fw-1a`, `10.20.2.0/
 Règles, en ordre strict :
 1. laisser passer tout le trafic interne du VPC (`10.20.0.0/22`) pour ne pas casser les autres modules ;
 2. autoriser seulement `.amazonlinux.com` et `.amazonaws.com` ;
-3. par défaut, bloquer et journaliser (`drop_established` et `alert_established`) dans `/leman/nfw-alert-TP-AC`.
+3. par défaut, bloquer et journaliser (`drop_established` et `alert_established`) dans `/leman/nfw-alert-TP-AC` ;
+4. un second journal, `/leman/nfw-flow-TP-AC`, garde **tous** les flux vus par le pare-feu, y compris ceux qu'il autorise : c'est lui qui montre le flux autorisé, car une alerte n'est émise que pour ce qui est bloqué.
 
-Les routes sont : `rt-prive` avec `0.0.0.0/0` vers l'endpoint ; `rt-fw` avec `0.0.0.0/0` vers la NAT ; `rt-public` avec `10.20.1.0/26` vers l'endpoint pour le retour.
+Les routes sont : `rt-prive` avec `0.0.0.0/0` vers l'endpoint ; `rt-fw` avec `0.0.0.0/0` vers la NAT ; `rt-public` avec `10.20.1.0/26` vers l'endpoint pour le retour ; et, dans `rt-prive`, `10.20.0.0/26` et `10.20.0.64/26` vers l'endpoint (les deux sous-réseaux publics), pour que les réponses du privé vers le public traversent aussi le pare-feu.
 
-Script : `scripts/m04-firewall.ps1`. Le template `cfn/optional-m04-network-firewall.yaml` reste une variante CloudFormation, non déployée.
+Le pare-feu que montrent les tests est **déployé par le modèle CloudFormation** `cfn/interconnexion-leman.yaml` (voir le module 13). Le script `scripts/m04-firewall.ps1` (déploiement par la ligne de commande) nous a servi pour le premier essai.
 
 ## Résultats des tests
 ```
-Module 4 - Network Firewall (17/11/2026, eu-north-1, depuis app-01-TP-AC via SSM)
+=== Module 4 : pare-feu deploye par la stack stack-interconnexion-leman-TP-AC ===
+Pare-feu nfw-prod-leman-TP-AC : statut READY, endpoint vpce-0951ba9169b5e0399 dans le sous-reseau sub-fw-1a-TP-AC (10.20.2.0/28)
+Routes : rt-prive 0.0.0.0/0 -> vpce-0951ba9169b5e0399 (endpoint du pare-feu)
+[autorise] curl https://cdn.amazonlinux.com/ -> HTTP 403
+[bloque]   curl https://example.com/        -> Failed	curl: (28) Connection timed out after 10002 milliseconds HTTP 000	failed to run commands: exit status 28
+[bloque]   curl https://www.wikipedia.org/  -> Failed	curl: (28) Connection timed out after 10003 milliseconds HTTP 000	failed to run commands: exit status 28
+[interne]   web-01 -> app-01:8080 (trafic interne, autorise par la regle 1 du pare-feu) -> Success	app-01 TP-AC /api/health 	
 
-Pare-feu : nfw-prod-leman-TP-AC, statut READY, endpoint vpce-08c28b6db9885db5b (sub-fw-1a-TP-AC, 10.20.2.0/28)
-Routes : rt-prive 0.0.0.0/0 -> endpoint ; rt-public 10.20.1.0/26 -> endpoint ; rt-fw 0.0.0.0/0 -> NAT
+Journal des alertes /leman/nfw-alert-TP-AC (flux bloques) :
+  47 alertes ; exemples :
+  src 10.20.1.10 -> dst 13.40.182.125:123 | proto ntp | action blocked | aws:alert_established action
+  src 10.20.1.10 -> dst 18.133.139.197:123 | proto ntp | action blocked | aws:alert_established action
+  src 10.20.1.10 -> dst 104.20.23.154:443 | proto tls | action blocked | aws:alert_established action
 
-[autorise] curl https://cdn.amazonlinux.com/             -> HTTP 403 (le serveur repond : la connexion passe)
-[autorise] curl https://ssm.eu-north-1.amazonaws.com/    -> HTTP 400 (le serveur repond : la connexion passe)
-[bloque]   curl https://example.com/                     -> Connection timed out after 15002 ms
-[bloque]   curl https://www.wikipedia.org/               -> Connection timed out after 15003 ms
-
-Journal /leman/nfw-alert-TP-AC (extrait) :
-  "src_ip":"10.20.1.10","app_proto":"tls","alert":{"signature":"aws:alert_established action","action":"blocked"}
+Journal des flux /leman/nfw-flow-TP-AC (tous les flux vus par le pare-feu, dont le flux autorise) :
+  128 flux vus (app-01 et web-01 vers app-01) ; exemples :
+  src 10.20.0.115:40388 -> dst 10.20.1.10:8080 | proto TCP | octets 180
+  src 10.20.0.19:41222 -> dst 10.20.1.10:8080 | proto TCP | octets 180
+  src 10.20.0.115:14054 -> dst 10.20.1.10:8080 | proto TCP | octets 180
+  src 10.20.0.19:25106 -> dst 10.20.1.10:8080 | proto TCP | octets 180
 ```
 
 ## Ce que nous avons vérifié
 1. Le pare-feu passe à `Ready` et son endpoint apparaît dans la zone.
 2. Depuis `app-01`, `curl https://cdn.amazonlinux.com` fonctionne, `curl https://example.com` échoue.
-3. L'alerte du deuxième test apparaît dans les journaux.
+3. Les deux tests apparaissent dans les journaux : l'alerte du flux bloqué dans le journal des alertes, le flux autorisé (avec son nombre d'octets) dans le journal des flux.
 
 ## Ce qui a moins bien marché
-Le script a créé le pare-feu mais a échoué sur trois étapes : le groupe de journaux (les étiquettes passées à la création), la journalisation qui en dépend, et les routes (l'identifiant d'endpoint n'avait pas été lu). Nous avons relu l'endpoint avec `describe-firewall`, créé le groupe sans étiquettes puis étiqueté à part, et posé les routes à la main. Les routes n'avaient pas été modifiées entre-temps.
+Au premier essai, par la ligne de commande, le pare-feu a été créé mais trois étapes ont échoué : le groupe de journaux (les étiquettes passées à la création), la journalisation qui en dépend, et les routes (l'identifiant d'endpoint n'avait pas été lu). Nous avons corrigé ces étapes à la main. AWS a aussi refusé de supprimer le pare-feu tant qu'une journalisation était configurée : il faut la retirer d'abord. Le modèle CloudFormation gère cet ordre tout seul.
+
+Le sujet demande que le flux autorisé et le flux bloqué apparaissent tous les deux dans les journaux. Notre premier essai ne journalisait que les alertes : nous avons ajouté le journal des flux.
+
+## Un défaut que le sujet ne mentionne pas
+Notre première version ne mettait que la route de retour dans la table publique, comme le sujet le demande. Résultat : **`web-01` ne joignait plus `app-01`**. La NAT est dans le même sous-réseau que `web-01` : la route de retour `10.20.1.0/26` vers le pare-feu s'applique donc aussi à tout ce que `web-01` envoie vers `app-01`. La requête passait par le pare-feu, mais la réponse revenait directement, et le pare-feu, qui ne voyait qu'un sens de l'échange, coupait la suite.
+
+Nous avons d'abord ajouté, dans `rt-prive`, les routes `10.20.0.0/26` et `10.20.0.64/26` vers l'endpoint, pour que la réponse repasse aussi par le pare-feu. Cela ne suffisait pas : le flux était bien vu par le pare-feu (il apparaît dans le journal des flux), mais n'arrivait pas à `app-01`. La cause : dans `sg-app`, les règles de `web-01` et de `rtr-aws` étaient écrites « depuis le groupe de sécurité X ». Quand le trafic traverse l'endpoint du pare-feu, AWS ne le rattache plus à ce groupe, et la règle ne correspond plus. Les flux du développement et des sites marchaient, car leurs règles sont écrites par plage d'adresses. Nous avons donc écrit ces règles par plage (`10.20.0.0/26` pour `web-01`, `10.20.0.74/32` pour `rtr-aws`).
+
+Ce qu'il faut retenir : avec un pare-feu au milieu d'un VPC, il faut que le trafic soit **symétrique**, et que les Security Groups autorisent par **adresses** plutôt que par référence de groupe.
 
 ## Nettoyage
 Supprimer d'abord le pare-feu, puis la politique et les groupes de règles, et remettre `0.0.0.0/0` vers la NAT dans `rt-prive`.
@@ -420,9 +461,17 @@ Supprimer d'abord le pare-feu, puis la politique et les groupes de règles, et r
 
 ![Console AWS – politique regles](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/00-console-politique-regles.png)
 
-**Journal des tests**
+**Terminal**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/99-preuves-tests.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/10-terminal-1.png)
+
+**Terminal**
+
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/10-terminal-2.png)
+
+**Terminal – journal du test**
+
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/99-journal-1.png)
 
 
 ---
@@ -477,17 +526,13 @@ Comme le sujet le demande, le peering `pcx-lab-TP-AC` est supprimé au module 6 
 
 ![Console AWS – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/00-console-peering.png)
 
-**Terminal – peering**
+**Terminal**
 
-![Terminal – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/01-peering.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/10-terminal-1.png)
 
-**Terminal – routes dev**
+**Terminal – journal du test**
 
-![Terminal – routes dev](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/02-routes-dev.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/99-preuves-tests.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/99-journal-1.png)
 
 
 ---
@@ -508,7 +553,7 @@ Chaque VPC se branche au Transit Gateway par un attachement. Avec le peering il 
 - Deux tables : `tgw-rt-prod-TP-AC` (associée à la prod, elle apprend le CIDR du dev) et `tgw-rt-dev-TP-AC` (associée au dev, elle apprend le CIDR de la prod).
 - Dans les VPC : `10.21.0.0/24` vers le Transit Gateway dans `rt-prive`, et `10.20.0.0/22` vers le Transit Gateway dans la table du dev. Le peering `pcx-lab` a ensuite été supprimé.
 
-Script : `scripts/m06-tgw.ps1`. Nos plages sont `10.20.0.0/22` (prod) et `10.21.0.0/24` (dev), pas les `10.0.0.0/16` et `10.1.0.0/16` du sujet.
+Le Transit Gateway que montrent les tests est **déployé par le modèle CloudFormation** `cfn/interconnexion-leman.yaml` (module 13) ; ses attachements `tgwa-prod-TP-AC` et `tgwa-dev-TP-AC` utilisent un sous-réseau de chaque VPC (pour la prod : `sub-prive-1a` et `sub-public-1b`, afin que le routeur AWS du module 8 joigne le Transit Gateway). Le script `scripts/m06-tgw.ps1` nous a servi pour le premier essai, et `scripts/m06-tests.ps1` rejoue les tests. Nos plages sont `10.20.0.0/22` (prod) et `10.21.0.0/24` (dev), pas les `10.0.0.0/16` et `10.1.0.0/16` du sujet.
 
 ![Module 6](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m06-tgw.png)
 
@@ -527,15 +572,17 @@ Script : `scripts/m06-tgw.ps1`. Nos plages sont `10.20.0.0/22` (prod) et `10.21.
 
 ## Résultats des tests
 ```
-=== TP1/TP2 : tgw-leman ===
-Attachements : tgwa-prod-TP-AC	available tgwa-dev-TP-AC	available
-pcx-lab present ? : 0 (0 = supprime)
-Routes tgw-rt-prod : 10.21.0.0/24	propagated
+=== Module 6 : Transit Gateway deploye par la stack stack-interconnexion-leman-TP-AC ===
+Attachements : tgwa-prod-TP-AC	vpc	available | tgwa-dev-TP-AC	vpc	available | None	vpn	available | tgwa-vpn-agence-TP-AC	vpn	available | None	direct-connect-gateway	available
+Peering pcx-lab encore actif ? : 0 (0 = supprime)
+Tables : tgw-rt-prod-TP-AC	available | tgw-rt-dev-TP-AC	available | tgw-rt-sites-TP-AC	available
+Routes tgw-rt-prod : 10.21.0.0/24	propagated | 192.168.10.0/24	static | 192.168.20.0/24	static
 Routes tgw-rt-dev  : 10.20.0.0/22	propagated
-dev-01 -> app-01:8080 via TGW : Success	app-01 TP-AC /api/health 	
+dev-01 -> app-01:8080 par le Transit Gateway : Success	app-01 TP-AC /api/health 	
 
-=== TP3 : propagation retiree ===
-Propagation tgwa-dev -> tgw-rt-prod retiree (la prod ne sait plus repondre au dev) : Success	ECHEC 	
+=== TP3 : propagation de tgwa-dev vers tgw-rt-prod retiree ===
+Routes tgw-rt-prod apres retrait : 192.168.10.0/24	static | 192.168.20.0/24	static
+dev-01 -> app-01:8080 (la reponse n'a plus de route) : Success	ECHEC 	
 Propagation retablie : Success	app-01 TP-AC /api/health
 ```
 Quand nous retirons la propagation de `tgwa-dev` vers `tgw-rt-prod`, le `curl` depuis `dev-01` échoue : la requête arrive jusqu'à `app-01`, mais la réponse n'a plus de route pour revenir. Dès que la propagation est remise, il refonctionne.
@@ -564,9 +611,13 @@ Facturé à l'heure : nous supprimons les attachements, puis les tables, puis le
 
 ![Console AWS – tables tgw](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/00-console-tables-tgw.png)
 
-**Journal des tests**
+**Terminal**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/99-preuves-tests.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/10-terminal-1.png)
+
+**Terminal – journal du test**
+
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/99-journal-1.png)
 
 
 ---
@@ -589,7 +640,7 @@ Une connexion VPN AWS donne **deux tunnels** IPsec, vers deux adresses publiques
 - Chaque routeur monte ses deux tunnels (`xfrm-siege1` et `xfrm-siege2`, `xfrm-agence1` et `xfrm-agence2`). Le premier tunnel a la préférence (métrique 100), le second sert de secours (200).
 - Dans `sg-app` : ping et 8080 pour le siège, 8080 seulement pour l'agence.
 
-Scripts : `scripts/m07-vpn-aws.ps1` avec `-Stage 1` (ressources AWS), `-Stage 2` (routeurs et tests) et `-Stage 3` (bascule).
+Les ressources AWS (Elastic IP, Customer Gateways, connexions VPN, attachements, routes) sont **déployées par le modèle CloudFormation** `cfn/interconnexion-leman.yaml` (voir le module 13). Les clés partagées viennent de Secrets Manager par référence dynamique : elles n'apparaissent dans aucun fichier. Le script `scripts/m07-vpn-aws.ps1` configure ensuite les routeurs et mesure : `-Stage 2` (strongSwan et tests de flux), `-Stage 3` (bascule du siège) et `-Stage 4` (bascule de l'agence). Le premier essai, créé à la main par la ligne de commande, nous a servi à comprendre les paramètres ; le modèle l'a remplacé.
 
 ![Module 7](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m07-vpn.png)
 
@@ -608,60 +659,114 @@ Scripts : `scripts/m07-vpn-aws.ps1` avec `-Stage 1` (ressources AWS), `-Stage 2`
 
 ## Résultats des tests
 ```
-=== Module 7 - etape 1 : etat des VPN avant configuration des routeurs ===
-vpn-siege-TP-AC : available ipsec.1 True
-  tunnels (adresse AWS, etat) : 13.48.14.139 DOWN | 16.192.201.171 DOWN
-vpn-agence-TP-AC : available ipsec.1 True
-  tunnels (adresse AWS, etat) : 16.192.26.24 DOWN | 51.21.21.145 DOWN
+=== Module 7 - etape 1 : VPN crees par la stack, avant configuration des routeurs ===
+vpn-siege-TP-AC : available	ipsec.1	True
+  tunnels (adresse AWS, etat) : 16.16.69.252	DOWN | 16.192.162.35	DOWN
+vpn-agence-TP-AC : available	ipsec.1	True
+  tunnels (adresse AWS, etat) : 13.61.98.78	DOWN | 13.63.173.212	DOWN
+tgw-rt-prod : 10.21.0.0/24	propagated	active | 192.168.10.0/24	static	blackhole | 192.168.20.0/24	static	blackhole
 
 === Module 7 - etape 2 : tunnels, flux et segmentation ===
 siege : swanctl --list-sas (cote routeur)
-siege-t2: #2, ESTABLISHED, IKEv2, 7715eee1bf6cb7d9_i* 207cbdc434e743c0_r
-  siege-t2: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-siege-t1: #1, ESTABLISHED, IKEv2, c01a613693cec6ac_i* 0a606cb63546e3dd_r
-  siege-t1: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+siege-t2: #2, ESTABLISHED, IKEv2, 35f033fe3ecf3ca4_i* 67e0bc1592994c7c_r
+  siege-t2: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+siege-t1: #1, ESTABLISHED, IKEv2, c4c613fa152a7cd4_i* d1219417c5494da4_r
+  siege-t1: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+
 agence : swanctl --list-sas (cote routeur)
-agence-t2: #2, ESTABLISHED, IKEv2, 6ece0791ffe16043_i* 7754fd3d6d5e44c8_r
+agence-t2: #2, ESTABLISHED, IKEv2, e2e49f4e64242dc5_i* 2f6ae7a044ccede0_r
   agence-t2: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-agence-t1: #1, ESTABLISHED, IKEv2, 1bda37dff36ddac9_i* 919dbf129234fc88_r
+agence-t1: #1, ESTABLISHED, IKEv2, dd2a0ff6e93c4d51_i* 01379b4f96a3567f_r
   agence-t1: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-vpn-siege-TP-AC, etat des tunnels vu par AWS : 13.48.14.139 UP  | 16.192.201.171 UP 
-vpn-agence-TP-AC, etat des tunnels vu par AWS : 16.192.26.24 DOWN  | 51.21.21.145 DOWN    <- lecture faite trop tot : AWS mettait quelques secondes a passer UP (voir etat final)
-tgw-rt-prod (routes actives) : 10.21.0.0/24 propagated vpc | 192.168.10.0/24 static vpn | 192.168.20.0/24 static vpn
-tgw-rt-dev  (routes actives) : 10.20.0.0/22 propagated
-tgw-rt-sites (routes actives) : 10.20.0.0/22 propagated
+
+vpn-siege-TP-AC, etat des tunnels vu par AWS : 16.16.69.252	UP	 | 16.192.162.35	UP	
+vpn-agence-TP-AC, etat des tunnels vu par AWS : 13.61.98.78	UP	 | 13.63.173.212	UP	
+tgw-rt-prod (routes actives) : 10.21.0.0/24	propagated	vpc | 192.168.10.0/24	static	vpn | 192.168.20.0/24	static	vpn
+tgw-rt-dev  (routes actives) : 10.20.0.0/22	propagated
+tgw-rt-sites (routes actives) : 10.20.0.0/22	propagated
+
 -- siege -> app-01 (10.20.1.10)
 ping : --- 10.20.1.10 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2003ms
-rtt min/avg/max/mdev = 2.729/3.175/3.841/0.479 ms
+3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+rtt min/avg/max/mdev = 2.645/2.703/2.818/0.081 ms
+	
 8080 : app-01 TP-AC /api/health
+	
+
 -- agence -> app-01 (seul le 8080 est autorise)
 8080 : app-01 TP-AC /api/health
-ping (doit echouer) : 2 packets transmitted, 0 received, 100% packet loss, time 1028ms
+	
+ping (doit echouer) : 2 packets transmitted, 0 received, 100% packet loss, time 1014ms
+
+	
+
 -- segmentation : aucun site ne joint dev-01 (10.21.0.10), dev-01 ne joint pas les sites (dev-01 SSM : Online)
-siege -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2042ms
-agence -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2034ms
-dev-01 -> siege : 3 packets transmitted, 0 received, 100% packet loss, time 2101ms
-dev-01 -> agence : 3 packets transmitted, 0 received, 100% packet loss, time 2117ms
+siege -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2048ms
+
+	
+agence -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2050ms
+
+	
+dev-01 -> siege : 3 packets transmitted, 0 received, 100% packet loss, time 2119ms
+
+	
+dev-01 -> agence : 3 packets transmitted, 0 received, 100% packet loss, time 2114ms
 
 === Module 7 - etape 3 : bascule entre les deux tunnels du siege ===
-T+10 s : coupure du tunnel 1 (siege-t1)
-T+70 s : tunnel 1 retabli
---- resultat du ping horodate (une sonde toutes les 0,5 s, 200 sondes)
-200 packets transmitted, 160 received, 20% packet loss, time 99838ms
-rtt min/avg/max/mdev = 2.340/2.535/3.768/0.187 ms
-interruption de 20.7 s, de T+10.0 s a T+30.7 s (sondes 22 a 61 perdues)
-sessions IKE etablies : 2
-etat vu par AWS : 13.48.14.139 UP | 16.192.201.171 UP
+avant le test : tunnels vus par AWS = UP	UP
+T+10 s : panne silencieuse du tunnel 1 (les paquets vers 16.16.69.252 sont perdus, comme une vraie coupure)
 
-=== Etat final des 4 tunnels (vu par AWS, apres tous les tests) ===
-vpn-siege-TP-AC : 13.48.14.139 UP | 16.192.201.171 UP
-vpn-agence-TP-AC : 16.192.26.24 UP | 51.21.21.145 UP
-tgw-rt-prod : 10.21.0.0/24 propagated | 192.168.10.0/24 static | 192.168.20.0/24 static
+T+15 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege1 uid 0 
+
+T+60 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege2 uid 0  ; tunnels etablis cote routeur : 1
+
+T+90 s : le tunnel 1 est retabli (paquets de nouveau acceptes, IKE relance)
+
+T+130 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege1 uid 0 
+
+--- resultat des requetes curl sur le port 8080 (une toutes les 0,3 s)
+
+interruption de 29.2 s, de T+9.9 s a T+39.0 s
+
+sessions IKE etablies : 2
+
+	
+
+etat vu par AWS : 16.16.69.252	DOWN | 16.192.162.35	UP
+
+=== Module 7 - etape 4 : bascule entre les deux tunnels de l'agence ===
+avant le test : tunnels vus par AWS = UP	UP
+T+10 s : panne silencieuse du tunnel 1 (les paquets vers 13.61.98.78 sont perdus, comme une vraie coupure)
+
+T+15 s : route : 10.20.1.10 from 192.168.20.10 dev xfrm-agence1 uid 0 
+
+T+60 s : route : 10.20.1.10 from 192.168.20.10 dev xfrm-agence2 uid 0  ; tunnels etablis cote routeur : 1
+
+T+90 s : le tunnel 1 est retabli (paquets de nouveau acceptes, IKE relance)
+
+T+130 s : route : 10.20.1.10 from 192.168.20.10 dev xfrm-agence1 uid 0 
+
+--- resultat des requetes curl sur le port 8080 (une toutes les 0,3 s)
+
+interruption de 33.5 s, de T+9.7 s a T+43.2 s
+
+sessions IKE etablies : 2
+
+	
+etat vu par AWS : 13.61.98.78	UP | 13.63.173.212	UP
 ```
 
 ## Bascule entre les deux tunnels
-Nous coupons le premier tunnel du siège pendant un ping horodaté (une sonde toutes les 0,5 s). L'interruption dure environ **21 secondes** : c'est le délai de détection d'AWS (le temps d'abandonner le tunnel qu'il croit encore vivant). Ensuite le trafic passe par le second tunnel, et quand nous remettons le premier, rien ne se coupe. Le sujet parle d'une bascule « sans coupure » : nous ne l'avons pas obtenue, nous avons mesuré 21 secondes.
+Pour imiter une vraie panne, nous ne coupons pas l'interface : nous **supprimons les paquets** vers l'adresse AWS du premier tunnel (une perte silencieuse, comme une coupure de ligne). Une requête `curl` est envoyée toutes les 0,3 s (une nouvelle connexion à chaque fois, comme de vrais clients). Nous mesurons le plus long silence :
+
+| Site | Interruption mesurée |
+|---|---|
+| Siège | **29,2 s** |
+| Agence | **33,5 s** |
+
+C'est le délai pendant lequel AWS croit encore que le premier tunnel est vivant ; ensuite, tout passe par le second. Quand nous rendons le premier, rien ne se coupe. Cette durée n'est pas fixe : sur d'autres essais, nous avons mesuré entre 26 et 34 secondes. Le sujet parle d'une bascule « sans coupure » : ce n'est pas possible avec un VPN IPsec (voir `docs/02-ecarts-au-sujet.md`).
+
+Nos premières mesures étaient trompeuses : (1) en coupant l'interface, la bascule semblait immédiate, ce qui n'arrive jamais en vrai ; (2) avec un `ping`, le même flux ICMP restait collé au tunnel mort et la mesure atteignait 81 s, alors que de nouvelles connexions repartent après 30 s environ. Le `curl` toutes les 0,3 s est donc plus représentatif.
 
 ## Limites de notre réalisation
 - Les sites sont simulés : deux instances EC2 dans deux petits VPC (`vpc-siege-sim`, `vpc-agence-sim`), pas du vrai matériel ni du GNS3.
@@ -684,29 +789,25 @@ Les deux connexions VPN sont facturées à l'heure : nous les supprimons à la f
 
 ![Console AWS – tunnels vpn](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/00-console-tunnels-vpn.png)
 
-**Journal des tests**
+**Terminal**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-1.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/10-terminal-1.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-2.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-journal-1.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-3.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-journal-2.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-4.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-journal-3.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-5.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-6.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-journal-4.png)
 
 
 ---
@@ -726,7 +827,7 @@ Nous devons transférer 2 To en 8 heures : 16 000 Gbit sur 28 800 s, soit enviro
 
 ## Ce que nous avons fait
 **Partie réelle :**
-- `dxgw-leman-TP-AC`, ASN 64513. Notre premier essai avait pris par erreur le même ASN que le Transit Gateway (64512), et AWS refuse alors l'association : nous l'avons supprimé et recréé avec le bon ASN.
+- `dxgw-leman-TP-AC`, ASN 64513. Il n'existe pas de type CloudFormation pour un Direct Connect Gateway : le modèle `cfn/interconnexion-leman.yaml` le crée avec une **ressource personnalisée** (une petite fonction Lambda). Notre premier essai avait pris par erreur le même ASN que le Transit Gateway (64512), et AWS refuse alors l'association : nous l'avons supprimé et recréé avec le bon ASN.
 - L'association de `dxgw-leman-TP-AC` à `tgw-leman-TP-AC`, avec les préfixes autorisés `10.20.0.0/22` et `192.168.10.0/24`. Elle passe à `associated`, et AWS crée de lui-même un attachement « Direct Connect Gateway » dans le Transit Gateway.
 
 **Partie simulée :**
@@ -738,7 +839,7 @@ Nous devons transférer 2 To en 8 heures : 16 000 Gbit sur 28 800 s, soit enviro
 
 Les routeurs tournent avec FRRouting sur Ubuntu. Le sujet propose GNS3 : nous ne l'avons pas utilisé.
 
-Script : `scripts/m08-dx-sim.ps1` (option `-TestOnly` pour rejouer les tests).
+Script : `scripts/m08-dx-sim.ps1` (configuration des routeurs et tests ; option `-TestOnly` pour rejouer seulement les tests, à condition que les routeurs soient déjà configurés par ce même script).
 
 ![Module 8](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m08-dx.png)
 
@@ -767,26 +868,32 @@ Script : `scripts/m08-dx-sim.ps1` (option `-TestOnly` pour rejouer les tests).
 === TP1 : dimensionnement et Direct Connect Gateway (reel) ===
 2 To en 8 h = 16 000 Gbit / 28 800 s = 0,556 Gbit/s -> liaison 1 Gbit/s (marge ~44 %)
 Emplacement retenu (non commande) : EQSK1, Equinix Sweden SK1 (vitesses 1G / 10G / 100G), le plus proche disponible dans la region eu-north-1
-dxgw : dxgw-leman-TP-AC 64513 available
-association avec tgw-leman : associated 192.168.10.0/24 10.20.0.0/22
+dxgw : dxgw-leman-TP-AC	64513	available
+association avec tgw-leman : associated 192.168.10.0/24	10.20.0.0/22
 
 === TP2 : GRE + BGP ===
+rtr-aws : traduction d'adresse (NAT) pour app-01 :
+-P POSTROUTING ACCEPT
+-A POSTROUTING -s 192.168.10.0/24 -o ens5 -j MASQUERADE
+	
+
 rtr-siege : show bgp summary
 
 IPv4 Unicast Summary (VRF default):
 BGP router identifier 192.168.10.10, local AS number 65010 vrf-id 0
-BGP table version 14
+BGP table version 2
 RIB entries 3, using 576 bytes of memory
 Peers 2, using 1448 KiB of memory
 
 Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt Desc
-169.254.100.1   4      64513       117       118        0    0    0 00:01:38            1        2 DX-simule-GRE
-169.254.101.1   4      64513       130       151        0    0    0 00:01:43            1        2 VPN-GRE-dans-IPsec
+169.254.100.1   4      64513        20        21        0    0    0 00:00:34            1        2 DX-simule-GRE
+169.254.101.1   4      64513        20        23        0    0    0 00:00:34            1        2 VPN-GRE-dans-IPsec
 
 Total number of neighbors 2
+	
 
 rtr-aws : show ip bgp (prefixes recus du siege)
-BGP table version is 16, local router ID is 10.20.0.74, vrf id 0
+BGP table version is 4, local router ID is 10.20.0.74, vrf id 0
 Default local pref 100, local AS 64513
 Status codes:  s suppressed, d damped, h history, * valid, > best, = multipath,
                i internal, r RIB-failure, S Stale, R Removed
@@ -796,66 +903,73 @@ RPKI validation codes: V valid, I invalid, N Not found
 
    Network          Next Hop            Metric LocPrf Weight Path
 *> 10.20.0.0/22     0.0.0.0                  0         32768 i
-*> 192.168.10.0/24  169.254.100.2            0             0 65010 i
-*                   169.254.101.2            0             0 65010 65010 65010 65010 i
+*  192.168.10.0/24  169.254.101.2            0             0 65010 65010 65010 65010 i
+*>                  169.254.100.2            0             0 65010 i
 
 Displayed  2 routes and 3 total paths
+	
 
 siege -> app-01 (chemin choisi) :
-10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0
-    cache expires 492sec mtu 8977
+10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0 
+    cache 
 --- 10.20.1.10 ping statistics ---
 3 packets transmitted, 3 received, 0% packet loss, time 2003ms
-rtt min/avg/max/mdev = 2.411/2.489/2.596/0.078 ms
+rtt min/avg/max/mdev = 2.663/2.984/3.323/0.269 ms
 app-01 TP-AC /api/health
+	
 
 === TP3 : politique et bascule ===
 rtr-siege : show ip bgp 10.20.0.0/22 (local-pref 200 sur DX, 100 sur VPN)
-BGP routing table entry for 10.20.0.0/22, version 14
-Paths: (2 available, best #1, table default)
+BGP routing table entry for 10.20.0.0/22, version 2
+Paths: (2 available, best #2, table default)
   Advertised to non peer-group peers:
   169.254.100.1 169.254.101.1
   64513
-    169.254.100.1 from 169.254.100.1 (10.20.0.74)
-      Origin IGP, metric 0, localpref 200, valid, external, best (Local Pref)
-      Last update: Tue Nov 17 10:33:33 2026
-  64513
     169.254.101.1 from 169.254.101.1 (10.20.0.74)
       Origin IGP, metric 0, valid, external
-      Last update: Tue Nov 17 10:33:29 2026
+      Last update: Tue Nov 17 18:48:40 2026
+  64513
+    169.254.100.1 from 169.254.100.1 (10.20.0.74)
+      Origin IGP, metric 0, localpref 200, valid, external, best (Local Pref)
+      Last update: Tue Nov 17 18:48:40 2026
+	
 
 rtr-aws : show ip bgp 192.168.10.0/24 (le chemin VPN arrive avec AS-path prepend x3)
-BGP routing table entry for 192.168.10.0/24, version 16
-Paths: (2 available, best #1, table default)
+BGP routing table entry for 192.168.10.0/24, version 4
+Paths: (2 available, best #2, table default)
   Advertised to non peer-group peers:
   169.254.100.2 169.254.101.2
-  65010
-    169.254.100.2 from 169.254.100.2 (192.168.10.10)
-      Origin IGP, metric 0, valid, external, best (AS Path)
-      Last update: Tue Nov 17 10:33:32 2026
   65010 65010 65010 65010
     169.254.101.2 from 169.254.101.2 (192.168.10.10)
       Origin IGP, metric 0, valid, external
-      Last update: Tue Nov 17 10:33:27 2026
+      Last update: Tue Nov 17 18:48:39 2026
+  65010
+    169.254.100.2 from 169.254.100.2 (192.168.10.10)
+      Origin IGP, metric 0, valid, external, best (AS Path)
+      Last update: Tue Nov 17 18:48:39 2026
+	
 
-T+10 s : panne de la liaison DX (le GRE vers 51.21.77.112 est perdu, sans coupure de l'interface)
-route : 10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0
-T+40 s (DX en panne) route : 10.20.1.10 from 192.168.10.50 via 169.254.101.1 dev gre-vpn uid 0
+T+10 s : panne de la liaison DX (le GRE vers 56.228.132.92 est perdu, sans coupure de l'interface)
+route : 10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0 
+T+40 s (DX en panne) route : 10.20.1.10 from 192.168.10.50 via 169.254.101.1 dev gre-vpn uid 0 
 Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt Desc
-169.254.100.1   4      64513       130       135        0    0    0 00:00:23      Connect        0 DX-simule-GRE
-169.254.101.1   4      64513       153       185        0    0    0 00:00:06            1        2 VPN-GRE-dans-IPsec
+169.254.100.1   4      64513        33        38        0    0    0 00:00:22      Connect        0 DX-simule-GRE
+169.254.101.1   4      64513        44        47        0    0    0 00:01:43            1        2 VPN-GRE-dans-IPsec
 T+40 s : liaison DX retablie
-T+70 s (DX retablie) route : 10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0
+T+70 s (DX retablie) route : 10.20.1.10 from 192.168.10.50 via 169.254.100.1 dev gre-dx uid 0 
 --- ping horodate depuis 192.168.10.50 (une sonde toutes les 0,5 s, 180 sondes)
-180 packets transmitted, 166 received, 7.77778% packet loss, time 89745ms
-rtt min/avg/max/mdev = 2.351/2.864/45.264/3.319 ms
-interruption de 7.6 s, de T+9.5 s a T+17.1 s (sondes 21 a 34 perdues)
+180 packets transmitted, 162 received, 10% packet loss, time 89755ms
+rtt min/avg/max/mdev = 2.636/3.564/19.321/1.658 ms
+interruption de 9.6 s, de T+9.5 s a T+19.1 s (sondes 21 a 38 perdues)
 ```
 
 ## Mesure de la bascule
-Pour simuler une vraie panne, nous supprimons les paquets GRE du chemin DX **sans couper l'interface** : BGP doit s'en apercevoir lui-même. Sur un ping horodaté (une sonde toutes les 0,5 s, depuis un poste du LAN du siège), l'interruption dure **7,6 secondes** : c'est le temps de détection de BGP (délai de 9 s moins quelques instants). Le trafic passe alors par le chemin VPN. Quand nous rétablissons le GRE, le trafic revient seul sur la liaison dédiée, sans nouvelle coupure.
+Pour simuler une vraie panne, nous supprimons les paquets GRE du chemin DX **sans couper l'interface** : BGP doit s'en apercevoir lui-même. Sur un ping horodaté (une sonde toutes les 0,5 s, depuis un poste du LAN du siège), l'interruption dure **9,6 secondes** (8,1 s sur un autre essai) : c'est le temps de détection de BGP (délai de 9 s). Le trafic passe alors par le chemin VPN. Quand nous rétablissons le GRE, le trafic revient seul sur la liaison dédiée, sans nouvelle coupure.
 
 Au premier essai nous avions pingué depuis l'adresse du routeur lui-même, qui répond par une route directe : la mesure était trop belle (une seule sonde perdue) et ne passait pas par BGP. Nous l'avons refaite depuis un poste du LAN.
+
+## Ce qui a mal tourné
+Sur la pile déployée par CloudFormation, la bascule durait d'abord **45 secondes** et la session BGP du VPN tombait à chaque panne du DX. Les captures de paquets ont montré pourquoi : la réponse du chemin VPN revenait **à l'intérieur** du tunnel GRE de la liaison dédiée. Sur `rtr-aws`, la route vers l'extrémité GRE du siège (`192.168.10.10`) était recouverte par la route BGP apprise `192.168.10.0/24` via `gre-dx` : le secours dépendait donc de la liaison qu'il devait remplacer (un routage « récursif »). Une route statique `192.168.10.10/32` vers le routeur du sous-réseau, déclarée dans FRRouting, règle le problème : la bascule tombe à 8-10 s et la session BGP du VPN reste établie.
 
 ## Console AWS
 La console Direct Connect affiche un bandeau d'erreur (`DescribeLocations` refusé) : elle appelle un point d'accès global situé dans une région que l'organisation interdit. Le service fonctionne bien par la ligne de commande.
@@ -869,17 +983,25 @@ Le Direct Connect Gateway ne coûte rien ; son association au Transit Gateway aj
 
 ![Console AWS – dx gateway](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/00-console-dx-gateway.png)
 
-**Journal des tests**
+**Terminal**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-1.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/10-terminal-1.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-2.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-journal-1.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-3.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-journal-2.png)
+
+**Terminal – journal du test**
+
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-journal-3.png)
+
+**Terminal – journal du test**
+
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-journal-4.png)
 
 
 ---
@@ -947,25 +1069,13 @@ Nous n'avons pas de domaine, donc le certificat est auto-signé (nos tests utili
 
 ![Console AWS – groupes cibles](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-groupes-cibles.png)
 
-**Terminal – alb**
+**Terminal**
 
-![Terminal – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/01-alb.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/10-terminal-1.png)
 
-**Terminal – targets web**
+**Terminal – journal du test**
 
-![Terminal – targets web](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/02-targets-web.png)
-
-**Terminal – targets app**
-
-![Terminal – targets app](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/03-targets-app.png)
-
-**Terminal – rules**
-
-![Terminal – rules](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/04-rules.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/99-preuves-tests.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/99-journal-1.png)
 
 
 ---
@@ -1033,21 +1143,13 @@ Nous n'avons pas acheté de domaine, donc la délégation réelle est impossible
 
 ![Console AWS – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-zones.png)
 
-**Terminal – zones**
+**Terminal**
 
-![Terminal – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/01-zones.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/10-terminal-1.png)
 
-**Terminal – records**
+**Terminal – journal du test**
 
-![Terminal – records](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/02-records.png)
-
-**Terminal – records privee**
-
-![Terminal – records privee](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/03-records-privee.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/99-preuves-tests.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/99-journal-1.png)
 
 
 ---
@@ -1129,13 +1231,17 @@ Sans domaine, nous ne pouvons pas avoir de certificat ACM validé : les visiteur
 
 ![Console AWS – cloudfront](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/00-console-cloudfront.png)
 
-**Terminal – distribution**
+**Terminal**
 
-![Terminal – distribution](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/01-distribution.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/10-terminal-1.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/99-preuves-tests.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/99-journal-1.png)
+
+**Terminal – journal du test**
+
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/99-journal-2.png)
 
 
 ---
@@ -1231,29 +1337,17 @@ Nous gardons le tableau de bord, l'alarme et le groupe de logs pour le module 13
 
 ![Console AWS – tableau de bord](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-tableau-de-bord.png)
 
-**Terminal – alarm**
+**Terminal**
 
-![Terminal – alarm](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/01-alarm.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/10-terminal-1.png)
 
-**Terminal – flowlog**
+**Terminal – journal du test**
 
-![Terminal – flowlog](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/02-flowlog.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-journal-1.png)
 
-**Terminal – sns**
+**Terminal – journal du test**
 
-![Terminal – sns](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/03-sns.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-1.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-2.png)
-
-**Journal des tests**
-
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-journal-2.png)
 
 
 ---
@@ -1295,11 +1389,11 @@ Sorties : `VpcId`, `AlbDns` et `SgWebId`.
 ## Résultats des tests
 ```
 === TP1 : validation et creation de la stack (reseau seul) ===
-validate-template : parametres = CidrVpc	WebPrivateIp	AppPrivateIp	AdminCidr	Environnement	InstanceType	CertificateArn	AmiId
-Statut : CREATE_COMPLETE ; sorties : VpcId	vpc-03d732488a1659ebc SgWebId	sg-05ed3128c6be342bb
+validate-template : parametres = CidrVpc	WebPrivateIp	AppPrivateIp	AdminCidr	CleSSH	Environnement	InstanceType	CertificateArn	AmiId
+Statut : CREATE_COMPLETE ; sorties : VpcId	vpc-0310d32aa87687c10 SgWebId	sg-06d62e0ec61238041
 
 === TP2 : change set (instances, groupes cibles, ALB) ===
-Change set cs-ajouts-505498746 : 7 changements ; actions = Add
+Change set cs-ajouts-912889504 : 7 changements ; actions = Add
    Add  Alb  AWS::ElasticLoadBalancingV2::LoadBalancer
    Add  App01  AWS::EC2::Instance
    Add  ListenerHttps  AWS::ElasticLoadBalancingV2::Listener
@@ -1309,21 +1403,21 @@ Change set cs-ajouts-505498746 : 7 changements ; actions = Add
    Add  Web01  AWS::EC2::Instance
 Statut apres execution : UPDATE_COMPLETE
 Cibles : tg-web=healthy  tg-app=healthy
-curl -k https://alb-prod-leman-cfn-TP-AC-1713432283.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
-curl -k https://alb-prod-leman-cfn-TP-AC-1713432283.eu-north-1.elb.amazonaws.com/ -> web-01 TP-AC (cfn)
+curl -k https://alb-prod-leman-cfn-TP-AC-1508405322.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
+curl -k https://alb-prod-leman-cfn-TP-AC-1508405322.eu-north-1.elb.amazonaws.com/ -> web-01 TP-AC (cfn)
 
 === TP3 : drift, suppression, redeploiement ===
 Regle SSH ajoutee a la main sur sg-web-cfn -> drift stack : DETECTION_COMPLETE	DRIFTED
 Detail : SgWeb	MODIFIED	/SecurityGroupIngress/1	ADD
 Regle manuelle retiree -> drift stack : DETECTION_COMPLETE	IN_SYNC
-Change set cs-declaration-template-1149632398 : 1 changements ; actions = Modify
+Change set cs-declaration-template-2112251803 : 1 changements ; actions = Modify
    Modify  SgWeb  AWS::EC2::SecurityGroup
 Regle declaree dans le template (AdminCidr) puis redeploiement -> statut : UPDATE_COMPLETE
 Apres correction par le template -> drift stack : DETECTION_COMPLETE	IN_SYNC
-Regles de sg-web-cfn : tcp	80	None	sg-018397dd4dbc1dd12 tcp	22	203.0.113.0/24	None
+Regles de sg-web-cfn : tcp	80	None	sg-0517516cc80d5f705 tcp	22	203.0.113.0/24	None
 Suppression de la stack (ordre inverse des dependances) : 2 min -> DELETE_COMPLETE (stack disparue)
 VPC restants avec le tag de la stack : 0
-Change set cs-redeploiement-222070138 : 7 changements ; actions = Add
+Change set cs-redeploiement-1694842148 : 7 changements ; actions = Add
    Add  Alb  AWS::ElasticLoadBalancingV2::LoadBalancer
    Add  App01  AWS::EC2::Instance
    Add  ListenerHttps  AWS::ElasticLoadBalancingV2::Listener
@@ -1331,8 +1425,22 @@ Change set cs-redeploiement-222070138 : 7 changements ; actions = Add
    Add  TgApp  AWS::ElasticLoadBalancingV2::TargetGroup
    Add  TgWeb  AWS::ElasticLoadBalancingV2::TargetGroup
    Add  Web01  AWS::EC2::Instance
-Redeploiement : UPDATE_COMPLETE ; cibles tg-web=healthy tg-app=healthy ; curl -k https://alb-prod-leman-cfn-TP-AC-267212375.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
+Redeploiement : UPDATE_COMPLETE ; cibles tg-web=healthy tg-app=healthy ; curl -k https://alb-prod-leman-cfn-TP-AC-1090625744.eu-north-1.elb.amazonaws.com/api/health -> app-01 TP-AC (cfn) /api/health
 ```
+
+## Le second modèle : l'interconnexion
+Le sujet demande pour ce module le réseau du portail (`reseau-leman.yaml`). Comme le critère final parle de « tout redéployable depuis le modèle », nous avons ajouté `cfn/interconnexion-leman.yaml`, qui s'applique **par-dessus** le réseau existant (les identifiants des VPC, sous-réseaux et tables sont des paramètres). Il déploie 52 ressources :
+
+| Module | Ressources |
+|---|---|
+| 4, pare-feu | sous-réseau et table du pare-feu, 2 groupes de règles, la politique, le pare-feu, 2 groupes de journaux (alertes et flux), les routes qui passent par son endpoint |
+| 6, Transit Gateway | le Transit Gateway, 2 attachements (la prod sur deux zones), 3 tables, les associations, les propagations et les routes des VPC |
+| 7, VPN | 3 Elastic IP et leur association aux routeurs, 2 Customer Gateways, 2 connexions VPN (clés lues dans Secrets Manager par référence dynamique), les routes statiques des sites, les règles de `sg-app` |
+| 8, Direct Connect | la Direct Connect Gateway et son association au Transit Gateway |
+
+Deux choses n'ont pas de ressource CloudFormation : l'attachement d'un VPN au Transit Gateway (aucun attribut ne le donne) et la Direct Connect Gateway. Une petite fonction Lambda (ressource personnalisée, dans le modèle) retrouve les attachements et crée la passerelle. Les sites eux-mêmes (les routeurs strongSwan), leur configuration, la liaison GRE et le BGP restent **hors modèle** : ce sont des équipements « chez le client », configurés par `scripts/m07-vpn-aws.ps1` et `scripts/m08-dx-sim.ps1`.
+
+Le script `scripts/m13-interconnexion.ps1` retire les versions manuelles de ce que le modèle va gérer, crée la stack et importe ses sorties. **Preuve de redéploiement :** nous avons supprimé la stack (environ 10 minutes, sans ressource orpheline : plus de Transit Gateway, de VPN ni de pare-feu), puis redéployé le même modèle sans aucune modification : `CREATE_COMPLETE` en 6 minutes 13 secondes, tunnels VPN `DOWN` tant que les routeurs ne sont pas configurés, puis `UP`. Tous les tests des modules 4, 6, 7 et 8 de ce dossier ont été rejoués sur ce second déploiement.
 
 ## Nettoyage
 Nous gardons le template et la stack. La stack contient des instances et un ALB (facturés) : nous la supprimerons à la fin du cours avec `aws cloudformation delete-stack`.
@@ -1340,6 +1448,14 @@ Nous gardons le template et la stack. La stack contient des instances et un ALB 
 ## Problèmes rencontrés
 Deux erreurs de notre part : les descriptions des Security Groups ne peuvent pas contenir d'apostrophes ni d'accents, et notre premier calcul des sous-réseaux avec `!Cidr` donnait au sous-réseau privé une plage qui ne contenait pas l'adresse fixe d'`app-01`. Nous n'avons pas mis de NAT dans la stack (coût) : `app-01` n'a pas besoin de paquets, mais elle n'est donc pas joignable par SSM.
 
+Pour le second modèle, cinq problèmes, tous réglés :
+1. **Conflit de nom** : le groupe de journaux `/leman/nfw-alert-TP-AC` créé à la main au test du module 4 existait encore. CloudFormation l'a vu avant de créer quoi que ce soit (« NAME_CONFLICT_VALIDATION ») ; nous l'avons supprimé.
+2. **Elastic IP restées associées** : notre script de nettoyage n'avait pas dissocié les anciennes adresses des routeurs avant de les libérer (l'erreur n'était pas affichée). CloudFormation a répondu `AlreadyExists` à l'association. Nous les avons dissociées puis libérées, et corrigé le script.
+3. **Fonction Lambda sans réponse** : en Python 3.12, le module `cfnresponse` n'est pas disponible dans le code intégré au modèle. La fonction plantait avant de répondre, et CloudFormation attend alors une heure avant d'échouer. La restauration a ensuite attendu une seconde heure pour la même raison, jusqu'à ce que nous remplacions le code de la fonction pendant la restauration. Le modèle envoie maintenant lui-même la réponse, avec un délai de 20 minutes.
+4. **Deux variables du même nom** : notre script d'import écrasait les options du profil AWS (`$P` et `$p` sont la même variable en PowerShell).
+5. **Un mot réservé** : la fonction `Try` de notre script de nettoyage des modules 6 à 8 n'a jamais pu s'exécuter, car `Try` est un mot réservé de PowerShell.
+
+Le portail (`reseau-leman.yaml`) a aussi reçu le paramètre `CleSSH` que le sujet demande : il est vide par défaut, car nous administrons par SSM et n'ouvrons aucun SSH. Nous l'avons rejoué en entier (étape réseau, change set, dérive, suppression, redéploiement).
 
 ## Captures
 
@@ -1347,14 +1463,43 @@ Deux erreurs de notre part : les descriptions des Security Groups ne peuvent pas
 
 ![Console AWS – piles cloudformation](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/00-console-piles-cloudformation.png)
 
-**Terminal – stack**
+**Terminal**
 
-![Terminal – stack](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/01-stack.png)
+![Terminal](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/10-terminal-1.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-1.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-journal-1.png)
 
-**Journal des tests**
+**Terminal – journal du test**
 
-![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-2.png)
+![Terminal – journal du test](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-journal-2.png)
+
+
+---
+
+# Points du sujet impossibles, incohérents ou réalisés autrement
+
+Le sujet a été rédigé avec l'aide d'une IA : certaines consignes ne peuvent pas être suivies à la lettre, ou se contredisent. Cette liste dit, pour chacune, ce que nous avons fait à la place et pourquoi. Elle est destinée au formateur.
+
+| # | Module | Ce que dit le sujet | Pourquoi ce n'est pas possible tel quel | Ce que nous avons fait |
+|---|---|---|---|---|
+| 1 | 8 | Une liaison Direct Connect près de Genève | Il n'existe aucun emplacement Direct Connect près de Genève dans la région de Stockholm (Zurich n'est pas activée sur le compte, Francfort est refusée). Et nous ne commandons pas de fibre. | Emplacement retenu sur le papier : EQSK1 (Equinix Sweden SK1, 1 Gbit/s). Direct Connect Gateway réel et associé au Transit Gateway ; la liaison est simulée par un tunnel GRE et BGP (FRRouting). |
+| 2 | 7 | Une bascule entre deux tunnels VPN « sans coupure » | Un VPN IPsec ne peut pas basculer sans coupure : AWS met un certain temps à constater qu'un tunnel est mort avant d'utiliser l'autre. Nous avons mesuré entre 26 et 34 secondes (valeurs exactes au module 7). | Mesure honnête, avec une vraie panne silencieuse (paquets perdus, sans couper l'interface). |
+| 3 | 8 | Une bascule Direct Connect vers VPN en quelques secondes, avec un prepend | Un VPN statique ne parle pas BGP : le prepend n'aurait aucun effet. | Le BGP du chemin « VPN » passe dans un tunnel GRE à l'intérieur du vrai VPN. Bascule mesurée au module 8. |
+| 4 | 7 | Customer Gateways en `203.0.113.10` et `198.51.100.10` | Ce sont des adresses réservées à la documentation : aucun tunnel ne s'établit vers elles. | Une Elastic IP par routeur de site (`rtr-siege-TP-AC`, `rtr-agence-TP-AC`). |
+| 5 | 6, 7 | Plages `10.0.0.0/16` et `10.1.0.0/16` | Le compte est partagé par toute la classe : ces plages recouvrent celles des autres. | `10.20.0.0/22` (prod) et `10.21.0.0/24` (dev). |
+| 6 | 7 | Déclarer les routes statiques sur la connexion VPN | Pour un VPN rattaché à un Transit Gateway, AWS refuse : les routes se déclarent dans la table de routage du Transit Gateway. | Routes dans `tgw-rt-prod-TP-AC`. |
+| 7 | 4 | Ne mettre que la route de retour `10.20.1.0/26` dans la table publique | Cela casse `web-01` vers `app-01` : la requête passe par le pare-feu, pas la réponse, et le pare-feu perd l'état. Les Security Groups « depuis un groupe » ne correspondent plus au trafic qui sort d'un endpoint de pare-feu. | Routes symétriques, et règles de `sg-app` par plage d'adresses (module 4). |
+| 8 | 4 | Le flux autorisé doit apparaître dans les journaux | Un journal d'alertes ne contient que ce qui est bloqué. | Second journal, de type flux (`/leman/nfw-flow-TP-AC`). |
+| 9 | 10, 11 | Zone publique et certificat ACM validé par DNS pour `leman-finance.example` | Nous n'avons pas de domaine (et n'en achetons pas) : la délégation DNS réelle et la validation ACM sont impossibles. | La zone existe, et nous interrogeons directement un de ses serveurs de noms ainsi que `route53 test-dns-answer`. Les visiteurs voient le certificat `*.cloudfront.net` ; CloudFront joint l'ALB en HTTP (il refuserait le certificat auto-signé de l'ALB). |
+| 10 | 0 | Un module « cadrage » sans client joignable | Nous ne pouvons pas poser nos questions au client. | Questions et budget rédigés par nos soins, à relire (module 0). |
+| 11 | 1 | Région Zurich | `eu-central-2` n'est pas activée (`AuthFailure`), Francfort est refusée par l'organisation. | Stockholm (`eu-north-1`), acceptée avec le formateur. |
+| 12 | 8 | Console Direct Connect | La console affiche une erreur `DescribeLocations` : elle appelle un point d'accès global situé dans une région interdite. | Le service est utilisé par la ligne de commande. |
+| 13 | 4, 6, 7, 8 | Services autorisés | L'organisation refusait Network Firewall, Transit Gateway, VPN et Direct Connect jusqu'au 17/11/2026 (voir `01-services-bloques.md`). | Modules refaits en réel après la levée, et redéployés depuis un modèle CloudFormation. |
+
+## Ce qui reste simulé malgré tout
+- Les deux sites (siège, agence) sont des instances EC2 avec strongSwan, pas du matériel réel.
+- La « fibre » Direct Connect est un tunnel GRE sur Internet : il n'y a pas d'interface virtuelle physique.
+- Il n'y a pas de domaine réel : certificat auto-signé.
+- GNS3 n'est pas utilisé : les routeurs sont des instances EC2 avec FRRouting.

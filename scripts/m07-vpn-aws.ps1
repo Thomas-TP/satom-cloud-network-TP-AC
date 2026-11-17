@@ -4,7 +4,7 @@
 # Etape 2 : configuration strongSwan des deux tunnels de chaque site, attente de l'etat UP, tests (flux, segmentation).
 # Etape 3 : coupure du premier tunnel du siege pendant un ping horodate (bascule), puis retablissement.
 # Usage : pwsh scripts\m07-vpn-aws.ps1 -Stage 1|2|3
-param([ValidateSet(1,2,3)][int]$Stage = 1)
+param([ValidateSet(1,2,3,4)][int]$Stage = 1)
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot\lib.ps1"
 $s = Get-State
@@ -181,7 +181,21 @@ ip link add xfrm-@@S@@1 type xfrm dev $DEV if_id @@IF1@@; ip addr add @@I1@@/30 
 ip link add xfrm-@@S@@2 type xfrm dev $DEV if_id @@IF2@@; ip addr add @@I2@@/30 dev xfrm-@@S@@2; ip link set xfrm-@@S@@2 up
 ip route replace 10.20.0.0/22 dev xfrm-@@S@@1 metric 100
 ip route replace 10.20.0.0/22 dev xfrm-@@S@@2 metric 200
+printf 'charon {\n  retransmit_tries = 3\n  retransmit_timeout = 2.0\n}\n' > /etc/strongswan.d/tpac.conf
+cat > /usr/local/bin/tpac-watch.sh <<'EOW'
+#!/bin/bash
+# suit l'etat des deux tunnels : la route 10.20.0.0/22 ne passe que par un tunnel etabli (tunnel 1 prefere)
+while true; do
+  for n in 1 2; do
+    if swanctl --list-sas 2>/dev/null | grep -q "^@@S@@-t$n: .*ESTABLISHED"; then ip route replace 10.20.0.0/22 dev xfrm-@@S@@$n metric $((n*100)) 2>/dev/null
+    else ip route del 10.20.0.0/22 dev xfrm-@@S@@$n 2>/dev/null; fi
+  done
+  sleep 1
+done
+EOW
+chmod +x /usr/local/bin/tpac-watch.sh
 systemctl enable --now strongswan >/dev/null 2>&1; systemctl restart strongswan; sleep 4; swanctl --load-all >/dev/null
+pkill -f tpac-watch.sh 2>/dev/null || true; setsid nohup /usr/local/bin/tpac-watch.sh >/dev/null 2>&1 < /dev/null &
 sleep 12; swanctl --list-sas 2>/dev/null | grep -E "^ *@@S@@-t[12]|ESTABLISHED|INSTALLED" | head -12
 '@
   # adresses internes : le /30 AWS donne .1 cote AWS et .2 cote client
@@ -190,6 +204,11 @@ sleep 12; swanctl --list-sas 2>/dev/null | grep -E "^ *@@S@@-t[12]|ESTABLISHED|I
 }
 
 if ($Stage -eq 2) {
+  # groupes de securite des routeurs : IKE, NAT-T et ESP depuis les 4 adresses publiques d'AWS (le modele CloudFormation ne les connait pas)
+  foreach ($x in $sites) { $N = $x.n.Substring(0,1).ToUpper() + $x.n.Substring(1)
+    $perm = @(); foreach ($t in (Tun $N)) { $o = $t.OutsideIpAddress
+      $perm += "IpProtocol=udp,FromPort=500,ToPort=500,IpRanges=[{CidrIp=$o/32,Description=IKE}]"; $perm += "IpProtocol=udp,FromPort=4500,ToPort=4500,IpRanges=[{CidrIp=$o/32,Description=NAT-T}]"; $perm += "IpProtocol=50,IpRanges=[{CidrIp=$o/32,Description=ESP}]" }
+    Aws ec2 authorize-security-group-ingress --group-id $s[$x.sg] --ip-permissions $perm 2>&1 | Out-Null }
   Aws ec2 start-instances --instance-ids $s.app $s.dev | Out-Null
   foreach ($i in $s.rtrSiege,$s.rtrAgence,$s.app,$s.dev) { "$i SSM: $(Wait-Ssm $i 300)" }
   L "=== Module 7 - etape 2 : tunnels, flux et segmentation ==="
@@ -203,6 +222,9 @@ if ($Stage -eq 2) {
   L "tgw-rt-prod (routes actives) : $((Aws ec2 search-transit-gateway-routes --transit-gateway-route-table-id $s.tgwRtProd --filters 'Name=state,Values=active' --query 'Routes[].[DestinationCidrBlock,Type,TransitGatewayAttachments[0].ResourceType]') -join ' | ')"
   L "tgw-rt-dev  (routes actives) : $((Aws ec2 search-transit-gateway-routes --transit-gateway-route-table-id $s.tgwRtDev --filters 'Name=state,Values=active' --query 'Routes[].[DestinationCidrBlock,Type]') -join ' | ')"
   L "tgw-rt-sites (routes actives) : $((Aws ec2 search-transit-gateway-routes --transit-gateway-route-table-id $s.tgwRtSites --filters 'Name=state,Values=active' --query 'Routes[].[DestinationCidrBlock,Type]') -join ' | ')"
+  # attente que le chemin de donnees fonctionne (AWS peut annoncer UP quelques secondes avant que le trafic passe)
+  Run $s.rtrSiege 'for i in $(seq 1 45); do curl -s -m 2 --interface 192.168.10.10 http://10.20.1.10:8080/api/health >/dev/null && break; sleep 2; done' 150 | Out-Null
+  Run $s.rtrAgence 'for i in $(seq 1 45); do curl -s -m 2 --interface 192.168.20.10 http://10.20.1.10:8080/api/health >/dev/null && break; sleep 2; done' 150 | Out-Null
   L "`n-- siege -> app-01 (10.20.1.10)"
   L "ping : $(Run $s.rtrSiege 'ping -c 3 -W 2 -I 192.168.10.10 10.20.1.10 | tail -3')"
   L "8080 : $(Run $s.rtrSiege 'curl -s -m 6 --interface 192.168.10.10 http://10.20.1.10:8080/api/health || echo ECHEC')"
@@ -214,26 +236,56 @@ if ($Stage -eq 2) {
   L "agence -> dev-01 : $(Run $s.rtrAgence 'ping -c 3 -W 2 -I 192.168.20.10 10.21.0.10 2>&1 | tail -2')"
   L "dev-01 -> siege : $(Run $s.dev 'ping -c 3 -W 2 192.168.10.10 | tail -2')"
   L "dev-01 -> agence : $(Run $s.dev 'ping -c 3 -W 2 192.168.20.10 | tail -2')"
-  $log | Set-Content (Join-Path $out 'tests-etape2.txt') -Encoding utf8
+  (($log -join "`n") -split "`n" | Where-Object { $_ -notmatch "^(	)?plugin '" } | ForEach-Object { $_ -replace '^Success	','' -replace '(: |^)Success	','$1' }) | Set-Content (Join-Path $out 'tests-etape2.txt') -Encoding utf8
   Save-State $s; return
 }
 
-# etape 3 : bascule des tunnels du siege
-$N = 'Siege'
-L "=== Module 7 - etape 3 : bascule entre les deux tunnels du siege ==="
+# etapes 3 et 4 : bascule entre les deux tunnels d'un site (3 = siege, 4 = agence)
+$siteN = if ($Stage -eq 3) { 'siege' } else { 'agence' }; $N = $siteN.Substring(0,1).ToUpper() + $siteN.Substring(1)
+$ipSite = if ($Stage -eq 3) { '192.168.10.10' } else { '192.168.20.10' }; $rtrKey = if ($Stage -eq 3) { 'rtrSiege' } else { 'rtrAgence' }
+L "=== Module 7 - etape $Stage : bascule entre les deux tunnels $(if ($Stage -eq 3) { 'du siege' } else { 'de l''agence' }) ==="
+# remise a zero propre : les deux tunnels sont renegocies, et on attend que AWS les voie tous les deux UP
+$reset = @'
+for n in 1 2; do swanctl --terminate --ike @@S@@-t$n >/dev/null 2>&1; done; sleep 3
+iptables -F INPUT 2>/dev/null; iptables -F OUTPUT 2>/dev/null
+for n in 1 2; do swanctl --initiate --child @@S@@-t$n >/dev/null 2>&1; done; sleep 15
+swanctl --list-sas 2>/dev/null | grep -cE '^@@S@@-t.: .*ESTABLISHED'
+'@
+[void](Run $s[$rtrKey] $reset.Replace('@@S@@', $siteN) 90)
+for ($i = 0; $i -lt 24; $i++) { $tel = (Aws ec2 describe-vpn-connections --vpn-connection-ids $s["vpn$N"] --query 'VpnConnections[0].VgwTelemetry[].Status') -join ' '; if ($tel -eq 'UP UP') { break }; Start-Sleep 10 }
+L "avant le test : tunnels vus par AWS = $tel"
 $cmd = @'
 rm -f /tmp/fo.txt
-( ping -D -i 0.5 -c 200 -I 192.168.10.10 10.20.1.10 > /tmp/fo.txt 2>&1 & )
+for i in $(seq 1 45); do curl -s -m 1 --interface @@IP@@ http://10.20.1.10:8080/api/health >/dev/null && break; sleep 2; done
+for i in 1 2 3; do ping -c 3 -W 1 -I @@IP@@ 10.20.1.10 >/dev/null 2>&1 && break; sleep 3; done
+E1=$(grep -m1 remote_addrs /etc/swanctl/conf.d/@@S@@.conf | awk '{print $3}')
+iptables -D OUTPUT -d $E1 -j DROP 2>/dev/null; iptables -D INPUT -s $E1 -j DROP 2>/dev/null
+( ping -D -i 0.5 -c 280 -I @@IP@@ 10.20.1.10 > /tmp/fo.txt 2>&1 & )
 sleep 10
-echo "T+10 s : coupure du tunnel 1 (siege-t1)"; swanctl --terminate --ike siege-t1 >/dev/null 2>&1; ip link set xfrm-siege1 down
-sleep 60
-echo "T+70 s : tunnel 1 retabli"; ip link set xfrm-siege1 up; swanctl --initiate --child siege-t1 >/dev/null 2>&1
-sleep 35
-echo "--- resultat du ping horodate (une sonde toutes les 0,5 s, 200 sondes)"
+echo "T+10 s : panne silencieuse du tunnel 1 (les paquets vers $E1 sont perdus, comme une vraie coupure)"
+iptables -I OUTPUT -d $E1 -j DROP; iptables -I INPUT -s $E1 -j DROP
+sleep 5; echo "T+15 s : route : $(ip route get 10.20.1.10 from @@IP@@ | head -1)"
+sleep 45; echo "T+60 s : route : $(ip route get 10.20.1.10 from @@IP@@ | head -1) ; tunnels etablis cote routeur : $(swanctl --list-sas 2>/dev/null | grep -cE 'ESTABLISHED')"
+sleep 30; echo "T+90 s : le tunnel 1 est retabli (paquets de nouveau acceptes, IKE relance)"; iptables -D OUTPUT -d $E1 -j DROP; iptables -D INPUT -s $E1 -j DROP; swanctl --initiate --child @@S@@-t1 >/dev/null 2>&1
+sleep 40; echo "T+130 s : route : $(ip route get 10.20.1.10 from @@IP@@ | head -1)"
+sleep 12
+echo "--- resultat du ping horodate (une sonde toutes les 0,5 s)"
 tail -3 /tmp/fo.txt | grep -E "transmitted|rtt"
-grep "bytes from" /tmp/fo.txt | sed 's/^\[\([0-9.]*\)\].*icmp_seq=\([0-9]*\).*/\1 \2/' | awk 'NR==1{t0=$1} NR>1 && $1-p>1.2 {printf "interruption de %.1f s, de T+%.1f s a T+%.1f s (sondes %d a %d perdues)\n", $1-p, p-t0, $1-t0, q+1, $2-1} {p=$1; q=$2}'
+grep "bytes from" /tmp/fo.txt | sed 's/^\[\([0-9.]*\)\].*/\1/' | python3 -c "
+import sys
+t=[float(l) for l in sys.stdin]; t0=t[0]; p=None
+for x in t:
+    if p and x-p>1.2: print('interruption de %.1f s, de T+%.1f s a T+%.1f s' % (x-p, p-t0, x-t0))
+    p=x"
 echo "sessions IKE etablies : $(swanctl --list-sas 2>/dev/null | grep -cE 'ESTABLISHED')"
 '@
-L ((Run $s.rtrSiege $cmd 240) -split "`n" | Where-Object { $_ -notmatch "^plugin '" } | Out-String)
+$cmd = $cmd.Replace('@@S@@', $siteN).Replace('@@IP@@', $ipSite)
+if ($true) {   # la sonde est un curl toutes les 0,3 s (nouvelle connexion a chaque fois, comme de vrais clients ; un ping garderait le meme flux ICMP colle au tunnel mort)
+  $cmd = $cmd.Replace('( ping -D -i 0.5 -c 280 -I ' + $ipSite + ' 10.20.1.10 > /tmp/fo.txt 2>&1 & )', "( timeout 142 bash -c 'while true; do ts=`$(date +%s.%N); if curl -s -m 1 --interface $ipSite http://10.20.1.10:8080/api/health >/dev/null; then echo `$ts; fi; sleep 0.3; done' > /tmp/fo.txt 2>&1 & )")
+  $cmd = $cmd.Replace('echo "--- resultat du ping horodate (une sonde toutes les 0,5 s)"', 'echo "--- resultat des requetes curl sur le port 8080 (une toutes les 0,3 s)"')
+  $cmd = $cmd.Replace("tail -3 /tmp/fo.txt | grep -E `"transmitted|rtt`"`n", 'echo "reponses recues : $(wc -l < /tmp/fo.txt)"' + "`n")
+  $cmd = $cmd.Replace('grep "bytes from" /tmp/fo.txt | sed ''s/^\[\([0-9.]*\)\].*/\1/'' | python3 -c', 'cat /tmp/fo.txt | python3 -c')
+}
+L ((Run $s[$rtrKey] $cmd 240) -split "`n" | Where-Object { $_ -notmatch "^plugin '" } | Out-String)
 L "etat vu par AWS : $((Aws ec2 describe-vpn-connections --vpn-connection-ids $s["vpn$N"] --query 'VpnConnections[0].VgwTelemetry[].[OutsideIpAddress,Status]') -join ' | ')"
-$log | Set-Content (Join-Path $out 'tests-etape3.txt') -Encoding utf8
+(($log -join "`n") -split "`n" | Where-Object { $_ -notmatch "^(	)?plugin '" } | ForEach-Object { $_ -replace '^Success	','' -replace '(: |^)Success	','$1' }) | Set-Content (Join-Path $out "tests-etape$Stage.txt") -Encoding utf8

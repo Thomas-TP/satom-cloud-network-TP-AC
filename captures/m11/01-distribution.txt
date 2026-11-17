@@ -1,9 +1,0 @@
-$ aws cloudfront get-distribution
-----------------------------------------------------
-|                  GetDistribution                 |
-+----------------+---------------------------------+
-|  Comportements |  /static/*, /api/*              |
-|  Domaine       |  d14byb6fexq6px.cloudfront.net  |
-|  Etat          |  Deployed                       |
-|  Id            |  E3HM34P4WV8A3X                 |
-+----------------+---------------------------------+

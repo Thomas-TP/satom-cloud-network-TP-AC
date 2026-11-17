@@ -1,9 +1,0 @@
-$ aws elbv2 describe-rules (listener HTTPS)
---------------------------------------
-|            DescribeRules           |
-+---------+-------------+------------+
-| Action  |  Condition  | Priorite   |
-+---------+-------------+------------+
-|  forward|  /api/*     |  10        |
-|  forward|  None       |  default   |
-+---------+-------------+------------+

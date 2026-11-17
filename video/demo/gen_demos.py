@@ -73,12 +73,14 @@ DEMOS = {
 }
 HEAD = ". '$PSScriptRoot\\term-init.ps1' | Out-Null\n"
 for name, items in DEMOS.items():
-    lines = []
+    lines = []; k = 0
     for it in items:
-        if it[0] == 'note': lines.append("Show-Note " + repr(it[1]).replace('"', '`"') if False else "Show-Note '" + it[1].replace("'", "''") + "'")
+        if it[0] == 'note': lines.append("Show-Note '" + it[1].replace("'", "''") + "'")
         elif it[0] == 'cmd': lines.append("Show-Cmd '" + it[1].replace("'", "''") + "'")
-        elif it[0] == 'clear': lines.append("Clear-Host")
-        elif it[0] == 'pause': lines.append("Start-Sleep -Milliseconds %d" % it[1])
-    io.open(os.path.join(D, name + '.ps1'), 'w', encoding='utf-8', newline='\n').write("\n".join(lines) + "\n")
+        elif it[0] == 'clear':
+            k += 1; lines.append("Show-Shot '%s-%d'" % (name, k)); lines.append('Clear-Host')
+        elif it[0] == 'pause': lines.append('Start-Sleep -Milliseconds %d' % it[1])
+    k += 1; lines.append("Show-Shot '%s-%d'" % (name, k))
+    NL = chr(10)
+    io.open(os.path.join(D, name + '.ps1'), 'w', encoding='utf-8', newline=NL).write(NL.join(lines) + NL)
 print('demos :', ', '.join(DEMOS))
-

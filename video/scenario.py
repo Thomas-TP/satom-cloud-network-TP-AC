@@ -78,7 +78,7 @@ S = [
  dict(kind='shot', id='m04b', img='captures/m04/00-console-paquets-bloques.png', focus=(0.65, 0.5, 1.0, 1.12),
       text="Deux groupes de règles en ordre strict, et le graphique montre les paquets bloqués par le moteur à états."),
  dict(kind='clip', id='m04c', clip='video/clips/m04.mp4',
-      text="Les domaines autorisés répondent, example point com expire, et l'alerte arrive dans CloudWatch. Ce pare-feu coûte à l'heure : nous l'avons supprimé après les tests."),
+      text="Les domaines autorisés répondent, et example point com expire. Le flux bloqué se retrouve dans le journal des alertes, et le flux autorisé dans le journal des flux. Ce pare-feu est déployé par CloudFormation, et il coûte à l'heure : nous le supprimons à la fin du projet."),
 
  M(5, 'Module 5 – Peering', 'prod et dev, non transitif'),
  dict(kind='diagram', id='m05a', img='docs/images/m05-peering.png', focus=(0.5, 0.5, 1.0, 1.07),
@@ -102,7 +102,7 @@ S = [
  dict(kind='shot', id='m07b', img='captures/m07/00-console-tunnels-vpn.png', focus=(0.5, 0.75, 1.0, 1.15),
       text="Les quatre tunnels sont à l'état haut. Les routes des sites sont dans la table de production, et aucune n'arrive dans celle du développement."),
  dict(kind='clip', id='m07c', clip='video/clips/m07.mp4',
-      text="Le siège joint app-01. Quand nous coupons le premier tunnel, le trafic reprend sur le second après une vingtaine de secondes, le temps qu'AWS détecte la panne."),
+      text="Le siège joint app-01. Nous simulons une vraie panne silencieuse du premier tunnel : le trafic reprend sur le second après vingt-neuf secondes pour le siège, et trente-trois pour l'agence, le temps qu'AWS détecte la panne. Une bascule sans coupure n'est pas possible avec un VPN."),
 
  M(8, 'Module 8 – Direct Connect', 'passerelle réelle, liaison simulée'),
  dict(kind='diagram', id='m08a', img='docs/images/m08-dx.png', focus=(0.5, 0.5, 1.0, 1.07),
@@ -110,7 +110,7 @@ S = [
  dict(kind='shot', id='m08b', img='captures/m08/00-console-dx-gateway.png', focus=(0.5, 0.55, 1.0, 1.15),
       text="La passerelle porte l'ASN 64513, et les deux préfixes autorisés."),
  dict(kind='clip', id='m08c', clip='video/clips/m08.mp4',
-      text="Le BGP préfère le chemin Direct Connect. Si on le coupe, le trafic passe par le VPN en huit secondes environ, puis revient tout seul."),
+      text="Le BGP préfère le chemin Direct Connect. Si on le coupe, le trafic passe par le VPN en dix secondes environ, puis revient tout seul."),
 
  M(9, 'Module 9 – Load balancer', 'répartition de charge et pannes'),
  dict(kind='diagram', id='m09a', img='docs/images/m09-alb.png', focus=(0.5, 0.5, 1.0, 1.07),
@@ -146,14 +146,16 @@ S = [
 
  M(13, 'Module 13 – CloudFormation', 'tout le réseau dans un modèle'),
  dict(kind='diagram', id='m13a', img='docs/images/m13-cloudformation.png', focus=(0.5, 0.5, 1.0, 1.07),
-      text="Module treize, CloudFormation. Tout le réseau est décrit dans un seul modèle, qu'on peut redéployer à l'identique."),
+      text="Module treize, CloudFormation. Le réseau est décrit dans des modèles, qu'on peut redéployer à l'identique. L'un d'eux crée aussi le pare-feu, le Transit Gateway, les VPN et le Direct Connect Gateway : supprimé puis redéployé, il est prêt en six minutes."),
  dict(kind='shot', id='m13b', img='captures/m13/00-console-piles-cloudformation.png', focus=(0.5, 0.35, 1.0, 1.15),
       text="Voici la pile : créée, puis agrandie par un change set."),
  dict(kind='clip', id='m13c', clip='video/clips/m13.mp4',
       text="Une règle ajoutée à la main est détectée comme une dérive. Nous la retirons, et la pile revient en synchronisation."),
 
  dict(kind='diagram', id='99-fin', img='docs/images/global.png', focus=(0.5, 0.5, 1.06, 1.0),
-      text="Voilà ce que nous avons construit : un réseau sur trois sites, cloisonné, surveillé, et redéployable. Les services payants à l'heure ont été supprimés après les tests, et le code, les preuves et le dossier sont sur GitHub. Merci de nous avoir suivis."),
+      text="Voilà ce que nous avons construit : un réseau sur trois sites, cloisonné, surveillé, et redéployable. Les services payants à l'heure seront supprimés à la fin du projet. Les points du sujet impossibles à suivre à la lettre sont listés dans le dossier. Le code, les preuves et le dossier sont sur GitHub. Merci de nous avoir suivis."),
 ]
+ABDER = ('m04', 'm05', 'm06', 'm09', 'm10', 'm11', 'm12', 'm13')   # modules lus par Abderahmane, les autres par Thomas
 for s in S:
     if 'text' in s: s['say'] = say(s['text'])
+    s['voice'] = 'abder' if s['id'][:3] in ABDER else 'thomas'

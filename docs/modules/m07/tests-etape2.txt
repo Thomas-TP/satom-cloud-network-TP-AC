@@ -1,0 +1,47 @@
+=== Module 7 - etape 2 : tunnels, flux et segmentation ===
+siege : swanctl --list-sas (cote routeur)
+siege-t2: #2, ESTABLISHED, IKEv2, 35f033fe3ecf3ca4_i* 67e0bc1592994c7c_r
+  siege-t2: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+siege-t1: #1, ESTABLISHED, IKEv2, c4c613fa152a7cd4_i* d1219417c5494da4_r
+  siege-t1: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+
+agence : swanctl --list-sas (cote routeur)
+agence-t2: #2, ESTABLISHED, IKEv2, e2e49f4e64242dc5_i* 2f6ae7a044ccede0_r
+  agence-t2: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+agence-t1: #1, ESTABLISHED, IKEv2, dd2a0ff6e93c4d51_i* 01379b4f96a3567f_r
+  agence-t1: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+
+vpn-siege-TP-AC, etat des tunnels vu par AWS : 16.16.69.252	UP	 | 16.192.162.35	UP	
+vpn-agence-TP-AC, etat des tunnels vu par AWS : 13.61.98.78	UP	 | 13.63.173.212	UP	
+tgw-rt-prod (routes actives) : 10.21.0.0/24	propagated	vpc | 192.168.10.0/24	static	vpn | 192.168.20.0/24	static	vpn
+tgw-rt-dev  (routes actives) : 10.20.0.0/22	propagated
+tgw-rt-sites (routes actives) : 10.20.0.0/22	propagated
+
+-- siege -> app-01 (10.20.1.10)
+ping : --- 10.20.1.10 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+rtt min/avg/max/mdev = 2.645/2.703/2.818/0.081 ms
+	
+8080 : app-01 TP-AC /api/health
+	
+
+-- agence -> app-01 (seul le 8080 est autorise)
+8080 : app-01 TP-AC /api/health
+	
+ping (doit echouer) : 2 packets transmitted, 0 received, 100% packet loss, time 1014ms
+
+	
+
+-- segmentation : aucun site ne joint dev-01 (10.21.0.10), dev-01 ne joint pas les sites (dev-01 SSM : Online)
+siege -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2048ms
+
+	
+agence -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2050ms
+
+	
+dev-01 -> siege : 3 packets transmitted, 0 received, 100% packet loss, time 2119ms
+
+	
+dev-01 -> agence : 3 packets transmitted, 0 received, 100% packet loss, time 2114ms
+
+	

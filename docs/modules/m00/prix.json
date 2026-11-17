@@ -1,0 +1,34 @@
+{
+ "EC2 t3.micro Linux (heure)": {
+  "usd": 0.0108,
+  "description": "$0.0108 per On Demand Linux t3.micro Instance Hour"
+ },
+ "NAT Gateway (heure)": {
+  "usd": 0.046,
+  "description": "$0.046 per NAT Gateway Hour"
+ },
+ "ALB (heure)": {
+  "usd": 0.02394,
+  "description": "$0.02394 per Application LoadBalancer-hour (or partial hour)"
+ },
+ "Attachement Transit Gateway (heure)": {
+  "usd": null,
+  "description": "introuvable"
+ },
+ "Connexion VPN (heure)": {
+  "usd": null,
+  "description": "introuvable"
+ },
+ "Network Firewall endpoint (heure)": {
+  "usd": null,
+  "description": "introuvable"
+ },
+ "Adresse IPv4 publique (heure)": {
+  "usd": null,
+  "description": "introuvable"
+ },
+ "Zone hebergee Route 53 (mois)": {
+  "usd": 0.5,
+  "description": "$0.50 per Hosted Zone for the first 25 Hosted Zones"
+ }
+}

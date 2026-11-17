@@ -59,3 +59,11 @@ function ssm([string]$vm, [string]$cmd) {
   for ($i = 0; $i -lt 40; $i++) { Start-Sleep 2; $st = aws ssm get-command-invocation --command-id $cid --instance-id $id --query Status --output text 2>$null; if ($st -in 'Success','Failed','TimedOut') { break } }
   (aws ssm get-command-invocation --command-id $cid --instance-id $id --query StandardOutputContent --output text) -split "`n" | Where-Object { $_ -notmatch "^plugin '" -and $_.Trim() }
 }
+
+# Demande une capture d'ecran de la fenetre (faite par record.ps1) et attend qu'elle soit prise.
+function Show-Shot([string]$name) {
+  $req = Join-Path $env:TEMP 'tpac-shot.req'; Start-Sleep -Milliseconds 500
+  Set-Content $req $name -Encoding ascii
+  for ($i = 0; $i -lt 150 -and (Test-Path $req); $i++) { Start-Sleep -Milliseconds 100 }
+  Start-Sleep -Milliseconds 300
+}

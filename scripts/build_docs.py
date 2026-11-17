@@ -11,20 +11,22 @@ MOD = os.path.join(ROOT, 'docs', 'modules')
 base = sys.argv[1].rstrip('/') if len(sys.argv) > 1 else None
 base_root = base.rsplit('/docs/images', 1)[0] if base else None
 
-LABELS = {'00-console': 'Console AWS', '99-preuves': 'Journal des tests'}
+LABELS = {'00-console': 'Console AWS', '10-terminal': 'Terminal', '99-journal': 'Terminal – journal du test'}
 
 
 def label(fn):
     n = os.path.basename(fn)[:-4]
+    if n.startswith('00-console'):
+        return 'Console AWS – ' + n.split('-', 2)[-1].replace('-', ' ')
     for k, v in LABELS.items():
         if n.startswith(k):
-            return v + ' – ' + n.split('-', 2)[-1].replace('-', ' ') if k == '00-console' else v
-    return 'Terminal – ' + n.split('-', 1)[-1].replace('-', ' ')
+            return v
+    return 'Terminal'
 
 
 def captures_section(m, absolute):
     pngs = sorted(glob.glob(os.path.join(ROOT, 'captures', m, '*.png')))
-    pngs = [p for p in pngs if re.search(r'-\d\.png$', os.path.basename(p)) is None or '99-preuves' in p]
+    pngs = [p for p in pngs if os.path.basename(p).startswith(tuple(LABELS))]
     if not pngs:
         return ''
     out = ['\n## Captures\n']
@@ -47,6 +49,8 @@ for path in sorted(glob.glob(os.path.join(SRC, 'm??.md'))):
 
 header_path = os.path.join(SRC, 'entete.md')
 header = open(header_path, encoding='utf-8').read() if os.path.exists(header_path) else ''
+ec = os.path.join(ROOT, 'docs', '02-ecarts-au-sujet.md')
+if os.path.exists(ec): parts.append(open(ec, encoding='utf-8').read())
 dossier = header + "\n\n" + "\n\n---\n\n".join(parts)
 if base:
     dossier = re.sub(r'\]\(\.\./images/', '](' + base + '/', dossier)

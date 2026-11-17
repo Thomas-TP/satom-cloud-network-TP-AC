@@ -1,0 +1,6 @@
+=== Module 7 - etape 1 : VPN crees par la stack, avant configuration des routeurs ===
+vpn-siege-TP-AC : available	ipsec.1	True
+  tunnels (adresse AWS, etat) : 16.16.69.252	DOWN | 16.192.162.35	DOWN
+vpn-agence-TP-AC : available	ipsec.1	True
+  tunnels (adresse AWS, etat) : 13.61.98.78	DOWN | 13.63.173.212	DOWN
+tgw-rt-prod : 10.21.0.0/24	propagated	active | 192.168.10.0/24	static	blackhole | 192.168.20.0/24	static	blackhole

@@ -1,0 +1,430 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  TP-AC - Couche d'interconnexion de Satom Cloud Network : Network Firewall (module 4), Transit Gateway (module 6),
+  VPN site a site siege et agence (module 7), Direct Connect Gateway (module 8). S'ajoute aux VPC deja en place
+  (prod et dev) : leurs identifiants sont des parametres. Les cles IPsec viennent de Secrets Manager (reference dynamique).
+  Les sites (routeurs strongSwan simules) et la liaison GRE/BGP restent hors modele : ce sont des equipements "chez le client".
+
+Parameters:
+  VpcProdId: {Type: 'AWS::EC2::VPC::Id', Description: vpc-prod-leman-TP-AC}
+  VpcDevId: {Type: 'AWS::EC2::VPC::Id', Description: vpc-dev-leman-TP-AC}
+  SubPriveId: {Type: 'AWS::EC2::Subnet::Id', Description: sub-prive-1a-TP-AC (attachement du Transit Gateway)}
+  SubPublic1bId: {Type: 'AWS::EC2::Subnet::Id', Description: "sub-public-1b-TP-AC (2e zone de l'attachement prod, ou vit rtr-aws)"}
+  SubDevId: {Type: 'AWS::EC2::Subnet::Id', Description: sub-dev-1a-TP-AC}
+  RtPriveId: {Type: String, Description: rt-prive-leman-TP-AC}
+  RtPublicId: {Type: String, Description: rt-public-leman-TP-AC}
+  RtDevId: {Type: String, Description: table de routage du dev}
+  SgAppId: {Type: 'AWS::EC2::SecurityGroup::Id', Description: sg-app-TP-AC}
+  SgRtrAwsId: {Type: 'AWS::EC2::SecurityGroup::Id', Description: groupe de rtr-aws (liaison DX simulee)}
+  NatGatewayId: {Type: String, Description: nat-prod-leman-TP-AC}
+  RtrSiegeInstanceId: {Type: 'AWS::EC2::Instance::Id'}
+  RtrAgenceInstanceId: {Type: 'AWS::EC2::Instance::Id'}
+  RtrAwsInstanceId: {Type: 'AWS::EC2::Instance::Id'}
+  CidrProd: {Type: String, Default: 10.20.0.0/22}
+  CidrDev: {Type: String, Default: 10.21.0.0/24}
+  CidrPrivateSubnet: {Type: String, Default: 10.20.1.0/26}
+  CidrPublicSubnet1a: {Type: String, Default: 10.20.0.0/26}
+  CidrPublicSubnet1b: {Type: String, Default: 10.20.0.64/26}
+  CidrFirewallSubnet: {Type: String, Default: 10.20.2.0/28}
+  CidrSiege: {Type: String, Default: 192.168.10.0/24}
+  CidrAgence: {Type: String, Default: 192.168.20.0/24}
+  SecretVpn: {Type: String, Default: Projet/SatomCloudNetwork/vpn, Description: nom du secret qui contient les 4 cles IPsec}
+  Environnement: {Type: String, Default: prod, AllowedValues: [prod, dev]}
+
+Resources:
+  # ------------------------------------------------------------------ module 4 : pare-feu
+  SubFw:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcProdId
+      CidrBlock: !Ref CidrFirewallSubnet
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags: [{Key: Name, Value: sub-fw-1a-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: !Ref Environnement}]
+  RtFw:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcProdId
+      Tags: [{Key: Name, Value: rt-fw-leman-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: !Ref Environnement}]
+  RtFwAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref SubFw, RouteTableId: !Ref RtFw}
+  RtFwDefault:
+    Type: AWS::EC2::Route
+    Properties: {RouteTableId: !Ref RtFw, DestinationCidrBlock: 0.0.0.0/0, NatGatewayId: !Ref NatGatewayId}
+  RgVpcPass:
+    Type: AWS::NetworkFirewall::RuleGroup
+    Properties:
+      RuleGroupName: rg-vpc-pass-TP-AC
+      Type: STATEFUL
+      Capacity: 10
+      RuleGroup:
+        StatefulRuleOptions: {RuleOrder: STRICT_ORDER}
+        RulesSource:
+          RulesString: !Sub 'pass ip ${CidrProd} any -> ${CidrProd} any (msg:"intra-VPC TP-AC"; sid:100001; rev:1;)'
+      Tags: [{Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]
+  RgDepots:
+    Type: AWS::NetworkFirewall::RuleGroup
+    Properties:
+      RuleGroupName: rg-depots-autorises-TP-AC
+      Type: STATEFUL
+      Capacity: 100
+      RuleGroup:
+        StatefulRuleOptions: {RuleOrder: STRICT_ORDER}
+        RulesSource:
+          RulesSourceList:
+            GeneratedRulesType: ALLOWLIST
+            TargetTypes: [HTTP_HOST, TLS_SNI]
+            Targets: [.amazonlinux.com, .amazonaws.com]
+      Tags: [{Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]
+  PolicyFw:
+    Type: AWS::NetworkFirewall::FirewallPolicy
+    Properties:
+      FirewallPolicyName: policy-prod-leman-TP-AC
+      FirewallPolicy:
+        StatelessDefaultActions: ['aws:forward_to_sfe']
+        StatelessFragmentDefaultActions: ['aws:forward_to_sfe']
+        StatefulEngineOptions: {RuleOrder: STRICT_ORDER}
+        StatefulDefaultActions: ['aws:drop_established', 'aws:alert_established']
+        StatefulRuleGroupReferences:
+          - {ResourceArn: !Ref RgVpcPass, Priority: 1}
+          - {ResourceArn: !Ref RgDepots, Priority: 2}
+      Tags: [{Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]
+  LogsAlert:
+    Type: AWS::Logs::LogGroup
+    Properties: {LogGroupName: /leman/nfw-alert-TP-AC, RetentionInDays: 3}
+  LogsFlow:
+    Type: AWS::Logs::LogGroup
+    Properties: {LogGroupName: /leman/nfw-flow-TP-AC, RetentionInDays: 3}
+  Firewall:
+    Type: AWS::NetworkFirewall::Firewall
+    Properties:
+      FirewallName: nfw-prod-leman-TP-AC
+      FirewallPolicyArn: !Ref PolicyFw
+      VpcId: !Ref VpcProdId
+      SubnetMappings: [{SubnetId: !Ref SubFw}]
+      Tags: [{Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]
+  FirewallLogging:
+    Type: AWS::NetworkFirewall::LoggingConfiguration
+    Properties:
+      FirewallArn: !Ref Firewall
+      LoggingConfiguration:
+        LogDestinationConfigs:
+          - {LogType: ALERT, LogDestinationType: CloudWatchLogs, LogDestination: {logGroup: !Ref LogsAlert}}
+          - {LogType: FLOW, LogDestinationType: CloudWatchLogs, LogDestination: {logGroup: !Ref LogsFlow}}
+  RoutePrivateViaFw:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RtPriveId
+      DestinationCidrBlock: 0.0.0.0/0
+      VpcEndpointId: !Select [1, !Split [':', !Select [0, !GetAtt Firewall.EndpointIds]]]
+  RouteReturnViaFw:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RtPublicId
+      DestinationCidrBlock: !Ref CidrPrivateSubnet
+      VpcEndpointId: !Select [1, !Split [':', !Select [0, !GetAtt Firewall.EndpointIds]]]
+
+  # Les reponses du prive vers le public doivent AUSSI traverser le pare-feu : sinon il ne voit qu'un sens des echanges
+  # web-01 -> app-01 (la requete passe par la route de retour ci-dessus, la reponse reviendrait directement) et les coupe.
+  RoutePriveToPublic1a:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RtPriveId
+      DestinationCidrBlock: !Ref CidrPublicSubnet1a
+      VpcEndpointId: !Select [1, !Split [':', !Select [0, !GetAtt Firewall.EndpointIds]]]
+  RoutePriveToPublic1b:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RtPriveId
+      DestinationCidrBlock: !Ref CidrPublicSubnet1b
+      VpcEndpointId: !Select [1, !Split [':', !Select [0, !GetAtt Firewall.EndpointIds]]]
+
+  # ------------------------------------------------------------------ module 6 : Transit Gateway
+  Tgw:
+    Type: AWS::EC2::TransitGateway
+    Properties:
+      Description: tgw-leman TP-AC
+      AmazonSideAsn: 64512
+      DefaultRouteTableAssociation: disable
+      DefaultRouteTablePropagation: disable
+      VpnEcmpSupport: enable
+      DnsSupport: enable
+      Tags: [{Key: Name, Value: tgw-leman-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: !Ref Environnement}]
+  AttachProd:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref Tgw
+      VpcId: !Ref VpcProdId
+      SubnetIds: [!Ref SubPriveId, !Ref SubPublic1bId]
+      Tags: [{Key: Name, Value: tgwa-prod-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: prod}]
+  AttachDev:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref Tgw
+      VpcId: !Ref VpcDevId
+      SubnetIds: [!Ref SubDevId]
+      Tags: [{Key: Name, Value: tgwa-dev-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: dev}]
+  TgwRtProd:
+    Type: AWS::EC2::TransitGatewayRouteTable
+    Properties: {TransitGatewayId: !Ref Tgw, Tags: [{Key: Name, Value: tgw-rt-prod-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}]}
+  TgwRtDev:
+    Type: AWS::EC2::TransitGatewayRouteTable
+    Properties: {TransitGatewayId: !Ref Tgw, Tags: [{Key: Name, Value: tgw-rt-dev-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}]}
+  TgwRtSites:
+    Type: AWS::EC2::TransitGatewayRouteTable
+    Properties: {TransitGatewayId: !Ref Tgw, Tags: [{Key: Name, Value: tgw-rt-sites-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}]}
+  AssocProd:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtProd, TransitGatewayAttachmentId: !Ref AttachProd}
+  AssocDev:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtDev, TransitGatewayAttachmentId: !Ref AttachDev}
+  PropDevToProd:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtProd, TransitGatewayAttachmentId: !Ref AttachDev}
+  PropProdToDev:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtDev, TransitGatewayAttachmentId: !Ref AttachProd}
+  PropProdToSites:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtSites, TransitGatewayAttachmentId: !Ref AttachProd}
+  RoutePriveToDev:
+    Type: AWS::EC2::Route
+    DependsOn: AttachProd
+    Properties: {RouteTableId: !Ref RtPriveId, DestinationCidrBlock: !Ref CidrDev, TransitGatewayId: !Ref Tgw}
+  RoutePriveToSiege:
+    Type: AWS::EC2::Route
+    DependsOn: AttachProd
+    Properties: {RouteTableId: !Ref RtPriveId, DestinationCidrBlock: !Ref CidrSiege, TransitGatewayId: !Ref Tgw}
+  RoutePriveToAgence:
+    Type: AWS::EC2::Route
+    DependsOn: AttachProd
+    Properties: {RouteTableId: !Ref RtPriveId, DestinationCidrBlock: !Ref CidrAgence, TransitGatewayId: !Ref Tgw}
+  RoutePublicToSiege:
+    Type: AWS::EC2::Route
+    DependsOn: AttachProd
+    Properties: {RouteTableId: !Ref RtPublicId, DestinationCidrBlock: !Ref CidrSiege, TransitGatewayId: !Ref Tgw}
+  RouteDevToProd:
+    Type: AWS::EC2::Route
+    DependsOn: AttachDev
+    Properties: {RouteTableId: !Ref RtDevId, DestinationCidrBlock: !Ref CidrProd, TransitGatewayId: !Ref Tgw}
+
+  # ------------------------------------------------------------------ module 7 : VPN site a site
+  EipSiege:
+    Type: AWS::EC2::EIP
+    Properties: {Domain: vpc, Tags: [{Key: Name, Value: eip-rtr-siege-TP-AC}, {Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]}
+  EipAgence:
+    Type: AWS::EC2::EIP
+    Properties: {Domain: vpc, Tags: [{Key: Name, Value: eip-rtr-agence-TP-AC}, {Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]}
+  EipRtrAws:
+    Type: AWS::EC2::EIP
+    Properties: {Domain: vpc, Tags: [{Key: Name, Value: eip-rtr-aws-TP-AC}, {Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]}
+  EipAssocSiege:
+    Type: AWS::EC2::EIPAssociation
+    Properties: {AllocationId: !GetAtt EipSiege.AllocationId, InstanceId: !Ref RtrSiegeInstanceId}
+  EipAssocAgence:
+    Type: AWS::EC2::EIPAssociation
+    Properties: {AllocationId: !GetAtt EipAgence.AllocationId, InstanceId: !Ref RtrAgenceInstanceId}
+  EipAssocRtrAws:
+    Type: AWS::EC2::EIPAssociation
+    Properties: {AllocationId: !GetAtt EipRtrAws.AllocationId, InstanceId: !Ref RtrAwsInstanceId}
+  CgwSiege:
+    Type: AWS::EC2::CustomerGateway
+    Properties: {Type: ipsec.1, BgpAsn: 65000, IpAddress: !Ref EipSiege, Tags: [{Key: Name, Value: cgw-siege-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: !Ref Environnement}]}
+  CgwAgence:
+    Type: AWS::EC2::CustomerGateway
+    Properties: {Type: ipsec.1, BgpAsn: 65000, IpAddress: !Ref EipAgence, Tags: [{Key: Name, Value: cgw-agence-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: !Ref Environnement}]}
+  VpnSiege:
+    Type: AWS::EC2::VPNConnection
+    Properties:
+      Type: ipsec.1
+      CustomerGatewayId: !Ref CgwSiege
+      TransitGatewayId: !Ref Tgw
+      StaticRoutesOnly: true
+      VpnTunnelOptionsSpecifications:
+        - PreSharedKey: !Sub '{{resolve:secretsmanager:${SecretVpn}:SecretString:siege1}}'
+          IKEVersions: [{Value: ikev2}]
+          Phase1EncryptionAlgorithms: [{Value: AES256}]
+          Phase2EncryptionAlgorithms: [{Value: AES256}]
+          Phase1IntegrityAlgorithms: [{Value: SHA2-256}]
+          Phase2IntegrityAlgorithms: [{Value: SHA2-256}]
+          Phase1DHGroupNumbers: [{Value: 14}]
+          Phase2DHGroupNumbers: [{Value: 14}]
+        - PreSharedKey: !Sub '{{resolve:secretsmanager:${SecretVpn}:SecretString:siege2}}'
+          IKEVersions: [{Value: ikev2}]
+          Phase1EncryptionAlgorithms: [{Value: AES256}]
+          Phase2EncryptionAlgorithms: [{Value: AES256}]
+          Phase1IntegrityAlgorithms: [{Value: SHA2-256}]
+          Phase2IntegrityAlgorithms: [{Value: SHA2-256}]
+          Phase1DHGroupNumbers: [{Value: 14}]
+          Phase2DHGroupNumbers: [{Value: 14}]
+      Tags: [{Key: Name, Value: vpn-siege-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: !Ref Environnement}]
+  VpnAgence:
+    Type: AWS::EC2::VPNConnection
+    Properties:
+      Type: ipsec.1
+      CustomerGatewayId: !Ref CgwAgence
+      TransitGatewayId: !Ref Tgw
+      StaticRoutesOnly: true
+      VpnTunnelOptionsSpecifications:
+        - PreSharedKey: !Sub '{{resolve:secretsmanager:${SecretVpn}:SecretString:agence1}}'
+          IKEVersions: [{Value: ikev2}]
+          Phase1EncryptionAlgorithms: [{Value: AES256}]
+          Phase2EncryptionAlgorithms: [{Value: AES256}]
+          Phase1IntegrityAlgorithms: [{Value: SHA2-256}]
+          Phase2IntegrityAlgorithms: [{Value: SHA2-256}]
+          Phase1DHGroupNumbers: [{Value: 14}]
+          Phase2DHGroupNumbers: [{Value: 14}]
+        - PreSharedKey: !Sub '{{resolve:secretsmanager:${SecretVpn}:SecretString:agence2}}'
+          IKEVersions: [{Value: ikev2}]
+          Phase1EncryptionAlgorithms: [{Value: AES256}]
+          Phase2EncryptionAlgorithms: [{Value: AES256}]
+          Phase1IntegrityAlgorithms: [{Value: SHA2-256}]
+          Phase2IntegrityAlgorithms: [{Value: SHA2-256}]
+          Phase1DHGroupNumbers: [{Value: 14}]
+          Phase2DHGroupNumbers: [{Value: 14}]
+      Tags: [{Key: Name, Value: vpn-agence-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: !Ref Environnement}]
+
+  # Pas d'attribut CloudFormation pour l'attachement TGW d'un VPN, ni de type pour la Direct Connect Gateway :
+  # une petite fonction Lambda (ressource personnalisee) retrouve les attachements et cree la passerelle DX.
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement: [{Effect: Allow, Principal: {Service: lambda.amazonaws.com}, Action: 'sts:AssumeRole'}]
+      ManagedPolicyArns: [!Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole']
+      Policies:
+        - PolicyName: interconnexion
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - {Effect: Allow, Action: ['ec2:DescribeTransitGatewayAttachments', 'ec2:CreateTags', 'directconnect:*'], Resource: '*'}
+      Tags: [{Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]
+  Helper:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 900
+      Role: !GetAtt LambdaRole.Arn
+      Tags: [{Key: Equipe, Value: TP-AC}, {Key: Projet, Value: SatomCloudNetwork}]
+      Code:
+        ZipFile: |
+          import boto3, time, json, urllib.request
+          def reponse(event, statut, data, rid, raison=''):
+              corps = json.dumps({'Status': statut, 'Reason': raison or 'voir les journaux CloudWatch', 'PhysicalResourceId': rid, 'StackId': event['StackId'],
+                                  'RequestId': event['RequestId'], 'LogicalResourceId': event['LogicalResourceId'], 'Data': data}).encode()
+              urllib.request.urlopen(urllib.request.Request(event['ResponseURL'], data=corps, method='PUT', headers={'Content-Type': ''}))
+          ec2 = boto3.client('ec2'); dx = boto3.client('directconnect')
+          def attach_of(vpn, nom):
+              for _ in range(90):
+                  r = ec2.describe_transit_gateway_attachments(Filters=[{'Name': 'resource-id', 'Values': [vpn]}, {'Name': 'state', 'Values': ['available', 'pending']}])
+                  if r['TransitGatewayAttachments']:
+                      att = r['TransitGatewayAttachments'][0]['TransitGatewayAttachmentId']
+                      ec2.create_tags(Resources=[att], Tags=[{'Key': 'Name', 'Value': nom}, {'Key': 'Equipe', 'Value': 'TP-AC'}, {'Key': 'Projet', 'Value': 'SatomCloudNetwork'}])
+                      return att
+                  time.sleep(10)
+              raise Exception('attachement VPN introuvable : ' + vpn)
+          def wait_assoc(gw, want):
+              for _ in range(80):
+                  a = dx.describe_direct_connect_gateway_associations(directConnectGatewayId=gw)['directConnectGatewayAssociations']
+                  st = a[0]['associationState'] if a else 'gone'
+                  if st == want: return
+                  time.sleep(10)
+              raise Exception('association DX : etat inattendu ' + st)
+          def handler(event, ctx):
+              p = event['ResourceProperties']; t = event['ResourceType']; rid = event.get('PhysicalResourceId', 'x'); data = {}
+              try:
+                  if t == 'Custom::VpnAttachments':
+                      if event['RequestType'] != 'Delete':
+                          data = {'Siege': attach_of(p['VpnSiege'], 'tgwa-vpn-siege-TP-AC'), 'Agence': attach_of(p['VpnAgence'], 'tgwa-vpn-agence-TP-AC')}
+                      rid = 'vpn-attachments'
+                  elif t == 'Custom::DxGateway':
+                      if event['RequestType'] == 'Create':
+                          gw = dx.create_direct_connect_gateway(directConnectGatewayName=p['Name'], amazonSideAsn=int(p['Asn']))['directConnectGateway']['directConnectGatewayId']
+                          dx.create_direct_connect_gateway_association(directConnectGatewayId=gw, gatewayId=p['TgwId'], addAllowedPrefixesToDirectConnectGateway=[{'cidr': c} for c in p['Prefixes']])
+                          wait_assoc(gw, 'associated'); rid = gw; data = {'DxgwId': gw}
+                      elif event['RequestType'] == 'Delete' and rid.startswith(('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')) and '-' in rid:
+                          a = dx.describe_direct_connect_gateway_associations(directConnectGatewayId=rid)['directConnectGatewayAssociations']
+                          if a:
+                              dx.delete_direct_connect_gateway_association(associationId=a[0]['associationId'])
+                              for _ in range(80):
+                                  if not dx.describe_direct_connect_gateway_associations(directConnectGatewayId=rid)['directConnectGatewayAssociations']: break
+                                  time.sleep(10)
+                          dx.delete_direct_connect_gateway(directConnectGatewayId=rid)
+                  reponse(event, 'SUCCESS', data, rid)
+              except Exception as e:
+                  print('erreur', e)
+                  reponse(event, 'SUCCESS' if event['RequestType'] == 'Delete' else 'FAILED', {}, rid, str(e)[:200])
+  VpnAttachments:
+    Type: Custom::VpnAttachments
+    Properties: {ServiceToken: !GetAtt Helper.Arn, ServiceTimeout: 1200, VpnSiege: !Ref VpnSiege, VpnAgence: !Ref VpnAgence}
+  # tables du TGW pour les sites : ils voient la prod, pas le dev ; la prod apprend leurs routes (statiques)
+  AssocVpnSiege:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtSites, TransitGatewayAttachmentId: !GetAtt VpnAttachments.Siege}
+  AssocVpnAgence:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtSites, TransitGatewayAttachmentId: !GetAtt VpnAttachments.Agence}
+  RouteTgwSiege:
+    Type: AWS::EC2::TransitGatewayRoute
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtProd, DestinationCidrBlock: !Ref CidrSiege, TransitGatewayAttachmentId: !GetAtt VpnAttachments.Siege}
+  RouteTgwAgence:
+    Type: AWS::EC2::TransitGatewayRoute
+    Properties: {TransitGatewayRouteTableId: !Ref TgwRtProd, DestinationCidrBlock: !Ref CidrAgence, TransitGatewayAttachmentId: !GetAtt VpnAttachments.Agence}
+  # sg-app : ce que les sites ont le droit de faire (siege : ping + 8080 ; agence : 8080 seulement) et la liaison DX simulee
+  AppPingSiege:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: {GroupId: !Ref SgAppId, IpProtocol: icmp, FromPort: -1, ToPort: -1, CidrIp: !Ref CidrSiege, Description: ping siege}
+  AppApiSiege:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: {GroupId: !Ref SgAppId, IpProtocol: tcp, FromPort: 8080, ToPort: 8080, CidrIp: !Ref CidrSiege, Description: API siege}
+  AppApiAgence:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: {GroupId: !Ref SgAppId, IpProtocol: tcp, FromPort: 8080, ToPort: 8080, CidrIp: !Ref CidrAgence, Description: API agence}
+  # Avec le pare-feu au milieu, une regle "depuis un groupe de securite" ne correspond plus (le trafic arrive par l'endpoint du pare-feu,
+  # plus par l'interface du serveur) : on autorise donc par adresses, pour web-01 (sous-reseau public 1a) et pour rtr-aws.
+  AppApiWeb:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: {GroupId: !Ref SgAppId, IpProtocol: tcp, FromPort: 8080, ToPort: 8080, CidrIp: !Ref CidrPublicSubnet1a, Description: API depuis web-01 via le pare-feu}
+  AppApiRtrAws:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: {GroupId: !Ref SgAppId, IpProtocol: tcp, FromPort: 8080, ToPort: 8080, CidrIp: 10.20.0.74/32, Description: API via DX simule}
+  AppPingRtrAws:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: {GroupId: !Ref SgAppId, IpProtocol: icmp, FromPort: -1, ToPort: -1, CidrIp: 10.20.0.74/32, Description: ping via DX simule}
+
+  # ------------------------------------------------------------------ module 8 : Direct Connect Gateway
+  Dxgw:
+    Type: Custom::DxGateway
+    DependsOn: [AttachProd, AttachDev]
+    Properties:
+      ServiceToken: !GetAtt Helper.Arn
+      ServiceTimeout: 1200
+      Name: dxgw-leman-TP-AC
+      Asn: 64513
+      TgwId: !Ref Tgw
+      Prefixes: [!Ref CidrProd, !Ref CidrSiege]
+
+Outputs:
+  TgwId: {Value: !Ref Tgw}
+  TgwRtProd: {Value: !Ref TgwRtProd}
+  TgwRtDev: {Value: !Ref TgwRtDev}
+  TgwRtSites: {Value: !Ref TgwRtSites}
+  AttachProd: {Value: !Ref AttachProd}
+  AttachDev: {Value: !Ref AttachDev}
+  VpnSiege: {Value: !Ref VpnSiege}
+  VpnAgence: {Value: !Ref VpnAgence}
+  CgwSiege: {Value: !Ref CgwSiege}
+  CgwAgence: {Value: !Ref CgwAgence}
+  AttachVpnSiege: {Value: !GetAtt VpnAttachments.Siege}
+  AttachVpnAgence: {Value: !GetAtt VpnAttachments.Agence}
+  EipSiege: {Value: !Ref EipSiege}
+  EipAgence: {Value: !Ref EipAgence}
+  EipRtrAws: {Value: !Ref EipRtrAws}
+  EipSiegeAlloc: {Value: !GetAtt EipSiege.AllocationId}
+  EipAgenceAlloc: {Value: !GetAtt EipAgence.AllocationId}
+  EipRtrAwsAlloc: {Value: !GetAtt EipRtrAws.AllocationId}
+  DxgwId: {Value: !GetAtt Dxgw.DxgwId}
+  FirewallName: {Value: !Ref Firewall}

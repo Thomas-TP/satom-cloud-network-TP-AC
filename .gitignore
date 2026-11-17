@@ -14,3 +14,4 @@ scripts/state.json
 # fichiers de montage (gros, regenerables)
 /video/work/
 /video/clips/
+captures/_shots/

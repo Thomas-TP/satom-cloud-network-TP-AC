@@ -53,6 +53,7 @@ iptables -t nat -C POSTROUTING -s 192.168.10.0/24 -o `$DEV -j MASQUERADE 2>/dev/
 vtysh <<'EOV'
 configure terminal
 ip route 10.20.0.0/22 10.20.0.65
+ip route 192.168.10.10/32 10.20.0.65
 router bgp 64513
  bgp router-id 10.20.0.74
  no bgp ebgp-requires-policy
@@ -76,9 +77,22 @@ ip tunnel add gre-dx mode gre local 192.168.10.10 remote $pubAws ttl 255
 ip addr add 169.254.100.2/30 dev gre-dx; ip link set gre-dx up
 ip tunnel add gre-vpn mode gre local 192.168.10.10 remote 10.20.0.74 ttl 255
 ip addr add 169.254.101.2/30 dev gre-vpn; ip link set gre-vpn up
+pkill -f tpac-watch.sh 2>/dev/null || true      # le suivi du module 7 gere la route 10.20.0.0/22 : ici c'est FRR (BGP) qui la gere
+for n in 1 2; do swanctl --terminate --ike siege-t`$n >/dev/null 2>&1; done; sleep 3; iptables -F INPUT 2>/dev/null; iptables -F OUTPUT 2>/dev/null
+for n in 1 2; do swanctl --initiate --child siege-t`$n >/dev/null 2>&1; done; sleep 15
 ip route del 10.20.0.0/22 dev xfrm-siege1 2>/dev/null || true; ip route del 10.20.0.0/22 dev xfrm-siege2 2>/dev/null || true   # secours = routes statiques FRR de distance elevee (voir vtysh)
-ip route replace 10.20.0.74/32 dev xfrm-siege1 metric 100
-ip route replace 10.20.0.74/32 dev xfrm-siege2 metric 200
+cat > /usr/local/bin/tpac-watch32.sh <<'EOW'
+#!/bin/bash
+# le GRE dans le VPN a besoin d'une route vers rtr-aws (10.20.0.74) par un tunnel etabli
+while true; do
+  for n in 1 2; do
+    if swanctl --list-sas 2>/dev/null | grep -q "^siege-t`$n: .*ESTABLISHED"; then ip route replace 10.20.0.74/32 dev xfrm-siege`$n metric `$((n*100)) 2>/dev/null
+    else ip route del 10.20.0.74/32 dev xfrm-siege`$n 2>/dev/null; fi
+  done
+  sleep 1
+done
+EOW
+chmod +x /usr/local/bin/tpac-watch32.sh; pkill -f tpac-watch32.sh 2>/dev/null || true; setsid nohup /usr/local/bin/tpac-watch32.sh >/dev/null 2>&1 < /dev/null &
 vtysh <<'EOV'
 configure terminal
 ip route 192.168.10.0/24 192.168.10.1
@@ -120,6 +134,7 @@ L "Emplacement retenu (non commande) : EQSK1, Equinix Sweden SK1 (vitesses 1G / 
 L "dxgw : $(Aws directconnect describe-direct-connect-gateways --direct-connect-gateway-id $($s.dxgw) --query 'directConnectGateways[0].[directConnectGatewayName,amazonSideAsn,directConnectGatewayState]')"
 L "association avec tgw-leman : $(Aws directconnect describe-direct-connect-gateway-associations --direct-connect-gateway-id $($s.dxgw) --query 'directConnectGatewayAssociations[0].[associationState,allowedPrefixesToDirectConnectGateway[].cidr]')"
 L "`n=== TP2 : GRE + BGP ==="
+L "rtr-aws : traduction d'adresse (NAT) pour app-01 :`n$(Run $s.rtrAws 'iptables -t nat -S POSTROUTING | tail -2' 40)"
 L "rtr-siege : show bgp summary`n$(Run $s.rtrSiege 'vtysh -c "show bgp summary"' 40)"
 L "rtr-aws : show ip bgp (prefixes recus du siege)`n$(Run $s.rtrAws 'vtysh -c "show ip bgp"' 40)"
 L "siege -> app-01 (chemin choisi) :`n$(Run $s.rtrSiege 'ip addr add 192.168.10.50/32 dev lo 2>/dev/null; ip route get 10.20.1.10 from 192.168.10.50; ping -c 3 -I 192.168.10.50 10.20.1.10 | tail -3; curl -s -m 5 --interface 192.168.10.50 http://10.20.1.10:8080/api/health' 60)"

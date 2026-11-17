@@ -10,9 +10,10 @@ Région : **eu-north-1 (Stockholm)** – tags `Projet=SatomCloudNetwork`, `Equip
 | Schéma réseau final (WAN) | [`docs/images/global.png`](docs/images/global.png) |
 | Plan d'adressage | [`docs/00-plan-adressage.md`](docs/00-plan-adressage.md) |
 | Dossier client (10 pages max) | [`docs/CLIENT.md`](docs/CLIENT.md) |
-| Template CloudFormation (module 13) | [`cfn/reseau-leman.yaml`](cfn/reseau-leman.yaml) (+ `reseau-leman-etape1.yaml`, `optional-*.yaml`) |
+| Template CloudFormation (module 13) | [`cfn/reseau-leman.yaml`](cfn/reseau-leman.yaml) (+ `reseau-leman-etape1.yaml`) et [`cfn/interconnexion-leman.yaml`](cfn/interconnexion-leman.yaml) (pare-feu, Transit Gateway, VPN, DX Gateway) |
 | Procédures de test | section « Procédure de test / diagnostic » de chaque module |
 | Services bloqués par l'organisation | [`docs/01-services-bloques.md`](docs/01-services-bloques.md) |
+| Points du sujet impossibles ou incohérents (pour le formateur) | [`docs/02-ecarts-au-sujet.md`](docs/02-ecarts-au-sujet.md) |
 | Journal de projet et nettoyage | [`docs/NETTOYAGE.md`](docs/NETTOYAGE.md) |
 | Captures (console AWS réelles, état CLI, preuves de tests) | [`captures/`](captures/) |
 | Vidéo de rendu (environ 8 min) | [`video/satom-cloud-network-TP-AC.mp4`](video/satom-cloud-network-TP-AC.mp4) |

@@ -1,0 +1,21 @@
+=== Module 7 - etape 3 : bascule entre les deux tunnels du siege ===
+avant le test : tunnels vus par AWS = UP	UP
+T+10 s : panne silencieuse du tunnel 1 (les paquets vers 16.16.69.252 sont perdus, comme une vraie coupure)
+
+T+15 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege1 uid 0 
+
+T+60 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege2 uid 0  ; tunnels etablis cote routeur : 1
+
+T+90 s : le tunnel 1 est retabli (paquets de nouveau acceptes, IKE relance)
+
+T+130 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege1 uid 0 
+
+--- resultat des requetes curl sur le port 8080 (une toutes les 0,3 s)
+
+interruption de 29.2 s, de T+9.9 s a T+39.0 s
+
+sessions IKE etablies : 2
+
+	
+
+etat vu par AWS : 16.16.69.252	DOWN | 16.192.162.35	UP

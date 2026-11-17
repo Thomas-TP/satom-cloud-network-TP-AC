@@ -1,50 +1,95 @@
-=== Module 7 - etape 1 : etat des VPN avant configuration des routeurs ===
-vpn-siege-TP-AC : available ipsec.1 True
-  tunnels (adresse AWS, etat) : 13.48.14.139 DOWN | 16.192.201.171 DOWN
-vpn-agence-TP-AC : available ipsec.1 True
-  tunnels (adresse AWS, etat) : 16.192.26.24 DOWN | 51.21.21.145 DOWN
+=== Module 7 - etape 1 : VPN crees par la stack, avant configuration des routeurs ===
+vpn-siege-TP-AC : available	ipsec.1	True
+  tunnels (adresse AWS, etat) : 16.16.69.252	DOWN | 16.192.162.35	DOWN
+vpn-agence-TP-AC : available	ipsec.1	True
+  tunnels (adresse AWS, etat) : 13.61.98.78	DOWN | 13.63.173.212	DOWN
+tgw-rt-prod : 10.21.0.0/24	propagated	active | 192.168.10.0/24	static	blackhole | 192.168.20.0/24	static	blackhole
 
 === Module 7 - etape 2 : tunnels, flux et segmentation ===
 siege : swanctl --list-sas (cote routeur)
-siege-t2: #2, ESTABLISHED, IKEv2, 7715eee1bf6cb7d9_i* 207cbdc434e743c0_r
-  siege-t2: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-siege-t1: #1, ESTABLISHED, IKEv2, c01a613693cec6ac_i* 0a606cb63546e3dd_r
-  siege-t1: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+siege-t2: #2, ESTABLISHED, IKEv2, 35f033fe3ecf3ca4_i* 67e0bc1592994c7c_r
+  siege-t2: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+siege-t1: #1, ESTABLISHED, IKEv2, c4c613fa152a7cd4_i* d1219417c5494da4_r
+  siege-t1: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
+
 agence : swanctl --list-sas (cote routeur)
-agence-t2: #2, ESTABLISHED, IKEv2, 6ece0791ffe16043_i* 7754fd3d6d5e44c8_r
+agence-t2: #2, ESTABLISHED, IKEv2, e2e49f4e64242dc5_i* 2f6ae7a044ccede0_r
   agence-t2: #2, reqid 2, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-agence-t1: #1, ESTABLISHED, IKEv2, 1bda37dff36ddac9_i* 919dbf129234fc88_r
+agence-t1: #1, ESTABLISHED, IKEv2, dd2a0ff6e93c4d51_i* 01379b4f96a3567f_r
   agence-t1: #1, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_CBC-256/HMAC_SHA2_256_128
-vpn-siege-TP-AC, etat des tunnels vu par AWS : 13.48.14.139 UP  | 16.192.201.171 UP 
-vpn-agence-TP-AC, etat des tunnels vu par AWS : 16.192.26.24 DOWN  | 51.21.21.145 DOWN    <- lecture faite trop tot : AWS mettait quelques secondes a passer UP (voir etat final)
-tgw-rt-prod (routes actives) : 10.21.0.0/24 propagated vpc | 192.168.10.0/24 static vpn | 192.168.20.0/24 static vpn
-tgw-rt-dev  (routes actives) : 10.20.0.0/22 propagated
-tgw-rt-sites (routes actives) : 10.20.0.0/22 propagated
+
+vpn-siege-TP-AC, etat des tunnels vu par AWS : 16.16.69.252	UP	 | 16.192.162.35	UP	
+vpn-agence-TP-AC, etat des tunnels vu par AWS : 13.61.98.78	UP	 | 13.63.173.212	UP	
+tgw-rt-prod (routes actives) : 10.21.0.0/24	propagated	vpc | 192.168.10.0/24	static	vpn | 192.168.20.0/24	static	vpn
+tgw-rt-dev  (routes actives) : 10.20.0.0/22	propagated
+tgw-rt-sites (routes actives) : 10.20.0.0/22	propagated
+
 -- siege -> app-01 (10.20.1.10)
 ping : --- 10.20.1.10 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2003ms
-rtt min/avg/max/mdev = 2.729/3.175/3.841/0.479 ms
+3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+rtt min/avg/max/mdev = 2.645/2.703/2.818/0.081 ms
+	
 8080 : app-01 TP-AC /api/health
+	
+
 -- agence -> app-01 (seul le 8080 est autorise)
 8080 : app-01 TP-AC /api/health
-ping (doit echouer) : 2 packets transmitted, 0 received, 100% packet loss, time 1028ms
+	
+ping (doit echouer) : 2 packets transmitted, 0 received, 100% packet loss, time 1014ms
+
+	
+
 -- segmentation : aucun site ne joint dev-01 (10.21.0.10), dev-01 ne joint pas les sites (dev-01 SSM : Online)
-siege -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2042ms
-agence -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2034ms
-dev-01 -> siege : 3 packets transmitted, 0 received, 100% packet loss, time 2101ms
-dev-01 -> agence : 3 packets transmitted, 0 received, 100% packet loss, time 2117ms
+siege -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2048ms
+
+	
+agence -> dev-01 : 3 packets transmitted, 0 received, 100% packet loss, time 2050ms
+
+	
+dev-01 -> siege : 3 packets transmitted, 0 received, 100% packet loss, time 2119ms
+
+	
+dev-01 -> agence : 3 packets transmitted, 0 received, 100% packet loss, time 2114ms
 
 === Module 7 - etape 3 : bascule entre les deux tunnels du siege ===
-T+10 s : coupure du tunnel 1 (siege-t1)
-T+70 s : tunnel 1 retabli
---- resultat du ping horodate (une sonde toutes les 0,5 s, 200 sondes)
-200 packets transmitted, 160 received, 20% packet loss, time 99838ms
-rtt min/avg/max/mdev = 2.340/2.535/3.768/0.187 ms
-interruption de 20.7 s, de T+10.0 s a T+30.7 s (sondes 22 a 61 perdues)
-sessions IKE etablies : 2
-etat vu par AWS : 13.48.14.139 UP | 16.192.201.171 UP
+avant le test : tunnels vus par AWS = UP	UP
+T+10 s : panne silencieuse du tunnel 1 (les paquets vers 16.16.69.252 sont perdus, comme une vraie coupure)
 
-=== Etat final des 4 tunnels (vu par AWS, apres tous les tests) ===
-vpn-siege-TP-AC : 13.48.14.139 UP | 16.192.201.171 UP
-vpn-agence-TP-AC : 16.192.26.24 UP | 51.21.21.145 UP
-tgw-rt-prod : 10.21.0.0/24 propagated | 192.168.10.0/24 static | 192.168.20.0/24 static
+T+15 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege1 uid 0 
+
+T+60 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege2 uid 0  ; tunnels etablis cote routeur : 1
+
+T+90 s : le tunnel 1 est retabli (paquets de nouveau acceptes, IKE relance)
+
+T+130 s : route : 10.20.1.10 from 192.168.10.10 dev xfrm-siege1 uid 0 
+
+--- resultat des requetes curl sur le port 8080 (une toutes les 0,3 s)
+
+interruption de 29.2 s, de T+9.9 s a T+39.0 s
+
+sessions IKE etablies : 2
+
+	
+
+etat vu par AWS : 16.16.69.252	DOWN | 16.192.162.35	UP
+
+=== Module 7 - etape 4 : bascule entre les deux tunnels de l'agence ===
+avant le test : tunnels vus par AWS = UP	UP
+T+10 s : panne silencieuse du tunnel 1 (les paquets vers 13.61.98.78 sont perdus, comme une vraie coupure)
+
+T+15 s : route : 10.20.1.10 from 192.168.20.10 dev xfrm-agence1 uid 0 
+
+T+60 s : route : 10.20.1.10 from 192.168.20.10 dev xfrm-agence2 uid 0  ; tunnels etablis cote routeur : 1
+
+T+90 s : le tunnel 1 est retabli (paquets de nouveau acceptes, IKE relance)
+
+T+130 s : route : 10.20.1.10 from 192.168.20.10 dev xfrm-agence1 uid 0 
+
+--- resultat des requetes curl sur le port 8080 (une toutes les 0,3 s)
+
+interruption de 33.5 s, de T+9.7 s a T+43.2 s
+
+sessions IKE etablies : 2
+
+	
+etat vu par AWS : 13.61.98.78	UP | 13.63.173.212	UP

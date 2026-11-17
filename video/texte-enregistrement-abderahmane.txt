@@ -1,0 +1,60 @@
+ENREGISTREMENT DE LA VOIX D'ABDERAHMANE (environ 2 minutes 30)
+
+POURQUOI : Thomas utilise un logiciel qui clone une voix à partir d'un enregistrement, pour lire le texte de la vidéo du projet. Avec ta voix aussi, la vidéo pourra avoir deux narrateurs. Ta voix ne sert que pour ce projet, et ne sera pas partagée en dehors.
+
+---
+
+INSTALLATION (une seule fois)
+1. Ouvre un terminal Windows et tape :  winget install Audacity.Audacity
+   (ou télécharge Audacity sur audacityteam.org). Lance Audacity.
+
+RÉGLAGES AVANT D'ENREGISTRER
+2. Branche ton meilleur micro (casque avec fil ou micro USB). Évite le Bluetooth.
+3. En haut, clique sur « Config. Audio », puis « Paramètres audio » :
+   - Enregistrement, Appareil : ton micro
+   - Canaux d'enregistrement : 1 (Mono)
+   - Fréquence d'échantillonnage : 48000 Hz
+   - Format d'échantillon : 32 bits flottant
+4. Active le vumètre : clique sur l'icône de micro. Parle : les pics doivent rester entre -12 et -6 dB, jamais dans le rouge. Sinon, baisse le volume du micro dans Windows.
+5. Ne mets AUCUN effet (pas de réduction de bruit, pas de compresseur).
+
+CONDITIONS
+- Pièce calme (rideaux, pas de ventilateur, notifications coupées).
+- Micro à 15-20 cm, légèrement de côté.
+- Parle d'une voix NORMALE, un peu projetée, comme si tu expliquais à un collègue : surtout pas en chuchotant, car le clone chuchoterait aussi.
+- Laisse 2 secondes de silence au début et à la fin.
+- Si tu te trompes, reprends la phrase calmement et continue, sans arrêter l'enregistrement.
+
+ENREGISTRER
+6. Clique sur le rond rouge, lis le texte ci-dessous mot pour mot, puis clique sur le carré blanc.
+7. Réécoute avec le triangle vert : pas d'écho, pas de parasite, pas de saturation.
+
+EXPORTER
+8. Fichier, Exporter, Exporter l'audio. Type : Audio complet du projet.
+   - Nom : enregistrement-abderahmane
+   - Format : WAV (Microsoft), Mono, 48000 Hz, encodage 32-bit float
+9. Envoie le fichier .wav à Thomas, qui le place dans C:\Perso\voice\.
+
+---
+
+TEXTE À LIRE (mot pour mot)
+
+Bonjour, je m'appelle Abderahmane. Je suis d'accord pour que ma voix soit clonée, uniquement pour la vidéo de notre projet Satom Cloud Network.
+
+Avec Thomas, nous avons construit pour le groupe Léman Finance un réseau complet sur AWS. Il relie le siège de Genève, l'agence de Lausanne et le cloud, de façon sûre, mesurée et facile à rejouer.
+
+Première étape, les réseaux. Nous découpons un grand réseau en sous-réseaux publics et privés, avec une passerelle Internet pour le web et une passerelle NAT pour les serveurs qui doivent seulement sortir.
+
+Ensuite, la sécurité. Les Security Groups retiennent l'état des connexions, les listes de contrôle d'accès filtrent dans les deux sens, et un pare-feu managé ne laisse sortir que les domaines autorisés.
+
+Pour relier plusieurs réseaux, nous utilisons un Transit Gateway : un point central, avec une table de routage pour chaque environnement. Le siège et l'agence s'y connectent par deux tunnels chiffrés IPsec chacun. Si un tunnel tombe, le trafic reprend sur l'autre.
+
+Pour une liaison dédiée, le protocole BGP choisit le meilleur chemin, et bascule vers le secours en quelques secondes.
+
+Côté application, un répartiteur de charge distribue les requêtes, Route 53 répond aux noms, et CloudFront garde les pages en cache près des utilisateurs. Tout est surveillé par des journaux, un tableau de bord et une alarme.
+
+Enfin, tout peut être redéployé depuis des modèles CloudFormation, sans étape manuelle.
+
+Quelques chiffres et quelques sigles à bien prononcer : le port huit mille huitante. Septante-deux, huitante-quatre, nonante-six. Le tunnel est établi, la session B-G-P est active, et le ping répond en trois millisecondes. Un budget de cent dollars, avec une alerte à huitante pour cent.
+
+Merci de nous avoir suivis. Bon visionnage !

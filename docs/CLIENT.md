@@ -46,7 +46,7 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | Pare-feu : domaines sortants | les dépôts autorisés répondent, `example.com` est bloqué, l'alerte est journalisée |
 | Transit Gateway : propagation retirée | le test dev vers prod échoue (pas de route retour), puis réussit une fois la propagation remise |
 | VPN : quatre tunnels | tous à l'état haut ; le siège joint l'application ; l'agence seulement le port 8080 ; aucun site ne joint le dev |
-| VPN : panne du tunnel 1 | le trafic reprend sur le tunnel 2 après environ 21 s (détection AWS) |
+| VPN : panne du tunnel 1 | le trafic reprend sur le tunnel 2 après 29 s (siège) et 34 s (agence), selon la détection d'AWS |
 | Direct Connect (liaison simulée) : panne du DX | bascule vers le VPN en environ 8 s, retour automatique au rétablissement |
 | ALB : serveur web arrêté | cible `unhealthy`, réponse 502, retour à `healthy` après redémarrage |
 | Route 53 : serveur principal arrêté | bascule DNS vers le secours en **34 s**, retour au primaire en **23 s** |
@@ -56,7 +56,7 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 ## 6. Limites et écarts à connaître
 | Sujet | Situation | Conséquence |
 |---|---|---|
-| Sites et liaison dédiée | les deux sites sont des routeurs strongSwan ; aucune fibre Direct Connect n'est commandée | le VPN et le Direct Connect Gateway sont ceux d'AWS ; la liaison dédiée est simulée en GRE et BGP. Bascule du VPN : environ 21 s (délai de détection d'AWS), pas « sans coupure » |
+| Sites et liaison dédiée | les deux sites sont des routeurs strongSwan ; aucune fibre Direct Connect n'est commandée | le VPN et le Direct Connect Gateway sont ceux d'AWS ; la liaison dédiée est simulée en GRE et BGP. Bascule du VPN : 29 à 34 s (délai de détection d'AWS), pas « sans coupure » ; bascule liaison dédiée vers VPN : environ 10 s |
 | Services refusés en début de semaine | Network Firewall, Transit Gateway, VPN, Direct Connect | levés le 17/11/2026 ; nous avons alors refait ces modules pour de vrai |
 | Région | Stockholm (la région Zurich n'est pas activée sur la plateforme) | Pour la production réelle, Zurich/Francfort conviendrait à la localisation des données : il suffit de changer le paramètre de région |
 | Domaine et certificats | domaine fictif | certificats auto-signés / CloudFront par défaut ; en production : domaine réel + ACM validé par DNS |
@@ -74,7 +74,7 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 Estimation au 16/11 : de l'ordre de 2 à 4 USD pour la première journée (calcul par heures de ressources ; la facturation réelle n'était pas encore disponible, Cost Explorer a un retard d'environ 24 h). Les activités pédagogiques ont porté les crédits du compte à 180 USD.
 
 ## 8. Reproductibilité et exploitation
-* **Code** : scripts PowerShell/AWS CLI (un par module), templates CloudFormation (`reseau-leman.yaml`, `optional-*.yaml`), schémas et preuves dans le dépôt Git.
+* **Code** : scripts PowerShell/AWS CLI (un par module), templates CloudFormation (`reseau-leman.yaml` pour le portail, `interconnexion-leman.yaml` pour le pare-feu, le Transit Gateway, les VPN et le Direct Connect Gateway), schémas et preuves dans le dépôt Git.
 * **Déploiement complet** : une commande de création de stack (voir module 13) ; suppression propre en ordre inverse.
 * **Exploitation** : tableau de bord CloudWatch, alarme 5xx → SNS, journaux de flux interrogeables avec Logs Insights, procédures de diagnostic en quatre étapes par module.
 

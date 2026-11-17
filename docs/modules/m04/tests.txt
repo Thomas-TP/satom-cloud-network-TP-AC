@@ -1,12 +1,20 @@
-Module 4 - Network Firewall (17/11/2026, eu-north-1, depuis app-01-TP-AC via SSM)
+=== Module 4 : pare-feu deploye par la stack stack-interconnexion-leman-TP-AC ===
+Pare-feu nfw-prod-leman-TP-AC : statut READY, endpoint vpce-0951ba9169b5e0399 dans le sous-reseau sub-fw-1a-TP-AC (10.20.2.0/28)
+Routes : rt-prive 0.0.0.0/0 -> vpce-0951ba9169b5e0399 (endpoint du pare-feu)
+[autorise] curl https://cdn.amazonlinux.com/ -> HTTP 403
+[bloque]   curl https://example.com/        -> Failed	curl: (28) Connection timed out after 10002 milliseconds HTTP 000	failed to run commands: exit status 28
+[bloque]   curl https://www.wikipedia.org/  -> Failed	curl: (28) Connection timed out after 10003 milliseconds HTTP 000	failed to run commands: exit status 28
+[interne]   web-01 -> app-01:8080 (trafic interne, autorise par la regle 1 du pare-feu) -> Success	app-01 TP-AC /api/health 	
 
-Pare-feu : nfw-prod-leman-TP-AC, statut READY, endpoint vpce-08c28b6db9885db5b (sub-fw-1a-TP-AC, 10.20.2.0/28)
-Routes : rt-prive 0.0.0.0/0 -> endpoint ; rt-public 10.20.1.0/26 -> endpoint ; rt-fw 0.0.0.0/0 -> NAT
+Journal des alertes /leman/nfw-alert-TP-AC (flux bloques) :
+  47 alertes ; exemples :
+  src 10.20.1.10 -> dst 13.40.182.125:123 | proto ntp | action blocked | aws:alert_established action
+  src 10.20.1.10 -> dst 18.133.139.197:123 | proto ntp | action blocked | aws:alert_established action
+  src 10.20.1.10 -> dst 104.20.23.154:443 | proto tls | action blocked | aws:alert_established action
 
-[autorise] curl https://cdn.amazonlinux.com/             -> HTTP 403 (le serveur repond : la connexion passe)
-[autorise] curl https://ssm.eu-north-1.amazonaws.com/    -> HTTP 400 (le serveur repond : la connexion passe)
-[bloque]   curl https://example.com/                     -> Connection timed out after 15002 ms
-[bloque]   curl https://www.wikipedia.org/               -> Connection timed out after 15003 ms
-
-Journal /leman/nfw-alert-TP-AC (extrait) :
-  "src_ip":"10.20.1.10","app_proto":"tls","alert":{"signature":"aws:alert_established action","action":"blocked"}
+Journal des flux /leman/nfw-flow-TP-AC (tous les flux vus par le pare-feu, dont le flux autorise) :
+  128 flux vus (app-01 et web-01 vers app-01) ; exemples :
+  src 10.20.0.115:40388 -> dst 10.20.1.10:8080 | proto TCP | octets 180
+  src 10.20.0.19:41222 -> dst 10.20.1.10:8080 | proto TCP | octets 180
+  src 10.20.0.115:14054 -> dst 10.20.1.10:8080 | proto TCP | octets 180
+  src 10.20.0.19:25106 -> dst 10.20.1.10:8080 | proto TCP | octets 180

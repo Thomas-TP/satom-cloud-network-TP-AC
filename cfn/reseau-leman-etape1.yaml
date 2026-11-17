@@ -2,8 +2,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Satom Cloud Network - equipe TP-AC. Reseau prod (ou dev) du portail Groupe Leman Finance SA :
   VPC, sous-reseaux, IGW, routage, Security Groups, web-01 / app-01, groupes cibles et ALB (HTTPS 443, regle /api/*).
-  Les modules 4 (Network Firewall), 6 (Transit Gateway), 7 (VPN) et 8 (Direct Connect) sont fournis dans
-  optional-*.yaml car bloques par l'organisation sur la plateforme de formation.
+  Les modules 4 (Network Firewall), 6 (Transit Gateway), 7 (VPN) et 8 (Direct Connect) sont dans le modele
+  interconnexion-leman.yaml, qui s'ajoute a ce reseau.
 
 Parameters:
   Environnement:
@@ -31,6 +31,10 @@ Parameters:
     Type: String
     Default: ''
     Description: Plage autorisee a se connecter en SSH (salle d'exploitation). Vide = aucune regle SSH (administration par SSM uniquement).
+  CleSSH:
+    Type: String
+    Default: ''
+    Description: Nom d'une paire de cles EC2 pour SSH. Vide = aucune cle (administration par SSM, aucun SSH).
   InstanceType:
     Type: String
     Default: t3.micro
@@ -41,6 +45,7 @@ Parameters:
 Conditions:
   EstProd: !Equals [!Ref Environnement, prod]
   AvecAdmin: !Not [!Equals [!Ref AdminCidr, '']]
+  AvecCle: !Not [!Equals [!Ref CleSSH, '']]
 
 Resources:
   Vpc:
