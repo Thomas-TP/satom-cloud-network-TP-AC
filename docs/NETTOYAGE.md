@@ -38,9 +38,10 @@ Le compte AWS est **partagé** : on ne touche jamais aux ressources des autres �
 | 17/11/2026 | 2e Transit Gateway créé par erreur par notre script (+ 2 attachements) | doublon, supprimé |
 | 17/11/2026 | Direct Connect Gateway de test (ASN 64512) | mauvais ASN (même ASN que le Transit Gateway), recréé avec 64513 |
 | 17/11/2026 | Peering `pcx-lab-TP-AC` | supprimé au module 6, comme demandé par le sujet |
+| 17/11/2026 (nuit) | Stack `stack-interconnexion-leman-TP-AC` (pare-feu, Transit Gateway, 2 VPN, 2 Customer Gateways, DX Gateway, Elastic IP des routeurs), stack `stack-portail-leman-TP-AC` (instances + ALB), ALB `alb-prod-leman-TP-AC` et ses listeners, NAT Gateway + Elastic IP, Elastic IP de `web-01`, health check Route 53 | vidéo et dossier validés par Thomas ; plus aucune ressource facturée à l'heure |
 
 ## Ressources actuellement conservées
-VPC prod + dev, sous-réseaux, IGW, tables, SG, NACL, NAT, Transit Gateway (3 tables, 4 attachements), 2 VPN, 2 Customer Gateways, DX Gateway, 3 Elastic IP, ALB, groupes cibles, zones Route 53, CloudFront, tableau de bord, alarme, SNS/SQS, Flow Logs, secret VPN, rôles IAM `TP-AC-*`.
+VPC prod + dev (sous-réseaux, IGW, tables, SG, NACL, gratuits), instances `web-01`, `app-01`, `dev-01` et routeurs **arrêtés** (seuls les volumes EBS sont facturés), zones Route 53 (0,50 USD/mois chacune), CloudFront, tableau de bord, alarme, SNS/SQS, Flow Logs, secret VPN, rôles IAM `TP-AC-*`. La route par défaut de `rt-prive` pointe vers une NAT supprimée : pour rejouer, redéployer la NAT puis `scripts/m13-interconnexion.ps1`.
 
 ## Événements du 16/11/2026 à retenir
 | Heure | Événement |
