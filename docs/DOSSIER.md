@@ -29,7 +29,7 @@ Si le lecteur ne s'affiche pas : [voir la vidéo sur GitHub](https://github.com/
 
 Au début de la semaine, Network Firewall, Transit Gateway, VPN et Direct Connect étaient refusés par une règle de l'organisation AWS du formateur. Cette règle a été levée le 17/11/2026, et nous avons alors fait les modules 4, 6, 7 et 8 pour de vrai. Les erreurs relevées avant cette date sont dans le fichier `docs/01-services-bloques.md` du dépôt.
 
-![Schéma réseau final](../images/global.png)
+![Schéma réseau final](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
 
 Tout le code (scripts AWS CLI, templates CloudFormation), les preuves et les captures sont dans le dépôt GitHub public `Thomas-TP/satom-cloud-network-TP-AC`.
 
@@ -64,7 +64,7 @@ Le compte AWS est partagé avec toute la classe et l'organisation du formateur i
 | siège (simulé) | 192.168.10.0/24 | selon le sujet |
 | agence (simulée) | 192.168.20.0/24 | selon le sujet |
 
-![Plan global](../images/global.png)
+![Plan global](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
 
 ## Crédits et budget
 Le compte part avec 100 USD. Les activités « Gagnez des crédits AWS » nous ont rapporté 100 USD de plus (EC2, Lambda, DynamoDB, RDS et Budgets). Nous les avons faites en ligne de commande et supprimé les ressources juste après. L'écran de la console affichait encore 180 USD au dernier contrôle ; le report des derniers crédits peut prendre du temps.
@@ -78,15 +78,15 @@ Nous avons tout scripté avec l'AWS CLI (un script par module dans `scripts/`). 
 
 **Console AWS – budgets**
 
-![Console AWS – budgets](../../captures/m00/00-console-budgets.png)
+![Console AWS – budgets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-budgets.png)
 
 **Console AWS – credits**
 
-![Console AWS – credits](../../captures/m00/00-console-credits.png)
+![Console AWS – credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-credits.png)
 
 **Console AWS – quetes credits**
 
-![Console AWS – quetes credits](../../captures/m00/00-console-quetes-credits.png)
+![Console AWS – quetes credits](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m00/00-console-quetes-credits.png)
 
 
 ---
@@ -111,7 +111,7 @@ Le sujet propose un /16. Le prof nous a dit que c'était trop large pour deux se
 
 Script : `scripts/m01-vpc.ps1`.
 
-![Module 1](../images/m01-vpc.png)
+![Module 1](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m01-vpc.png)
 
 | Ressource | Valeur |
 |---|---|
@@ -157,31 +157,31 @@ L'outil Reachability Analyzer est bloqué par l'organisation. Et SSM a besoin d'
 
 **Console AWS – instances**
 
-![Console AWS – instances](../../captures/m01/00-console-instances.png)
+![Console AWS – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-instances.png)
 
 **Console AWS – sous reseaux**
 
-![Console AWS – sous reseaux](../../captures/m01/00-console-sous-reseaux.png)
+![Console AWS – sous reseaux](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-sous-reseaux.png)
 
 **Console AWS – vpcs**
 
-![Console AWS – vpcs](../../captures/m01/00-console-vpcs.png)
+![Console AWS – vpcs](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/00-console-vpcs.png)
 
 **Terminal – vpc**
 
-![Terminal – vpc](../../captures/m01/01-vpc.png)
+![Terminal – vpc](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/01-vpc.png)
 
 **Terminal – subnets**
 
-![Terminal – subnets](../../captures/m01/02-subnets.png)
+![Terminal – subnets](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/02-subnets.png)
 
 **Terminal – instances**
 
-![Terminal – instances](../../captures/m01/03-instances.png)
+![Terminal – instances](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/03-instances.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m01/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m01/99-preuves-tests.png)
 
 
 ---
@@ -202,7 +202,7 @@ Un sous-réseau est public quand sa table de routage envoie `0.0.0.0/0` vers une
 
 Script : `scripts/m02-routage.ps1`.
 
-![Module 2](../images/m02-routage.png)
+![Module 2](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m02-routage.png)
 
 | Table | Routes |
 |---|---|
@@ -243,27 +243,27 @@ Le compte n'autorise que 5 Elastic IP pour toute la classe. Les autres machines 
 
 **Console AWS – passerelle nat**
 
-![Console AWS – passerelle nat](../../captures/m02/00-console-passerelle-nat.png)
+![Console AWS – passerelle nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelle-nat.png)
 
 **Console AWS – passerelles internet**
 
-![Console AWS – passerelles internet](../../captures/m02/00-console-passerelles-internet.png)
+![Console AWS – passerelles internet](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-passerelles-internet.png)
 
 **Console AWS – tables routage**
 
-![Console AWS – tables routage](../../captures/m02/00-console-tables-routage.png)
+![Console AWS – tables routage](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/00-console-tables-routage.png)
 
 **Terminal – routes**
 
-![Terminal – routes](../../captures/m02/01-routes.png)
+![Terminal – routes](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/01-routes.png)
 
 **Terminal – nat**
 
-![Terminal – nat](../../captures/m02/02-nat.png)
+![Terminal – nat](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/02-nat.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m02/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m02/99-preuves-tests.png)
 
 
 ---
@@ -285,7 +285,7 @@ Un Security Group garde l'état des connexions : si l'aller est autorisé, le re
 
 Scripts : `scripts/m03-securite.ps1` et `scripts/m03-tests.ps1`.
 
-![Module 3](../images/m03-securite.png)
+![Module 3](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m03-securite.png)
 
 | Groupe | Sens | Port | Source |
 |---|---|---|---|
@@ -330,23 +330,23 @@ AWS interdit les noms de groupe qui commencent par `sg-`. Le nom `sg-web-TP-AC` 
 
 **Console AWS – groupes securite**
 
-![Console AWS – groupes securite](../../captures/m03/00-console-groupes-securite.png)
+![Console AWS – groupes securite](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-groupes-securite.png)
 
 **Console AWS – nacl**
 
-![Console AWS – nacl](../../captures/m03/00-console-nacl.png)
+![Console AWS – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/00-console-nacl.png)
 
 **Terminal – sg**
 
-![Terminal – sg](../../captures/m03/01-sg.png)
+![Terminal – sg](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/01-sg.png)
 
 **Terminal – nacl**
 
-![Terminal – nacl](../../captures/m03/02-nacl.png)
+![Terminal – nacl](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/02-nacl.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m03/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m03/99-preuves-tests.png)
 
 
 ---
@@ -364,7 +364,7 @@ Network Firewall est un pare-feu managé placé dans un sous-réseau à part. On
 ## Ce que nous avons fait
 Le trafic de `app-01` passe par l'endpoint du pare-feu (`sub-fw-1a`, `10.20.2.0/28`), puis vers la NAT, puis vers Internet. Au retour, une route dans la table publique renvoie le trafic vers le pare-feu.
 
-![Module 4](../images/m04-firewall.png)
+![Module 4](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m04-firewall.png)
 
 Règles, en ordre strict :
 1. laisser passer tout le trafic interne du VPC (`10.20.0.0/22`) pour ne pas casser les autres modules ;
@@ -406,23 +406,23 @@ Supprimer d'abord le pare-feu, puis la politique et les groupes de règles, et r
 
 **Console AWS – paquets bloques**
 
-![Console AWS – paquets bloques](../../captures/m04/00-console-paquets-bloques.png)
+![Console AWS – paquets bloques](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/00-console-paquets-bloques.png)
 
 **Console AWS – pare feu details**
 
-![Console AWS – pare feu details](../../captures/m04/00-console-pare-feu-details.png)
+![Console AWS – pare feu details](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/00-console-pare-feu-details.png)
 
 **Console AWS – pare feux**
 
-![Console AWS – pare feux](../../captures/m04/00-console-pare-feux.png)
+![Console AWS – pare feux](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/00-console-pare-feux.png)
 
 **Console AWS – politique regles**
 
-![Console AWS – politique regles](../../captures/m04/00-console-politique-regles.png)
+![Console AWS – politique regles](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/00-console-politique-regles.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m04/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m04/99-preuves-tests.png)
 
 
 ---
@@ -443,7 +443,7 @@ Un peering relie deux VPC par le réseau privé d'AWS. Il faut faire la demande,
 
 Scripts : `scripts/m05-peering.ps1` et `scripts/m05-tests.ps1`.
 
-![Module 5](../images/m05-peering.png)
+![Module 5](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m05-peering.png)
 
 | Élément | Valeur |
 |---|---|
@@ -475,19 +475,19 @@ Comme le sujet le demande, le peering `pcx-lab-TP-AC` est supprimé au module 6 
 
 **Console AWS – peering**
 
-![Console AWS – peering](../../captures/m05/00-console-peering.png)
+![Console AWS – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/00-console-peering.png)
 
 **Terminal – peering**
 
-![Terminal – peering](../../captures/m05/01-peering.png)
+![Terminal – peering](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/01-peering.png)
 
 **Terminal – routes dev**
 
-![Terminal – routes dev](../../captures/m05/02-routes-dev.png)
+![Terminal – routes dev](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/02-routes-dev.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m05/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m05/99-preuves-tests.png)
 
 
 ---
@@ -510,7 +510,7 @@ Chaque VPC se branche au Transit Gateway par un attachement. Avec le peering il 
 
 Script : `scripts/m06-tgw.ps1`. Nos plages sont `10.20.0.0/22` (prod) et `10.21.0.0/24` (dev), pas les `10.0.0.0/16` et `10.1.0.0/16` du sujet.
 
-![Module 6](../images/m06-tgw.png)
+![Module 6](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m06-tgw.png)
 
 | Élément | Valeur |
 |---|---|
@@ -550,23 +550,23 @@ Facturé à l'heure : nous supprimons les attachements, puis les tables, puis le
 
 **Console AWS – attachements**
 
-![Console AWS – attachements](../../captures/m06/00-console-attachements.png)
+![Console AWS – attachements](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/00-console-attachements.png)
 
 **Console AWS – passerelle transit**
 
-![Console AWS – passerelle transit](../../captures/m06/00-console-passerelle-transit.png)
+![Console AWS – passerelle transit](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/00-console-passerelle-transit.png)
 
 **Console AWS – routes tgw prod**
 
-![Console AWS – routes tgw prod](../../captures/m06/00-console-routes-tgw-prod.png)
+![Console AWS – routes tgw prod](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/00-console-routes-tgw-prod.png)
 
 **Console AWS – tables tgw**
 
-![Console AWS – tables tgw](../../captures/m06/00-console-tables-tgw.png)
+![Console AWS – tables tgw](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/00-console-tables-tgw.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m06/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m06/99-preuves-tests.png)
 
 
 ---
@@ -591,7 +591,7 @@ Une connexion VPN AWS donne **deux tunnels** IPsec, vers deux adresses publiques
 
 Scripts : `scripts/m07-vpn-aws.ps1` avec `-Stage 1` (ressources AWS), `-Stage 2` (routeurs et tests) et `-Stage 3` (bascule).
 
-![Module 7](../images/m07-vpn.png)
+![Module 7](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m07-vpn.png)
 
 | Élément | Valeur |
 |---|---|
@@ -674,39 +674,39 @@ Les deux connexions VPN sont facturées à l'heure : nous les supprimons à la f
 
 **Console AWS – connexions vpn**
 
-![Console AWS – connexions vpn](../../captures/m07/00-console-connexions-vpn.png)
+![Console AWS – connexions vpn](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/00-console-connexions-vpn.png)
 
 **Console AWS – secret vpn**
 
-![Console AWS – secret vpn](../../captures/m07/00-console-secret-vpn.png)
+![Console AWS – secret vpn](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/00-console-secret-vpn.png)
 
 **Console AWS – tunnels vpn**
 
-![Console AWS – tunnels vpn](../../captures/m07/00-console-tunnels-vpn.png)
+![Console AWS – tunnels vpn](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/00-console-tunnels-vpn.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m07/99-preuves-tests-1.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-1.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m07/99-preuves-tests-2.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-2.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m07/99-preuves-tests-3.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-3.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m07/99-preuves-tests-4.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-4.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m07/99-preuves-tests-5.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-5.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m07/99-preuves-tests-6.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m07/99-preuves-tests-6.png)
 
 
 ---
@@ -740,7 +740,7 @@ Les routeurs tournent avec FRRouting sur Ubuntu. Le sujet propose GNS3 : nous ne
 
 Script : `scripts/m08-dx-sim.ps1` (option `-TestOnly` pour rejouer les tests).
 
-![Module 8](../images/m08-dx.png)
+![Module 8](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m08-dx.png)
 
 | Élément | rtr-siege | rtr-aws |
 |---|---|---|
@@ -867,19 +867,19 @@ Le Direct Connect Gateway ne coûte rien ; son association au Transit Gateway aj
 
 **Console AWS – dx gateway**
 
-![Console AWS – dx gateway](../../captures/m08/00-console-dx-gateway.png)
+![Console AWS – dx gateway](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/00-console-dx-gateway.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m08/99-preuves-tests-1.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-1.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m08/99-preuves-tests-2.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-2.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m08/99-preuves-tests-3.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m08/99-preuves-tests-3.png)
 
 
 ---
@@ -901,7 +901,7 @@ L'ALB travaille au niveau applicatif et a un nœud par zone de disponibilité : 
 
 Script : `scripts/m09-alb.ps1`.
 
-![Module 9](../images/m09-alb.png)
+![Module 9](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m09-alb.png)
 
 | Élément | Valeur |
 |---|---|
@@ -941,31 +941,31 @@ Nous n'avons pas de domaine, donc le certificat est auto-signé (nos tests utili
 
 **Console AWS – alb**
 
-![Console AWS – alb](../../captures/m09/00-console-alb.png)
+![Console AWS – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-alb.png)
 
 **Console AWS – groupes cibles**
 
-![Console AWS – groupes cibles](../../captures/m09/00-console-groupes-cibles.png)
+![Console AWS – groupes cibles](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/00-console-groupes-cibles.png)
 
 **Terminal – alb**
 
-![Terminal – alb](../../captures/m09/01-alb.png)
+![Terminal – alb](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/01-alb.png)
 
 **Terminal – targets web**
 
-![Terminal – targets web](../../captures/m09/02-targets-web.png)
+![Terminal – targets web](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/02-targets-web.png)
 
 **Terminal – targets app**
 
-![Terminal – targets app](../../captures/m09/03-targets-app.png)
+![Terminal – targets app](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/03-targets-app.png)
 
 **Terminal – rules**
 
-![Terminal – rules](../../captures/m09/04-rules.png)
+![Terminal – rules](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/04-rules.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m09/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m09/99-preuves-tests.png)
 
 
 ---
@@ -985,7 +985,7 @@ Une zone privée n'est visible que depuis les VPC auxquels on l'associe (le rés
 
 Scripts : `scripts/m10-route53.ps1` et `scripts/m10-tests.ps1`.
 
-![Module 10](../images/m10-route53.png)
+![Module 10](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m10-route53.png)
 
 | Zone | Nom | Cible |
 |---|---|---|
@@ -1027,27 +1027,27 @@ Nous n'avons pas acheté de domaine, donc la délégation réelle est impossible
 
 **Console AWS – enregistrements**
 
-![Console AWS – enregistrements](../../captures/m10/00-console-enregistrements.png)
+![Console AWS – enregistrements](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-enregistrements.png)
 
 **Console AWS – zones**
 
-![Console AWS – zones](../../captures/m10/00-console-zones.png)
+![Console AWS – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/00-console-zones.png)
 
 **Terminal – zones**
 
-![Terminal – zones](../../captures/m10/01-zones.png)
+![Terminal – zones](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/01-zones.png)
 
 **Terminal – records**
 
-![Terminal – records](../../captures/m10/02-records.png)
+![Terminal – records](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/02-records.png)
 
 **Terminal – records privee**
 
-![Terminal – records privee](../../captures/m10/03-records-privee.png)
+![Terminal – records privee](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/03-records-privee.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m10/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m10/99-preuves-tests.png)
 
 
 ---
@@ -1068,7 +1068,7 @@ CloudFront sert le contenu depuis un point de présence proche du visiteur. Les 
 
 Script : `scripts/m11-cloudfront.ps1` (tests : `m11-tests.ps1`).
 
-![Module 11](../images/m11-cloudfront.png)
+![Module 11](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m11-cloudfront.png)
 
 | Comportement | Chemin | Cache | Méthodes |
 |---|---|---|---|
@@ -1127,15 +1127,15 @@ Sans domaine, nous ne pouvons pas avoir de certificat ACM validé : les visiteur
 
 **Console AWS – cloudfront**
 
-![Console AWS – cloudfront](../../captures/m11/00-console-cloudfront.png)
+![Console AWS – cloudfront](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/00-console-cloudfront.png)
 
 **Terminal – distribution**
 
-![Terminal – distribution](../../captures/m11/01-distribution.png)
+![Terminal – distribution](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/01-distribution.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m11/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m11/99-preuves-tests.png)
 
 
 ---
@@ -1157,7 +1157,7 @@ Chaque service envoie des métriques à CloudWatch. Une alarme regarde une stati
 
 Scripts : `scripts/m12-monitoring.ps1` (mise en place) et `m12-tests.ps1`, `m12-flowlogs3.ps1`, `m12-flowlogs4.ps1` (preuves).
 
-![Module 12](../images/m12-monitoring.png)
+![Module 12](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m12-monitoring.png)
 
 | Élément | Réglage |
 |---|---|
@@ -1225,35 +1225,35 @@ Nous gardons le tableau de bord, l'alarme et le groupe de logs pour le module 13
 
 **Console AWS – alarme**
 
-![Console AWS – alarme](../../captures/m12/00-console-alarme.png)
+![Console AWS – alarme](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-alarme.png)
 
 **Console AWS – tableau de bord**
 
-![Console AWS – tableau de bord](../../captures/m12/00-console-tableau-de-bord.png)
+![Console AWS – tableau de bord](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/00-console-tableau-de-bord.png)
 
 **Terminal – alarm**
 
-![Terminal – alarm](../../captures/m12/01-alarm.png)
+![Terminal – alarm](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/01-alarm.png)
 
 **Terminal – flowlog**
 
-![Terminal – flowlog](../../captures/m12/02-flowlog.png)
+![Terminal – flowlog](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/02-flowlog.png)
 
 **Terminal – sns**
 
-![Terminal – sns](../../captures/m12/03-sns.png)
+![Terminal – sns](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/03-sns.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m12/99-preuves-tests-1.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-1.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m12/99-preuves-tests-2.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests-2.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m12/99-preuves-tests.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m12/99-preuves-tests.png)
 
 
 ---
@@ -1274,7 +1274,7 @@ Un template contient des ressources, des paramètres (`Environnement`, `CidrVpc`
 
 Scripts : `scripts/m13-cfn.ps1` (le scénario complet) et `scripts/m13-deploy.ps1` (tout déployer en une commande, certificat compris).
 
-![Module 13](../images/m13-cloudformation.png)
+![Module 13](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m13-cloudformation.png)
 
 | Paramètre | Valeur par défaut |
 |---|---|
@@ -1345,16 +1345,16 @@ Deux erreurs de notre part : les descriptions des Security Groups ne peuvent pas
 
 **Console AWS – piles cloudformation**
 
-![Console AWS – piles cloudformation](../../captures/m13/00-console-piles-cloudformation.png)
+![Console AWS – piles cloudformation](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/00-console-piles-cloudformation.png)
 
 **Terminal – stack**
 
-![Terminal – stack](../../captures/m13/01-stack.png)
+![Terminal – stack](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/01-stack.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m13/99-preuves-tests-1.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-1.png)
 
 **Journal des tests**
 
-![Journal des tests](../../captures/m13/99-preuves-tests-2.png)
+![Journal des tests](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/captures/m13/99-preuves-tests-2.png)
