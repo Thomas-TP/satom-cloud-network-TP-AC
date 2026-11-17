@@ -10,3 +10,7 @@ scripts/state.json
 # journaux de travail locaux
 /*.out
 /*.err
+
+# fichiers de montage (gros, regenerables)
+/video/work/
+/video/clips/

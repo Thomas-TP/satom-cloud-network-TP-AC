@@ -1,0 +1,5 @@
+Show-Note 'Module 3 : Security Groups et NACL'
+Show-Cmd 'aws ec2 describe-security-groups --filters $F --query "SecurityGroups[].[GroupName,length(IpPermissions)]" --output table'
+Show-Note 'dev-01 -> app-01 : le port 8080 est ouvert, le 22 est ferme'
+Show-Cmd 'ssm dev-01 "curl -s -m 5 http://10.20.1.10:8080/api/health"'
+Show-Cmd 'ssm dev-01 "timeout 4 bash -c ''</dev/tcp/10.20.1.10/22'' && echo ouvert || echo ferme"'

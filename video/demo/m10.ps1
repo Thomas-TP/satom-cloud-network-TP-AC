@@ -1,0 +1,6 @@
+Show-Note 'Module 10 : Route 53'
+Show-Cmd 'aws route53 list-hosted-zones --query "HostedZones[].[Name,Config.PrivateZone]" --output table'
+Show-Cmd 'ssm web-01 "getent hosts app.prod.leman.internal"'
+Show-Cmd 'aws route53 get-health-check-status --health-check-id $S.hc --query "[length(HealthCheckObservations[?starts_with(StatusReport.Status,''Success'')]),length(HealthCheckObservations)]" --output text'
+Show-Note 'Bascule du DNS quand nginx est arrete (journal du test)'
+Show-Cmd 'Get-Content docs\modules\m10\tests.txt | Select-String "apres 34"'

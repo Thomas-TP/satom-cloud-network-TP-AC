@@ -1,0 +1,5 @@
+Show-Note 'Module 9 : load balancer'
+Show-Cmd 'aws elbv2 describe-load-balancers --names alb-prod-leman-TP-AC --query "LoadBalancers[].[LoadBalancerName,Scheme,State.Code]" --output table'
+Show-Cmd 'aws elbv2 describe-target-health --target-group-arn $S.tgWeb --query "TargetHealthDescriptions[].TargetHealth.State" --output text'
+Show-Note 'Journal des tests de panne (nginx arrete, 443 ferme)'
+Show-Cmd 'Get-Content docs\modules\m09\tests.txt | Select-Object -First 12'

@@ -1,0 +1,5 @@
+Show-Note 'Module 6 : le Transit Gateway'
+Show-Cmd 'aws ec2 describe-transit-gateway-vpc-attachments --filters $F Name=state,Values=available --query "TransitGatewayVpcAttachments[].[$N,State]" --output table'
+Show-Cmd 'aws ec2 search-transit-gateway-routes --transit-gateway-route-table-id $RTP --filters Name=state,Values=active --query "Routes[].[DestinationCidrBlock,Type]" --output table'
+Show-Note 'dev-01 joint app-01 par le Transit Gateway'
+Show-Cmd 'ssm dev-01 "curl -s -m 5 http://10.20.1.10:8080/api/health"'
