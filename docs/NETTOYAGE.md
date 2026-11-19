@@ -52,3 +52,9 @@ VPC prod + dev (sous-réseaux, IGW, tables, SG, NACL, gratuits), instances `web-
 ## Coût actuel (ressources facturées même instances arrêtées)
 NAT Gateway (~1,1 USD/jour), 2 ALB (manuel + stack, ~1,3 USD/jour), health check Route 53, 2 Elastic IP, volumes EBS, CloudFront et SNS/SQS négligeables. Le coût cumulé du projet reste très inférieur aux crédits du compte (180 USD).
 
+
+| 19/11/2026 | Tout le TP refait à la main en console puis filmé : instances (6), Elastic IP (3), NAT, 2 VPN, Transit Gateway et attachements, ALB et groupes cibles, CloudFront, zones Route 53 et health check, DX Gateway, secret, SNS/SQS, tableau de bord, alarme, Flow Log, groupes de journaux | vidéo validée par Thomas, plus rien à filmer |
+
+## Reste à supprimer (état au 19/11/2026)
+- **Network Firewall `nfw-prod-leman-TP-AC` (~0,40 USD/h)** : la suppression échoue depuis la console et la CLI avec `InternalServerError: Internal failure` (la protection contre la suppression est désactivée, plus aucune route ne pointe vers l'endpoint, plus de journalisation ; les autres écritures sur le pare-feu fonctionnent). À réessayer plus tard, puis à signaler à l'AWS Support ou au formateur si le message persiste. Ensuite : supprimer la politique `policy-prod-leman-TP-AC` et le groupe de règles `rg-depots-autorises-TP-AC` (gratuits).
+- Ressources gratuites conservées : VPC, sous-réseaux, tables de routage, IGW, groupes de sécurité, rôles IAM, certificat ACM, budget.
