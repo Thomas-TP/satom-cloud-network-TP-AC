@@ -16,7 +16,8 @@ Région : **eu-north-1 (Stockholm)** – tags `Projet=SatomCloudNetwork`, `Equip
 | Points du sujet impossibles ou incohérents (pour le formateur) | [`docs/02-ecarts-au-sujet.md`](docs/02-ecarts-au-sujet.md) |
 | Journal de projet et nettoyage | [`docs/NETTOYAGE.md`](docs/NETTOYAGE.md) |
 | Captures (console AWS réelles, état CLI, preuves de tests) | [`captures/`](captures/) |
-| Vidéo de rendu (environ 8 min) | [`video/satom-cloud-network-TP-AC.mp4`](video/satom-cloud-network-TP-AC.mp4) |
+| Vidéo de rendu v2 (environ 8 min, captures et terminaux) | [`video/satom-cloud-network-TP-AC.mp4`](video/satom-cloud-network-TP-AC.mp4) |
+| Vidéo tutoriel refaite à la main dans la console AWS (version complète d'environ 38 min, version courte de 6 min 30) | fichiers locaux `video/satom-cloud-network-TP-AC-gui.mp4` et `…-court.mp4` (trop lourds pour le dépôt) ; outils de tournage et de montage : [`video/rig/`](video/rig/), [`video/shoot/`](video/shoot/), [`video/scenario2.py`](video/scenario2.py), [`video/build_video.py`](video/build_video.py) |
 
 ## Rejouer le projet
 ```powershell

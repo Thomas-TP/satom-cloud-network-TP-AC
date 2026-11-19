@@ -1,0 +1,76 @@
+"""Module 7 : un site simule (VPC dedie siege ou agence) : VPC, sous-reseau, passerelle Internet, table de routage."""
+from common import *
+
+SITES = {'siege': ('192.168.10.0/24', '192.168.10.0/26'), 'agence': ('192.168.20.0/24', '192.168.20.0/26')}
+
+async def site(r, n):
+    cidr, sub = SITES[n]; vpc = f'vpc-{n}-TP-AC'
+    # VPC
+    await r.goto(vpc_url('vpcs:'), wait=4); await r.hold(1.0)
+    await r.click(btn('Créer un VPC')); await r.hold(2.0)
+    await r.type(ph('my-vpc-01'), vpc); await r.hold(0.5)
+    await r.type(ph('10.0.0.0/24'), cidr); await r.hold(1.0)
+    r.mark('vpc-cidr')
+    await r.scroll(500)
+    await tags(r, 'prod', start=1)
+    await r.scroll(800)
+    await r.click(btn('Créer un VPC')); await r.hold(4.5)
+    r.mark('vpc-cree')
+    # sous-reseau
+    await r.goto(vpc_url('CreateSubnet:'), wait=4); await r.hold(1.0)
+    await r.click(btn('Sélectionner un VPC')); await r.hold(1.2)
+    await r.click(txt(f'({vpc})')); await r.hold(1.5)
+    if not await r.present(lambda f: f.get_by_placeholder('my-subnet-01').first, 1.0):
+        await r.click(btn('Ajouter un nouveau sous-réseau')); await r.hold(1.5)
+    await r.scroll(250)
+    await r.type(lambda f: f.get_by_placeholder('my-subnet-01').nth(0), f'sub-{n}-TP-AC'); await r.hold(0.5)
+    await r.click(lambda f: f.get_by_role('button', name='Aucune préférence').nth(0)); await r.hold(0.7)
+    await r.click(opt(re.compile('eun1-az1'))); await r.hold(0.6)
+    await r.type(lambda f: f.get_by_label("Bloc d'adresse CIDR de sous-réseau IPv4").nth(0), sub); await r.hold(0.8)
+    await tags(r, 'prod', start=1, add='Ajouter une nouvelle balise', which=0)
+    await r.scroll(1500); await r.hold(1.0)
+    r.mark('sous-reseau')
+    await r.click(btn('Créer un sous-réseau')); await r.hold(5.0)
+    r.mark('sous-reseau-cree')
+    # passerelle Internet
+    await r.goto(vpc_url('igws:'), wait=4); await r.hold(1.0)
+    await r.click(btn('Créer une passerelle Internet')); await r.hold(2.0)
+    await r.type(ph('my-internet-gateway'), f'igw-{n}-TP-AC'); await r.hold(0.6)
+    await r.scroll(300)
+    await tags(r, 'prod', start=1, add='Ajouter une nouvelle balise')
+    await r.scroll(800)
+    await r.click(btn('Créer une passerelle Internet')); await r.hold(4.0)
+    await r.click(btn('Actions')); await r.hold(1.0)
+    await r.click(lambda f: f.get_by_role('menuitem', name=re.compile('Attacher au VPC'))); await r.hold(2.0)
+    await r.click(ph('Sélectionner un VPC')); await r.hold(1.2)
+    await r.click(lambda f: f.get_by_role('option', name=re.compile(vpc)).first); await r.hold(1.5)
+    await r.scroll(600); await r.hold(0.8)
+    await r.click(btn('Attacher une passerelle Internet')); await r.hold(4.0)
+    r.mark('igw-attachee')
+    # table de routage
+    await r.goto(vpc_url('CreateRouteTable:'), wait=4); await r.hold(1.0)
+    await r.type(ph('my-route-table-01'), f'rt-{n}-TP-AC'); await r.hold(0.6)
+    await r.click(btn('Sélectionner un VPC')); await r.hold(1.0)
+    await r.click(lambda f: f.get_by_role('option', name=re.compile(vpc))); await r.hold(1.0)
+    await tags(r, 'prod', start=1, add='Ajouter une nouvelle balise')
+    await r.click(btn('Créer une table de routage')); await r.hold(4.0)
+    await r.click(tab('Routes')); await r.hold(1.5)
+    await r.click(btn('Modifier des routes')); await r.hold(2.0)
+    await r.click(btn('Ajouter une route')); await r.hold(1.2)
+    await r.type(lambda f: f.get_by_role('combobox', name='Destination'), '0.0.0.0/0'); await r.hold(0.8)
+    await r.click(lambda f: f.get_by_role('option', name='0.0.0.0/0', exact=True)); await r.hold(1.0)
+    b = await r._box(lambda f: f.get_by_role('combobox', name='Destination'))
+    await r.click_xy(b['x'] + b['width'] + 206, b['y'] + b['height'] / 2); await r.hold(1.2)
+    await r.click(lambda f: f.get_by_role('option', name='Passerelle Internet', exact=True)); await r.hold(1.2)
+    b = await r._box(lambda f: f.get_by_role('combobox', name='Destination'))
+    await r.click_xy(b['x'] + b['width'] + 206, b['y'] + b['height'] / 2 + 34); await r.hold(1.2)
+    await r.click(lambda f: f.get_by_role('option', name=re.compile(f'igw-{n}-TP-AC')).first); await r.hold(1.5)
+    await r.click(btn('Enregistrer les modifications')); await r.hold(4.0)
+    await r.click(tab('Associations de sous-réseau')); await r.hold(1.5)
+    await r.click(lambda f: f.get_by_role('button', name='Modifier les associations de sous-réseau').first); await r.hold(2.0)
+    await r.click(lambda f: f.locator('tr', has_text=f'sub-{n}-TP-AC').get_by_role('checkbox')); await r.hold(1.2)
+    await r.click(btn('Enregistrer les associations')); await r.hold(4.0)
+    r.mark('table-associee'); await r.hold(2.0)
+
+async def run(r):
+    await site(r, 'siege')

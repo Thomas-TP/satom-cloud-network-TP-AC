@@ -1,0 +1,36 @@
+"""Module 7 : Secrets Manager : les quatre cles pre-partagees des tunnels (une par tunnel), saisies masquees."""
+from common import *
+
+async def run(r):
+    keys = psk()
+    await r.goto('https://eu-north-1.console.aws.amazon.com/secretsmanager/newsecret?region=eu-north-1', wait=5)
+    await r.hold(1.5)
+    await r.click(lambda f: f.get_by_text('Autre type de secret', exact=True).first); await r.hold(1.5)
+    r.mark('type')
+    for i, (k, v) in enumerate(keys.items()):
+        if i: await r.click(btn('+ Ajouter une ligne')); await r.hold(0.8)
+        ins = lambda f, n: f.locator('input[type=text]:not([role=combobox])').nth(n)
+        await r.type(lambda f, i=i: ins(f, 2 * i), k); await r.hold(0.3)
+        await mask(lambda f, i=i: ins(f, 2 * i + 1), r)
+        await r.type(lambda f, i=i: ins(f, 2 * i + 1), v, delay=15); await r.hold(0.5)
+    r.mark('cles')
+    await r.scroll(700)
+    await r.click(btn('Suivant', True)); await r.hold(2.0)
+    await r.type(lambda f: f.locator('input[type=text]').first, 'Projet/SatomCloudNetwork/vpn'); await r.hold(0.8)
+    r.mark('nom')
+    await r.scroll(600)
+    await r.type(lambda f: f.locator('textarea').first, 'Cles pre-partagees IPsec des 4 tunnels (siege, agence)'); await r.hold(0.8)
+    await r.scroll(500)
+    for n, (k, v) in enumerate([('Projet', 'SatomCloudNetwork'), ('Equipe', 'TP-AC'), ('Environnement', 'prod')]):
+        await r.click(btn('Ajouter')); await r.hold(0.6)
+        await r.type(lambda f, n=n: f.get_by_placeholder('Saisir une clé').nth(n), k, delay=40); await r.press('Tab', 0.2)
+        await r.type(lambda f, n=n: f.get_by_placeholder('Entrer une valeur').nth(n), v, delay=40); await r.press('Tab', 0.2)
+    r.mark('balises')
+    await r.scroll(900)
+    await r.click(btn('Suivant', True)); await r.hold(2.0)
+    r.mark('rotation')
+    await r.scroll(900)
+    await r.click(btn('Suivant', True)); await r.hold(2.5)
+    await r.scroll(1500)
+    await r.click(btn('Stocker', True)); await r.hold(5.0)
+    r.mark('stocke'); await r.hold(2.0)

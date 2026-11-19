@@ -3,7 +3,7 @@ import glob, json, os, sys
 for d in glob.glob(os.path.join(sys.prefix, 'Lib', 'site-packages', 'nvidia', '*', 'bin')):
     os.add_dll_directory(d); os.environ['PATH'] = d + os.pathsep + os.environ['PATH']
 from faster_whisper import WhisperModel
-W = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'work')
+W = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.environ.get('WORK', 'work'))
 m = WhisperModel('large-v3', device='cuda', compute_type='float16')
 for wav in sorted(glob.glob(os.path.join(W, 'voix_fort', '*.wav'))):
     sid = os.path.splitext(os.path.basename(wav))[0]

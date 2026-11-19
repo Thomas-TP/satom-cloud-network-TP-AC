@@ -1,0 +1,36 @@
+"""Module 4 : groupe de regles avec etat (liste de domaines autorises : depots Amazon Linux et services AWS)."""
+from common import *
+
+async def run(r):
+    await r.goto(vpc_url('NetworkFirewallRuleGroups:'), wait=5)
+    await r.hold(1.5)
+    await r.click(btn('Créer un groupe de règles')); await r.hold(2.5)
+    await r.type(ph('Saisir le nom du groupe de règles'), 'rg-depots-autorises-TP-AC'); await r.hold(0.6)
+    await r.type(ph('Saisir la description du groupe de règles'), 'Autorise les depots de mises a jour et les services AWS'); await r.hold(0.6)
+    await tags(r, 'prod', start=0, add='Ajouter une balise', kp='Entrer la clé', vp='Entrer la valeur', extra=[('Name', 'rg-depots-autorises-TP-AC')])
+    r.mark('nom')
+    await r.scroll(800)
+    await r.click(btn('Suivant', True)); await r.hold(2.5)
+    await r.click('input[value=V1]'); await r.hold(1.0)
+    await r.click(btn('Passer au mode Classique')); await r.hold(1.5)
+    r.mark('mode-classique')
+    await r.click(btn('Générateur visuel de règles')); await r.hold(1.0)
+    await r.click(lambda f: f.get_by_role('option', name=re.compile('^Liste de domaines'))); await r.hold(1.5)
+    r.mark('liste-domaines')
+    await r.click(btn('Suivant', True)); await r.hold(2.0)
+    await r.click(btn('Suivant', True)); await r.hold(2.0)
+    await r.click(lambda f: f.locator('textarea').first); await r.hold(0.4)
+    for ch in '.amazonlinux.com':
+        await r.page.keyboard.type(ch); await asyncio.sleep(0.05)
+    await r.page.keyboard.press('Enter')
+    for ch in '.amazonaws.com':
+        await r.page.keyboard.type(ch); await asyncio.sleep(0.05)
+    await r.hold(1.0)
+    r.mark('domaines'); await r.hold(1.5)
+    await r.scroll(900)
+    await r.hold(1.0)
+    await r.click(btn('Suivant', True)); await r.hold(2.5)
+    r.mark('verification'); await r.hold(2.0)
+    await r.scroll(1500)
+    await r.click(btn('Créer', True)); await r.hold(5.0)
+    r.mark('cree'); await r.hold(2.0)

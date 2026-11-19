@@ -9,8 +9,9 @@ import difflib, io, json, os, re, subprocess, sys
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
-W_ = os.path.join(HERE, 'work'); sys.path.insert(0, HERE)
-import scenario
+W_ = os.path.join(HERE, os.environ.get('WORK', 'work')); sys.path.insert(0, HERE)
+import importlib
+scenario = importlib.import_module(os.environ.get('SCEN', 'scenario'))
 FF = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'Microsoft', 'WinGet', 'Links')
 os.environ['PATH'] += os.pathsep + FF
 FONT, FONT_B = r'C:\Windows\Fonts\segoeui.ttf', r'C:\Windows\Fonts\segoeuib.ttf'
@@ -61,7 +62,9 @@ def cards():
         im.save(os.path.join(W_, 'cards', s['id'] + '.png'))
     # bandeau commun a toutes les scenes d'un module : titre en haut a gauche + 14 points de progression
     for n in range(14):
-        c = [s for s in scenario.S if s['kind'] == 'card' and s['num'] == n][0]
+        c = [s for s in scenario.S if s['kind'] == 'card' and s['num'] == n]
+        if not c: continue
+        c = c[0]
         ov = Image.new('RGBA', (1920, 1080), (0, 0, 0, 0)); d = ImageDraw.Draw(ov)
         label = c['title']; wlab = int(d.textlength(label, font=font(34, True))) + 56
         d.rounded_rectangle([34, 30, 34 + wlab, 92], 18, fill=(15, 23, 42, 215), outline=ACC + (255,), width=3)
@@ -120,6 +123,113 @@ def ass_for(s, total_end):
         ev.append('Dialogue: 0,%s,%s,Default,,0,0,0,,%s' % (ts(max(a, 0)), ts(b), wrap(' '.join(toks[x] for x in c))))
     open(os.path.join(W_, 'ass', s['id'] + '.ass'), 'w', encoding='utf-8').write(head + '\n'.join(ev) + '\n')
 
+
+# ---------------------------------------------------------------- scenes GUI (enregistrements reels de la console)
+def dark_segments(raw):
+    """Periodes (secondes du brut) ou l'image est un terminal sombre (Session Manager) : on y floute le bandeau de session."""
+    out = sh(['ffmpeg', '-v', 'error', '-i', raw, '-vf', 'fps=4,scale=96:54,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-', '-an', '-f', 'null', '-'])
+    segs = []; cur = None; t = 0.0
+    for line in out.splitlines():
+        m = re.search(r'pts_time:([0-9.]+)', line)
+        if m: t = float(m.group(1))
+        m = re.search(r'YAVG=([0-9.]+)', line)
+        if m:
+            dark = float(m.group(1)) < 90
+            if dark and cur is None: cur = t
+            if not dark and cur is not None: segs.append((cur, t)); cur = None
+    if cur is not None: segs.append((cur, 1e6))
+    return segs
+
+def speed_plan(marks, cd):
+    """[(t0, t1, facteur)] : les intervalles NNN-debut / NNN-fin portant 'accelere' sont acceleres, le reste est a vitesse normale."""
+    pts = []
+    for m in marks:
+        if m['name'].endswith('-debut') and 'accelere' in m: pts.append((m['t'], m['name'][:-6], m['accelere']))
+    ends = {m['name'][:-4]: m['t'] for m in marks if m['name'].endswith('-fin')}
+    plan = []; cur = 0.0
+    for t0, key, acc in sorted(pts):
+        t1 = ends.get(key, cd)
+        if t0 > cur: plan.append((cur, t0, 1.0))
+        plan.append((t0, t1, float(acc))); cur = t1
+    if cur < cd: plan.append((cur, cd, 1.0))
+    return plan or [(0.0, cd, 1.0)]
+
+def blank_segments(raw, min_len=1.5, thr=252.5):
+    """Periodes (secondes du brut) ou l'ecran est entierement blanc (page de connexion qui se recharge) : coupees au montage."""
+    out = sh(['ffmpeg', '-v', 'error', '-i', raw, '-vf', 'fps=4,scale=64:36,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=-', '-an', '-f', 'null', '-'])
+    segs = []; cur = None; t = 0.0
+    for line in out.splitlines():
+        m = re.search(r'pts_time:([0-9.]+)', line)
+        if m: t = float(m.group(1))
+        m = re.search(r'YAVG=([0-9.]+)', line)
+        if m:
+            blank = float(m.group(1)) >= thr
+            if blank and cur is None: cur = t
+            if not blank and cur is not None:
+                if t - cur >= min_len: segs.append((cur, t))
+                cur = None
+    return segs
+
+def cut_blanks(plan, blanks):
+    out = []
+    for a, b, f in plan:
+        pieces = [(a, b)]
+        for x, y in blanks:
+            nxt = []
+            for p, q in pieces:
+                if y <= p or x >= q: nxt.append((p, q)); continue
+                if x > p: nxt.append((p, x))
+                if y < q: nxt.append((y, q))
+            pieces = nxt
+        out += [(p, q, f) for p, q in pieces if q - p > 0.05]
+    return out
+
+def plan_for(raw):
+    cd = dur(raw); mp = os.path.splitext(raw)[0] + '.marks.json'
+    marks = json.load(open(mp, encoding='utf-8')) if os.path.exists(mp) else []
+    keep = os.path.splitext(os.path.basename(raw))[0] in ('m09g',)   # pages blanches legitimes (reponse de l'API affichee dans le navigateur)
+    return cut_blanks(speed_plan(marks, cd), [] if keep else blank_segments(raw))
+
+def gui_minlen(s, raw):
+    return sum((b - a) / f for a, b, f in plan_for(raw)) / s.get('max_speed', 6.0)
+
+def gui_chain(s, raw, total):
+    cd = dur(raw)
+    plan = plan_for(raw)
+    t1 = sum((b - a) / f for a, b, f in plan)
+    sp = min(max(t1 / (total - 0.3), 1.0), s.get('max_speed', 6.0)); out_len = t1 / sp
+    # masquage : compte (haut droite) sur la console, identifiant de session (haut gauche) sur les terminaux
+    dk = dark_segments(raw); en_term = '+'.join('between(t,%.2f,%.2f)' % d for d in dk) or '0'
+    flt = (f"[0:v]delogo=x=1596:y=3:w=320:h=46:enable='not({en_term})',delogo=x=4:y=4:w=530:h=36:enable='{en_term}'")
+    for (x, y, w, h, a, b) in s.get('boxes', []): flt += f",delogo=x={x}:y={y}:w={w}:h={h}:enable='between(t,{a},{b})'"
+    parts = []; n = len(plan)
+    flt += f",split={n}" + ''.join(f'[s{i}]' for i in range(n)) + ';'
+    for i, (a, b, f) in enumerate(plan):
+        flt += f"[s{i}]trim={a:.3f}:{b:.3f},setpts=(PTS-STARTPTS)/{sp * f:.4f}[p{i}];"
+    flt += ''.join(f'[p{i}]' for i in range(n)) + f"concat=n={n}:v=1:a=0,scale=1760:990:flags=lanczos,pad=1920:1080:80:84:color=0x0f172a,tpad=stop_mode=clone:stop_duration={max(total - out_len, 0) + 0.5:.2f},trim=0:{total:.2f},setpts=PTS-STARTPTS,fps={FPS}[bg]"
+    return flt, sp, out_len
+
+# ---------------------------------------------------------------- pastille "accelere xN"
+def badge(n):
+    path = os.path.join(W_, 'overlays', 'acc_%d.png' % n)
+    if os.path.exists(path): return path
+    im = Image.new('RGBA', (270, 52), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+    d.rounded_rectangle([0, 0, 269, 51], 26, fill=(99, 102, 241, 235))
+    d.text((135, 26), '»  accéléré ×%d' % n, font=font(27, True), fill=(255, 255, 255, 255), anchor='mm')
+    im.save(path); return path
+
+def badge_plan(s, raw, total):
+    """[(png, debut, fin)] en secondes de la video montee : une pastille quand la vitesse effective depasse x1,5."""
+    plan = plan_for(raw)
+    t1 = sum((b - a) / f for a, b, f in plan)
+    sp = min(max(t1 / (total - 0.3), 1.0), s.get('max_speed', 6.0))
+    out = []; t = 0.0
+    for a, b, f in plan:
+        d = (b - a) / (sp * f); v = sp * f
+        if v >= 1.5: out.append((badge(int(round(v))), t, t + d))
+        t += d
+    return out
+
 # ---------------------------------------------------------------- scenes
 def zoom_expr(fx, fy, z0, z1, frames):
     z = f"({z0}+({z1}-{z0})*on/{frames})"
@@ -153,7 +263,11 @@ def scene(s, durs):
     a = durs[sid]; total = LEAD + a + TAIL
     voice = os.path.join(W_, 'voix_fort', sid + '.wav')
     ass = 'ass/' + sid + '.ass'
-    if s['kind'] == 'clip':
+    if s['kind'] == 'gui':
+        total = max(total, gui_minlen(s, os.path.join(ROOT, s['raw'])) + 0.9)
+        base, sp, ol = gui_chain(s, os.path.join(ROOT, s['raw']), total)
+        inputs = ['-i', os.path.join(ROOT, s['raw'])]
+    elif s['kind'] == 'clip':
         clip = os.path.join(ROOT, s['clip']); cd = dur(clip)
         sp = min(max(cd / (total - 0.3), 1.0), 2.4); total = max(total, cd / sp + 0.9)
         base = f"[0:v]setpts=PTS/{sp:.4f},scale=1760:990:flags=lanczos,pad=1920:1080:80:84:color=0x0f172a,tpad=stop_mode=clone:stop_duration={total:.2f},trim=0:{total:.2f},setpts=PTS-STARTPTS,fps={FPS}[bg]"
@@ -163,14 +277,18 @@ def scene(s, durs):
         still = prep_still(s)
         base = f"[0:v]{zoom_expr(fx, fy, z0, z1, frames)}[bg]"
         inputs = ['-loop', '1', '-t', f'{total:.2f}', '-i', still]
-    chain = base + ';'
+    chain = (base if s['kind'] == 'gui' else base) + ';'
     last = '[bg]'
     if ovl:
         chain += f"{last}[2:v]overlay=0:0[ov];"; last = '[ov]'
+    bl = badge_plan(s, os.path.join(ROOT, s['raw']), total) if s['kind'] == 'gui' else []
+    bi = 3 if ovl else 2
+    for k, (png, a, b) in enumerate(bl):
+        chain += f"{last}[{bi + k}:v]overlay=1600:14:enable='between(t,{a:.2f},{b:.2f})'[bd{k}];"; last = f'[bd{k}]'
     chain += f"{last}subtitles={ass},fade=t=in:st=0:d=0.3,fade=t=out:st={total-0.3:.2f}:d=0.3[v]"
     cmd = ['ffmpeg', '-y', '-loglevel', 'error'] + inputs + ['-i', voice]
     if ovl: cmd += ['-i', ovl]
-    else: pass
+    for png, a, b in bl: cmd += ['-i', png]
     # l'ordre des entrees : 0 = video/image, 1 = voix, 2 = bandeau (si present)
     aud = f"[1:a]adelay={int(LEAD*1000)}:all=1,apad=whole_dur={total:.2f},afade=t=out:st={total-0.25:.2f}:d=0.25[a]"
     cmd += ['-filter_complex', chain + ';' + aud, '-map', '[v]', '-map', '[a]', '-t', f'{total:.2f}'] + enc + [out]
@@ -178,7 +296,7 @@ def scene(s, durs):
 
 def scenes(only=None):
     durs = json.load(open(os.path.join(W_, 'durees.json')))
-    seen = {}
+    seen = json.load(open(os.path.join(W_, 'scenes_dur.json'))) if only and os.path.exists(os.path.join(W_, 'scenes_dur.json')) else {}
     for s in scenario.S:
         if only and s['id'] not in only: continue
         if 'say' in s:
@@ -190,7 +308,7 @@ def concat():
     lst = os.path.join(W_, 'liste.txt')
     with open(lst, 'w', encoding='utf-8') as f:
         for s in scenario.S: f.write("file 'scenes/%s.mp4'\n" % s['id'])
-    out = os.path.join(HERE, 'satom-cloud-network-TP-AC.mp4')
+    out = os.path.join(HERE, os.environ.get('OUT', 'satom-cloud-network-TP-AC.mp4'))
     sh(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', lst, '-c', 'copy', '-movflags', '+faststart', out])
     print('video : %s (%.1f min, %.0f Mo)' % (out, dur(out) / 60, os.path.getsize(out) / 1e6))
 
