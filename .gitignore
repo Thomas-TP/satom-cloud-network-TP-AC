@@ -24,3 +24,18 @@ video/work3/
 video/satom-cloud-network-TP-AC-bloc*.mp4
 video/satom-cloud-network-TP-AC-gui.mp4
 video/satom-cloud-network-TP-AC-court.mp4
+
+# montage v3 : donnees intermediaires et rendus (gros, regenerables ; masques d'identifiants non versionnes)
+video/montage/work/
+video/montage/analyse/
+video/montage/plan/
+video/montage/plan_masks_*/
+video/montage/tmp/
+video/montage/rm/node_modules/
+video/montage/rm/out/
+video/montage/rm/src/data.json
+video/montage/*.log
+video/montage/*.err
+video/montage/survey.json
+video/montage/used.json
+video/satom-cloud-network-TP-AC-montage-sans-voix.mp4
