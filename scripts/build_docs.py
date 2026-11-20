@@ -51,7 +51,7 @@ for path in sorted(glob.glob(os.path.join(SRC, 'm??.md'))):
 header_path = os.path.join(SRC, 'entete.md')
 header = open(header_path, encoding='utf-8').read() if os.path.exists(header_path) else ''
 ec = os.path.join(ROOT, 'docs', '02-ecarts-au-sujet.md')
-if os.path.exists(ec): parts.append(open(ec, encoding='utf-8').read())
+# (les ecarts au sujet restent dans docs/02-ecarts-au-sujet.md, hors du dossier HackMD)
 dossier = header + "\n\n" + "\n\n---\n\n".join(parts)
 if base:
     dossier = re.sub(r'\]\(\.\./images/', '](' + base + '/', dossier)

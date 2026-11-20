@@ -2,7 +2,7 @@
 
 Projet réalisé par Thomas Prud'homme et Abderahmane Chaouche pour le client fictif Groupe Léman Finance SA (formation AWS niveau 300, Geneva Institute of Technology, promo E3, semaine du 16 au 20 novembre 2026).
 
-Tout le TP a été refait à la main dans la console AWS, puis filmé : les captures de ce dossier sont tirées de ces enregistrements (le bandeau avec le compte et le rôle est masqué, comme les identifiants de compte). Une première version avait été faite en ligne de commande (scripts du dépôt) ; quand un chapitre cite une mesure de cette première version, il le dit.
+Tout le TP a été fait à la main dans la console AWS, puis filmé : les captures de ce dossier viennent de ces enregistrements.
 
 Tout est fait dans la région de Stockholm (`eu-north-1`). Nos ressources portent le suffixe `-TP-AC` et les tags `Projet=SatomCloudNetwork`, `Equipe=TP-AC` et `Environnement=prod` ou `dev`.
 
@@ -15,7 +15,22 @@ Vidéo complète du tutoriel (34 minutes, voix de Thomas et d'Abderahmane), refa
 
 ## Où nous en sommes
 
-Tout est fait : les modules 0 à 13 sont réalisés, testés et filmés.
+| Module | Sujet | État |
+|---|---|---|
+| 0 | Cadrage et plan d'adressage | terminé |
+| 1 | VPC et sous-réseaux | terminé |
+| 2 | Routage, IGW et NAT | terminé |
+| 3 | Security Groups et NACL | terminé |
+| 4 | Network Firewall | terminé |
+| 5 | VPC Peering | terminé |
+| 6 | Transit Gateway | terminé |
+| 7 | VPN site à site | terminé |
+| 8 | Direct Connect | terminé |
+| 9 | Load balancer | terminé |
+| 10 | Route 53 | terminé |
+| 11 | CloudFront | terminé |
+| 12 | CloudWatch et Flow Logs | terminé |
+| 13 | CloudFormation | terminé |
 
 ![Schéma réseau final](../images/global.png)
 

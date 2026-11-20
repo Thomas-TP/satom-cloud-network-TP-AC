@@ -21,8 +21,5 @@ for k, title, rng, sub in PARTS:
 
 head = fix(rd(os.path.join(D, 'src', 'entete.md')))
 liste = '\n'.join(f"- [{t}]({{{{URL_{k}}}}}) : {sub}" for k, t, _, sub in PARTS)
-som = (head + "\n\n## Comment lire le dossier\nLe dossier est coupé en trois notes (limite de taille de HackMD). Chaque note a son propre sommaire en haut.\n\n" + liste + "\n\nAprès les trois parties, cette note contient les écarts au sujet, le plan d'adressage, les services bloqués, le dossier client et le journal de nettoyage.\n\n"
-       + "---\n\n" + fix(rd(os.path.join(D, '02-ecarts-au-sujet.md'))) + "\n\n---\n\n" + fix(rd(os.path.join(D, '00-plan-adressage.md'))) + "\n\n---\n\n" + fix(rd(os.path.join(D, '01-services-bloques.md')))
-       + "\n\n---\n\n" + fix(rd(os.path.join(D, 'CLIENT.md'))) + "\n\n---\n\n" + fix(rd(os.path.join(D, 'NETTOYAGE.md'))) + "\n")
-som = som.replace('\n## Où nous en sommes', '\n## Où nous en sommes', 1)
+som = head + '\n\n## Comment lire le dossier\nLe dossier est coupé en trois notes (limite de taille de HackMD). Chaque note a son propre sommaire en haut.\n\n' + liste + '\n'
 open(os.path.join(OUT, 'sommaire.md'), 'w', encoding='utf-8', newline='\n').write(som); print('sommaire', len(som))

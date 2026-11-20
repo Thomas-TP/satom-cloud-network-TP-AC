@@ -2,7 +2,7 @@
 
 Projet réalisé par Thomas Prud'homme et Abderahmane Chaouche pour le client fictif Groupe Léman Finance SA (formation AWS niveau 300, Geneva Institute of Technology, promo E3, semaine du 16 au 20 novembre 2026).
 
-Tout le TP a été refait à la main dans la console AWS, puis filmé : les captures de ce dossier sont tirées de ces enregistrements (le bandeau avec le compte et le rôle est masqué, comme les identifiants de compte). Une première version avait été faite en ligne de commande (scripts du dépôt) ; quand un chapitre cite une mesure de cette première version, il le dit.
+Tout le TP a été fait à la main dans la console AWS, puis filmé : les captures de ce dossier viennent de ces enregistrements.
 
 Tout est fait dans la région de Stockholm (`eu-north-1`). Nos ressources portent le suffixe `-TP-AC` et les tags `Projet=SatomCloudNetwork`, `Equipe=TP-AC` et `Environnement=prod` ou `dev`.
 
@@ -15,7 +15,22 @@ Vidéo complète du tutoriel (34 minutes, voix de Thomas et d'Abderahmane), refa
 
 ## Où nous en sommes
 
-Tout est fait : les modules 0 à 13 sont réalisés, testés et filmés.
+| Module | Sujet | État |
+|---|---|---|
+| 0 | Cadrage et plan d'adressage | terminé |
+| 1 | VPC et sous-réseaux | terminé |
+| 2 | Routage, IGW et NAT | terminé |
+| 3 | Security Groups et NACL | terminé |
+| 4 | Network Firewall | terminé |
+| 5 | VPC Peering | terminé |
+| 6 | Transit Gateway | terminé |
+| 7 | VPN site à site | terminé |
+| 8 | Direct Connect | terminé |
+| 9 | Load balancer | terminé |
+| 10 | Route 53 | terminé |
+| 11 | CloudFront | terminé |
+| 12 | CloudWatch et Flow Logs | terminé |
+| 13 | CloudFormation | terminé |
 
 ![Schéma réseau final](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/global.png)
 
@@ -1939,32 +1954,3 @@ Le module vise un réseau décrit dans un modèle, avec paramètres, jeu de modi
 
 ## Nettoyage
 La pile `stack-portail-leman-TP-AC` a été supprimée dans la vidéo même, le 19 novembre 2026 à 0 h 52 : plus aucune ressource `-cfn-TP-AC` ne restait. Les modèles `cfn/*.yaml` restent dans le dépôt. Pour le reste du projet, voir `docs/NETTOYAGE.md` : tout a été supprimé le 20 novembre 2026, sauf le Network Firewall `nfw-prod-leman-TP-AC`, dont la suppression échoue côté AWS.
-
-
----
-
-# Points du sujet impossibles, incohérents ou réalisés autrement
-
-Le sujet a été rédigé avec l'aide d'une IA : certaines consignes ne peuvent pas être suivies à la lettre, ou se contredisent. Cette liste dit, pour chacune, ce que nous avons fait à la place et pourquoi. Elle est destinée au formateur.
-
-| # | Module | Ce que dit le sujet | Pourquoi ce n'est pas possible tel quel | Ce que nous avons fait |
-|---|---|---|---|---|
-| 1 | 8 | Une liaison Direct Connect près de Genève | Il n'existe aucun emplacement Direct Connect près de Genève dans la région de Stockholm (Zurich n'est pas activée sur le compte, Francfort est refusée). Et nous ne commandons pas de fibre. | Emplacement retenu sur le papier : EQSK1 (Equinix Sweden SK1, 1 Gbit/s). Direct Connect Gateway réel et associé au Transit Gateway ; la liaison est simulée par un tunnel GRE et BGP (FRRouting). |
-| 2 | 7 | Une bascule entre deux tunnels VPN « sans coupure » | Un VPN IPsec ne peut pas basculer sans coupure : AWS met un certain temps à constater qu'un tunnel est mort avant d'utiliser l'autre. Nous avons mesuré entre 26 et 34 secondes (valeurs exactes au module 7). | Mesure honnête, avec une vraie panne silencieuse (paquets perdus, sans couper l'interface). |
-| 3 | 8 | Une bascule Direct Connect vers VPN en quelques secondes, avec un prepend | Un VPN statique ne parle pas BGP : le prepend n'aurait aucun effet. | Le BGP du chemin « VPN » passe dans un tunnel GRE à l'intérieur du vrai VPN. Bascule mesurée au module 8. |
-| 4 | 7 | Customer Gateways en `203.0.113.10` et `198.51.100.10` | Ce sont des adresses réservées à la documentation : aucun tunnel ne s'établit vers elles. | Une Elastic IP par routeur de site (`rtr-siege-TP-AC`, `rtr-agence-TP-AC`). |
-| 5 | 6, 7 | Plages `10.0.0.0/16` et `10.1.0.0/16` | Le compte est partagé par toute la classe : ces plages recouvrent celles des autres. | `10.20.0.0/22` (prod) et `10.21.0.0/24` (dev). |
-| 6 | 7 | Déclarer les routes statiques sur la connexion VPN | Pour un VPN rattaché à un Transit Gateway, AWS refuse : les routes se déclarent dans la table de routage du Transit Gateway. | Routes dans `tgw-rt-prod-TP-AC`. |
-| 7 | 4 | Ne mettre que la route de retour `10.20.1.0/26` dans la table publique | Cela casse `web-01` vers `app-01` : la requête passe par le pare-feu, pas la réponse, et le pare-feu perd l'état. Les Security Groups « depuis un groupe » ne correspondent plus au trafic qui sort d'un endpoint de pare-feu. | Routes symétriques, et règles de `sg-app` par plage d'adresses (module 4). |
-| 8 | 4 | Le flux autorisé doit apparaître dans les journaux | Un journal d'alertes ne contient que ce qui est bloqué. | Second journal, de type flux (`/leman/nfw-flow-TP-AC`). |
-| 9 | 10, 11 | Zone publique et certificat ACM validé par DNS pour le domaine du client | Le nom d'exemple du sujet n'est pas un domaine que nous possédons : on ne peut ni le déléguer, ni y valider un certificat. Au début, nous n'avions pas de domaine. | Le sujet est maintenant respecté avec un domaine réel : le sous-domaine `leman.thomastp.ch` (domaine `thomastp.ch`, jamais modifié) est délégué à une zone publique Route 53 par quatre enregistrements NS ajoutés chez Cloudflare. Certificat public ACM validé par DNS (`leman.thomastp.ch` et `*.leman.thomastp.ch`, plus un en `us-east-1` pour CloudFront), listener HTTPS de l'ALB, nom alternatif `cdn.leman.thomastp.ch` sur CloudFront, tests avec la vérification du certificat activée. Écarts restants : le secours du basculement Route 53 est une adresse statique de documentation (`203.0.113.50`), pas un vrai site de secours ; le nom alternatif de CloudFront a été posé avec la ligne de commande (`aws cloudfront update-distribution`), parce que la liste de certificats de la console ne proposait pas le certificat. |
-| 10 | 0 | Un module « cadrage » sans client joignable | Nous ne pouvons pas poser nos questions au client. | Questions et budget rédigés par nos soins, à relire (module 0). |
-| 11 | 1 | Région Zurich | `eu-central-2` n'est pas activée (`AuthFailure`), Francfort est refusée par l'organisation. | Stockholm (`eu-north-1`), acceptée avec le formateur. |
-| 12 | 8 | Console Direct Connect | La page affiche un bandeau rouge `DescribeLocations` : « explicit deny in a service control policy ». L'organisation refuse la lecture de la liste des emplacements. | La console reste utilisable pour ce qui nous sert : nous y avons créé le Direct Connect Gateway et son association au Transit Gateway (module 8). La liste des emplacements n'est pas consultable. |
-| 13 | 4, 6, 7, 8 | Services autorisés | L'organisation refusait Network Firewall, Transit Gateway, VPN et Direct Connect jusqu'au 17/11/2026 (voir `01-services-bloques.md`). | Modules refaits en réel après la levée, et redéployés depuis un modèle CloudFormation. |
-
-## Ce qui reste simulé malgré tout
-- Les deux sites (siège, agence) sont des instances EC2 avec strongSwan, pas du matériel réel.
-- La « fibre » Direct Connect est un tunnel GRE sur Internet : il n'y a pas d'interface virtuelle physique.
-- Le basculement Route 53 mène à une adresse de documentation (`203.0.113.50`), pas à un second site réel.
-- GNS3 n'est pas utilisé : les routeurs sont des instances EC2 avec FRRouting.
