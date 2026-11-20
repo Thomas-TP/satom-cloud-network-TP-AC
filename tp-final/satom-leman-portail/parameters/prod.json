@@ -1,0 +1,7 @@
+[
+  {"ParameterKey": "Environnement", "ParameterValue": "prod"},
+  {"ParameterKey": "CidrVpc", "ParameterValue": "10.20.0.0/22"},
+  {"ParameterKey": "WebPrivateIp", "ParameterValue": "10.20.0.10"},
+  {"ParameterKey": "AppPrivateIp", "ParameterValue": "10.20.1.10"},
+  {"ParameterKey": "InstanceType", "ParameterValue": "t3.micro"}
+]

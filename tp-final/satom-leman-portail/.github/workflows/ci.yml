@@ -1,0 +1,63 @@
+name: ci
+
+# Pipeline du TP final : les étapes 1 et 2 sont prêtes, la suite est à brancher sprint par sprint.
+# Authentification AWS : OIDC (jamais de clé d'accès). Les étapes de déploiement sont commentées tant que G0 n'est pas passé.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write   # nécessaire pour l'OIDC vers AWS (étape de déploiement)
+
+jobs:
+  qualite:
+    name: 1. Qualité de code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Outils
+        run: pip install cfn-lint ruff coverage
+      - name: cfn-lint sur les modèles
+        run: cfn-lint "templates/**/*.yaml"
+      - name: ruff sur l'application
+        run: ruff check app tests
+      - name: Tests unitaires et couverture
+        run: |
+          coverage run -m unittest discover -s tests -p "test_*.py"
+          coverage xml -o coverage.xml
+          coverage report --fail-under=80
+      # - name: Analyse SonarQube / SonarCloud (quality gate)
+      #   uses: SonarSource/sonarqube-scan-action@v5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  securite:
+    name: 2. Sécurité statique
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks (secrets, historique compris)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: cfn-guard (règles dans policies/)
+      #   run: cfn-guard validate --data templates --rules policies
+      # - name: Semgrep (SAST de l'application)
+      #   run: pip install semgrep && semgrep --config auto --error app
+      # - name: Trivy (dépendances)
+      #   uses: aquasecurity/trivy-action@0.28.0
+      #   with: { scan-type: fs, scan-ref: ., severity: 'CRITICAL,HIGH', exit-code: '1' }
+
+  # 3. Construction et SBOM (Syft, CycloneDX) -> sbom/
+  # 4. Déploiement dev par change set (aws-actions/configure-aws-credentials@v4 avec role-to-assume)
+  # 5. Tests dynamiques et performance : ZAP baseline, k6 (runner auto-hébergé dans le VPC)
+  # 6. Validation manuelle (environment "prod" avec relecteur requis), puis déploiement prod
+  # 7. Post-déploiement : alarmes, tableaux de bord, Security Hub, Config ; mise à jour de docs/journal.md

@@ -16,6 +16,8 @@ Région : **eu-north-1 (Stockholm)** – tags `Projet=SatomCloudNetwork`, `Equip
 | Services bloqués par l'organisation | [`docs/01-services-bloques.md`](docs/01-services-bloques.md) |
 | Points du sujet impossibles ou incohérents (pour le formateur) | [`docs/02-ecarts-au-sujet.md`](docs/02-ecarts-au-sujet.md) |
 | Journal de projet et nettoyage | [`docs/NETTOYAGE.md`](docs/NETTOYAGE.md) |
+| **Passation à Abderahmane pour le TP final** (à lire en premier) | [`docs/passation/README.md`](docs/passation/README.md) et [`AGENTS.md`](AGENTS.md) (contexte pour les assistants IA) |
+| TP final : questions pour le formateur, coût et calendrier ; squelette du dépôt | [`docs/tp-final/`](docs/tp-final/) et [`tp-final/satom-leman-portail/`](tp-final/satom-leman-portail/) |
 | Captures de la console AWS tirées de la vidéo (bandeau du compte masqué) | [`docs/images/shots/`](docs/images/shots/) (outil : `scripts/shot.py`) |
 | **Vidéo tutoriel complète avec voix** (34 min, tout refait à la main dans la console, vrai domaine pour les modules 9 à 11) | [https://youtu.be/emZqnBNtOjM](https://youtu.be/emZqnBNtOjM) (YouTube, non répertoriée) |
 | Ancienne vidéo de rendu (environ 8 min, captures et terminaux, première version en ligne de commande) | [`video/satom-cloud-network-TP-AC.mp4`](video/satom-cloud-network-TP-AC.mp4) |

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.coverage
+coverage.xml
+.env
+*.pem
+*.key
+credentials
+*.tfstate
+*.log
