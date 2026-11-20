@@ -30,7 +30,7 @@ async def run(r):
     r.mark('groupe-cible')
     await r.scroll(600); await r.hold(0.8)
     await r.click(btn('Sélectionner un certificat')); await r.hold(1.2)
-    await r.click(lambda f: f.get_by_role('option', name=re.compile('portefeuilles')).first); await r.hold(1.5)
+    await r.click(lambda f: f.get_by_role('option', name=re.compile('leman.thomastp.ch')).first); await r.hold(1.5)
     r.mark('certificat')
     await r.scroll(900); await r.hold(0.8)
     await r.click(lambda f: f.get_by_text('Équilibreur de charge balises').first); await r.hold(1.0)

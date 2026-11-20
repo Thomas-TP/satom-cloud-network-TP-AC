@@ -26,6 +26,15 @@ Le compte AWS est **partagé** : on ne touche jamais aux ressources des autres �
 7. Peering, VPC dev, instances, NAT + Elastic IP, IGW, sous-réseaux, tables, Security Groups, NACL, VPC prod.
 8. Rôles IAM `TP-AC-*` et profil d'instance.
 
+## Domaine réel (modules 9 à 11) : nettoyage effectué le 20/11/2026
+Les modules 9 à 11 ont été refaits avec le domaine réel `thomastp.ch` (sous-domaine `leman.thomastp.ch` délégué à Route 53). Tout ce qui a été créé pour ce tournage a été supprimé à la fin, dans cet ordre :
+1. Distribution CloudFront : alias et certificat retirés, désactivée, puis supprimée.
+2. Zones Route 53 `leman.thomastp.ch` (avec `origin`, `portefeuilles` principal et secours, `cdn`, CNAME de validation ACM) et `prod.leman.internal`, puis la surveillance de l'état `hc-portail-TP-AC`.
+3. ALB `alb-prod-leman-TP-AC`, ses groupes cibles `tg-web-TP-AC` et `tg-app-TP-AC`, le Security Group `alb-TP-AC` (et la règle 8080 qui y faisait référence).
+4. Pile CloudFormation de tournage `env-m9-m11-TP-AC` (VPC, sous-réseaux, passerelle Internet, `web-01-TP-AC`, `app-01-TP-AC`, rôle SSM).
+5. Certificats ACM `leman.thomastp.ch` d'`eu-north-1` et d'`us-east-1`.
+6. Chez Cloudflare : les quatre enregistrements NS du sous-domaine `leman` ont été retirés ; le reste de la zone `thomastp.ch` (le portfolio) n'a jamais été modifié.
+
 ## Journal des suppressions déjà effectuées
 | Date | Ressource | Justification |
 |---|---|---|

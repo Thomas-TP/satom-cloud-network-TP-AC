@@ -176,9 +176,13 @@ BUDGET = dict(base=3.5, k=0.10, lo=5.0, hi=40.0)
 # scenes qui repetent une procedure deja montree : budget reduit
 REPEAT = {'m07c2': 0.35, 'm07e2': 0.35, 'm07n2': 0.4, 'm05a1': 0.7, 'm05a2': 0.7, 'm05b1': 0.5, 'm05b2': 0.5, 'm05c1': 0.6, 'm05c2': 0.6, 'm06c': 0.6, 'm08f': 0.5, 'm02c': 0.7, 'm11e2': 0.6, 'm07j': 0.8}
 
+# duree minimale (s) demandee par la voix pour certaines scenes refilmees (vrai domaine)
+MINB = {'m10c': 13.0, 'm11d': 15.0, 'm11d2': 9.0, 'm11g': 38.0, 'm10d': 9.5, 'm09g': 8.0}
+
 def plan(sid):
     r0 = plan_once(sid, P, write=False)
     B = min(max(BUDGET['base'] + BUDGET['k'] * r0['active'], BUDGET['lo']), BUDGET['hi']) * REPEAT.get(sid, 1.0)
+    B = max(B, MINB.get(sid, 0))
     f = 1.0; best = r0
     for f in (1.0, 1.25, 1.55, 1.9, 2.3, 2.7):
         p = dict(P); p['typing_speed'] = P['typing_speed'] * f; p['change_speed'] = P['change_speed'] * f

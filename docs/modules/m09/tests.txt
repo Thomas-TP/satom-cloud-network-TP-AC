@@ -1,9 +1,16 @@
-=== TP1/TP2 ===
-tg-web : healthy   tg-app : healthy
-curl https://ALB/            -> web-01 TP-AC  [HTTP 200]
-curl https://ALB/api/health  -> app-01 TP-AC /api/health  [HTTP 200]
+=== Domaine reel (20/11/2026) : tests sans -k, certificat verifie ===
+--- curl.exe sans -k (certificat verifie) :
+https://portefeuilles.leman.thomastp.ch/ -> web-01 TP-AC (cfn)
+ [HTTP 200, verif certificat : 0]
+https://portefeuilles.leman.thomastp.ch/api/health -> app-01 TP-AC (cfn) /api/health
+ [HTTP 200, verif certificat : 0]
+--- certificat :
+subject=CN=leman.thomastp.ch
+issuer=C=US, O=Amazon, CN=Amazon RSA 2048 S21
+notBefore=Nov 20 07:47:39 2026 GMT
+notAfter=Jun  6 08:47:39 2027 GMT
 
-=== TP3 : pannes ===
+=== Pannes (premiere execution, avant le passage au domaine reel) ===
 nginx arrete sur web-01 : tg-web = unhealthy ; curl https://ALB/ -> <html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</h1></center> </body> </html>  [HTTP 502]
 nginx relance : tg-web = healthy
 curl https://ALB/ -> web-01 TP-AC  [HTTP 200]

@@ -7,7 +7,7 @@ async def run(r):
     await r.click(tab('Règles entrantes')); await r.hold(1.5)
     await r.click(lambda f: f.get_by_role('button', name='Modifier les règles entrantes').first); await r.hold(2.5)
     await r.click(lambda f: f.get_by_role('button', name='Ajouter une règle').first); await r.hold(1.0)
-    n = 8
+    n = 2  # le groupe app n'a qu'une regle (8080 depuis web) : la nouvelle est la deuxieme
     await r.type(lambda f: f.locator(f'input[aria-label="Règle entrante {n} Plage de ports"]'), '8080'); await r.hold(0.5)
     await r.click(lambda f: f.locator(f'input[aria-label="Règle entrante {n} Sélecteur CIDR"]')); await r.hold(0.6)
     await r.type(lambda f: f.locator(f'input[aria-label="Règle entrante {n} Sélecteur CIDR"]'), 'alb-TP'); await r.hold(1.5)

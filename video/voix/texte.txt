@@ -442,8 +442,10 @@ T | Direct Connect est validé. Abderahmane, on passe aux applications ?
 A | Module neuf : l'équilibreur de charge, en HTTPS, vers deux groupes cibles : le web, et l'application.
 
 == m09a
-A @+0.3 | Un certificat auto-signé, importé dans ACM, pour le HTTPS de l'équilibreur.
-A @+5.3 | La clé privée est collée masquée : elle n'apparaît nulle part.
+A @+0.3 | Un vrai certificat public ACM, pour leman point thomastp point ch.
+A @validation-dns+0.3 | Validation par DNS : on prouve que le domaine est à nous.
+A @creer-dns+0.2 | La console crée l'enregistrement dans Route cinquante-trois.
+A @emis-0.2 | Le certificat est émis.
 
 == m09b
 A @+0.4 | Deux groupes cibles. D'abord le web : HTTPS, port quatre cent quarante-trois.
@@ -457,8 +459,11 @@ A @+9.0 | Il laisse entrer les clients, et rien d'autre.
 
 == m09d
 T @+0.4 | L'équilibreur lui-même, sur deux zones de disponibilité.
-T @listener-0.3 | Un listener HTTPS sur le port quatre cent quarante-trois, qui envoie par défaut vers le groupe web, avec notre certificat.
+T @listener-0.3 | Un listener HTTPS sur le port quatre cent quarante-trois, qui envoie par défaut vers le groupe web, avec le vrai certificat ACM.
 A @cree-0.8 | Il se déploie en quelques minutes : on accélère.
+
+== m09d2
+A @+0.3 | On crée un alias : origin point leman point thomastp point ch, vers l'équilibreur.
 
 == m09e
 A @+0.3 | Le groupe application accepte l'équilibreur, sur le port huit mille huitante.
@@ -468,7 +473,7 @@ A @+0.3 | Une règle sur le listener : tout ce qui commence par slash api part v
 
 == m09g
 T @+0.2 | Les deux groupes sont sains.
-T @api-1.2 | L'API répond par l'équilibreur.
+T @api-1.2 | L'API répond par son vrai nom.
 
 == m09h
 T @+0.4 | La panne : on arrête nginx sur web zéro un.
@@ -493,8 +498,8 @@ T @+0.2 | Il faut activer les noms d'hôte DNS sur le VPC.
 T @+0.3 | Depuis web zéro un, le nom se résout bien : c'est le résolveur du VPC qui répond.
 
 == m10c
-A @+0.3 | La zone publique, pour un domaine fictif : leman-finance point example.
-A @+4.8 | Fictif, donc sans délégation chez un registraire.
+A @+0.3 | La zone publique réelle : leman point thomastp point ch.
+A @serveurs+0.3 | Voici ses quatre serveurs de noms.
 
 == m10d
 A @+0.3 | On surveille l'équilibreur en HTTPS, toutes les dix secondes.
@@ -505,9 +510,9 @@ A @+0.4 | Les enregistrements de basculement. Le nom portefeuilles pointe d'abor
 T @secours-0.5 | Et le secours : une adresse statique de documentation.
 
 == m10g
-T @+0.4 | On interroge directement un serveur de noms d'AWS, depuis un routeur. D'abord, on installe l'outil dig.
-A @zone-publique-0.4 | Les serveurs de noms se lisent dans la zone publique.
-T @boucle+0.3 | Une boucle demande la réponse toutes les trois secondes : c'est l'adresse de l'équilibreur.
+T @+0.4 | On interroge directement un serveur de noms d'AWS, depuis web zéro un. D'abord, on installe l'outil dig.
+A @+10.0 | On interroge la vraie zone : la réponse est l'adresse de l'équilibreur.
+T @+15.5 | Une boucle demande la réponse toutes les trois secondes : c'est l'adresse de l'équilibreur.
 A @arret-0.1 | Maintenant, on arrête nginx sur web zéro un.
 A | Il faut patienter : la surveillance doit constater la panne.
 T @bascule-0.4 | La réponse change : adresse de secours.
@@ -520,15 +525,15 @@ A | Module onze : un cache devant l'équilibreur, qui ne sera plus joignable en 
 == m11a
 A @+0.3 | Un petit fichier statique sur web zéro un : un logo, servi sous slash static.
 
-== m11b
-A @+0.2 | Certificat auto-signé oblige : un listener HTTP pour CloudFront.
-
-== m11c
-A @+0.3 | Sur ce listener HTTP, la même règle : slash api part vers l'application, le reste vers le web.
-
 == m11d
 T @+0.3 | La distribution CloudFront, avec le paiement à l'utilisation.
-A @elb-0.4 | L'équilibreur sert d'origine, en HTTP seulement, sans pare-feu applicatif.
+A @domaine+0.3 | L'origine : l'équilibreur, par son vrai nom, en HTTPS seulement, sans pare-feu applicatif.
+
+== m11d2
+T @+0.3 | La distribution porte le nom cdn point leman point thomastp point ch, avec un certificat ACM.
+
+== m11d3
+A @+0.3 | Dans Route cinquante-trois, un alias : cdn vers CloudFront.
 
 == m11e
 T @+0.3 | Un comportement pour slash static : cache optimisé.
@@ -539,16 +544,13 @@ A @+0.3 | Et pour slash api : jamais de cache, tous les en-têtes transmis.
 == m11f
 T @+0.3 | On verrouille l'équilibreur : seul CloudFront y accède, grâce à la liste de préfixes d'AWS.
 
-== m11f2
-T @+0.3 | La NACL bloquait encore le port huitante : on ajoute la règle cent cinq.
-
 == m11g
 A @+0.4 | Les tests. On appelle le fichier statique.
 T @miss-0.3 | Premier appel : Miss, la réponse vient de l'origine.
-A @+10.4 | Deuxième appel : Hit, depuis le cache.
+A @hit-0.3 | Deuxième appel : Hit, depuis le cache.
 T @api-0.4 | Pour l'API, jamais de cache : Miss à chaque fois.
 A @fichier-modifie-0.5 | On modifie le fichier : le cache sert encore l'ancienne version.
-T @invalidation-0.4 | Une invalidation vide son cache.
+T @ancien-cache+3.0 | Une invalidation vide son cache.
 A @creee-0.4 | Quelques minutes d'attente, accélérées.
 T @nouveau-0.4 | Et la nouvelle version apparaît.
 A @alb-direct-0.4 | Accès direct : bloqué.
@@ -624,6 +626,6 @@ T @+0.3 | Dernier geste : supprimer la pile. CloudFormation défait tout, dans l
 == end
 T | Voilà, c'est la fin du parcours : quatorze modules, tous réalisés à la main dans la console AWS.
 A | Un réseau sur trois sites, cloisonné, surveillé, et reproductible grâce à CloudFormation.
-T | On est restés honnêtes sur les limites : les sites sont simulés, la liaison Direct Connect aussi, et le domaine est fictif. Tous les écarts avec le sujet sont expliqués dans le dossier.
+T | On est restés honnêtes sur les limites : les sites sont simulés, la liaison Direct Connect aussi. Le domaine, lui, est réel. Tous les écarts avec le sujet sont expliqués dans le dossier.
 A | Merci de nous avoir suivis.
 T | À bientôt !

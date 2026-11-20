@@ -1,0 +1,42 @@
+=== Tests du domaine reel (20/11/2026) ===
+--- curl.exe sans -k (certificat verifie) :
+https://portefeuilles.leman.thomastp.ch/ -> web-01 TP-AC (cfn)
+ [HTTP 200, verif certificat : 0]
+https://portefeuilles.leman.thomastp.ch/api/health -> app-01 TP-AC (cfn) /api/health
+ [HTTP 200, verif certificat : 0]
+--- certificat :
+subject=CN=leman.thomastp.ch
+issuer=C=US, O=Amazon, CN=Amazon RSA 2048 S21
+notBefore=Nov 20 07:47:39 2026 GMT
+notAfter=Jun  6 08:47:39 2027 GMT
+
+=== Basculement Route 53 (primaire ALB -> secours statique 203.0.113.50) ===
+12:26:03 arret de nginx sur web-01 : Success	11:26:05  
+etat de la cible tg-web : unhealthy
+12:30:09 reponse DNS avant relance : 203.0.113.50 (secours)
+12:30:10 relance de nginx : Success	11:30:12  
+12:30:44 la reponse DNS publique est revenue a l'equilibreur (13.62.60.176) apres 34 s
+web-01 TP-AC (cfn)
+ [HTTP 200]
+12:31:14 2e mesure - arret de nginx : Success	11:31:15  
+12:32:22 la reponse DNS publique est devenue le secours (203.0.113.50) apres 70 s
+
+=== Zone privee prod.leman.internal (resolution depuis web-01) ===
+
+
+=== Zone privee prod.leman.internal (resolution depuis web-01) ===
+web.prod.leman.internal -> 10.30.0.10 ; app.prod.leman.internal -> 10.30.1.10 (getent hosts, depuis web-01, via le resolveur du VPC)
+
+=== CloudFront (cdn.leman.thomastp.ch, origine HTTPS origin.leman.thomastp.ch) ===
+1er appel /static/logo.png : HTTP/1.1 200 OK X-Cache: Miss from cloudfront 
+2e appel  /static/logo.png : HTTP/1.1 200 OK X-Cache: Hit from cloudfront 
+contenu : logo v1
+API 1 : HTTP/1.1 200 OK X-Cache: Miss from cloudfront 
+API 2 : HTTP/1.1 200 OK X-Cache: Miss from cloudfront 
+fichier modifie sur web-01 (v2) ; le cache sert encore : logo v1 (HTTP/1.1 200 OK X-Cache: Hit from cloudfront )
+apres invalidation (Completed) : logo v2 (HTTP/1.1 200 OK X-Cache: Hit from cloudfront )
+
+=== ALB verrouille : seul CloudFront (liste de prefixes geree par AWS) peut le joindre ===
+acces direct a l'ALB (origin.leman.thomastp.ch) : HTTP 000 (delai depasse attendu)
+via CloudFront (cdn.leman.thomastp.ch/api/health) : app-01 TP-AC (cfn) /api/health
+ [HTTP 200]

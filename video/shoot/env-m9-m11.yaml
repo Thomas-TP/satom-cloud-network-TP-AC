@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  TP-AC - environnement de tournage des modules 9 a 11 (version avec vrai domaine) : memes noms et memes adresses que le reseau
+  construit a la main aux modules 1 a 3 (VPC 10.20.0.0/22, web-01 10.20.0.10 en HTTPS 443, app-01 10.20.1.10 avec l'API 8080).
+  Ni ALB, ni groupes cibles, ni groupe de securite de l'ALB : ils sont crees dans la console pendant le tournage.
+
+Parameters:
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.20.0.0/22
+      EnableDnsSupport: true
+      EnableDnsHostnames: false
+      Tags: [{Key: Name, Value: vpc-prod-leman-TP-AC}]
+  SubPublic1a:
+    Type: AWS::EC2::Subnet
+    Properties: {VpcId: !Ref Vpc, AvailabilityZone: eu-north-1a, CidrBlock: 10.20.0.0/26, MapPublicIpOnLaunch: true, Tags: [{Key: Name, Value: sub-public-1a-TP-AC}]}
+  SubPrive1a:
+    Type: AWS::EC2::Subnet
+    Properties: {VpcId: !Ref Vpc, AvailabilityZone: eu-north-1a, CidrBlock: 10.20.1.0/26, Tags: [{Key: Name, Value: sub-prive-1a-TP-AC}]}
+  SubPublic1b:
+    Type: AWS::EC2::Subnet
+    Properties: {VpcId: !Ref Vpc, AvailabilityZone: eu-north-1b, CidrBlock: 10.20.0.64/26, MapPublicIpOnLaunch: true, Tags: [{Key: Name, Value: sub-public-1b-TP-AC}]}
+  Igw:
+    Type: AWS::EC2::InternetGateway
+    Properties: {Tags: [{Key: Name, Value: igw-prod-leman-TP-AC}]}
+  IgwAttach:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: {VpcId: !Ref Vpc, InternetGatewayId: !Ref Igw}
+  RtPublic:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref Vpc, Tags: [{Key: Name, Value: rt-public-leman-TP-AC}]}
+  RoutePublicDefault:
+    Type: AWS::EC2::Route
+    DependsOn: IgwAttach
+    Properties: {RouteTableId: !Ref RtPublic, DestinationCidrBlock: 0.0.0.0/0, GatewayId: !Ref Igw}
+  AssocPublic1a:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref SubPublic1a, RouteTableId: !Ref RtPublic}
+  AssocPublic1b:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref SubPublic1b, RouteTableId: !Ref RtPublic}
+
+  SgWeb:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: web-TP-AC
+      GroupDescription: TP-AC web (443 public)
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0, Description: HTTPS public}
+      Tags: [{Key: Name, Value: sg-web-TP-AC}]
+  SgApp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: app-TP-AC
+      GroupDescription: TP-AC application (8080 depuis le groupe web)
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 8080, ToPort: 8080, SourceSecurityGroupId: !Ref SgWeb, Description: API depuis web}
+      Tags: [{Key: Name, Value: sg-app-TP-AC}]
+
+  SsmRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement: [{Effect: Allow, Principal: {Service: ec2.amazonaws.com}, Action: 'sts:AssumeRole'}]
+      ManagedPolicyArns: ['arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore']
+  SsmProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: {Roles: [!Ref SsmRole]}
+
+  Web01:
+    Type: AWS::EC2::Instance
+    DependsOn: RoutePublicDefault
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: t3.micro
+      SubnetId: !Ref SubPublic1a
+      PrivateIpAddress: 10.20.0.10
+      SecurityGroupIds: [!Ref SgWeb]
+      IamInstanceProfile: !Ref SsmProfile
+      Tags: [{Key: Name, Value: web-01-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: prod}]
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          dnf install -y nginx
+          mkdir -p /etc/pki/nginx
+          openssl req -x509 -nodes -newkey rsa:2048 -days 365 -keyout /etc/pki/nginx/web.key -out /etc/pki/nginx/web.crt -subj "/CN=web-01.prod.leman.internal"
+          cat > /etc/nginx/conf.d/web.conf <<'EOC'
+          server {
+            listen 443 ssl;
+            ssl_certificate /etc/pki/nginx/web.crt;
+            ssl_certificate_key /etc/pki/nginx/web.key;
+            default_type text/plain;
+            location / { return 200 "web-01 TP-AC\n"; }
+            location /api/ { proxy_pass http://10.20.1.10:8080; }
+          }
+          EOC
+          systemctl enable --now nginx
+  App01:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: t3.micro
+      SubnetId: !Ref SubPrive1a
+      PrivateIpAddress: 10.20.1.10
+      SecurityGroupIds: [!Ref SgApp]
+      IamInstanceProfile: !Ref SsmProfile
+      Tags: [{Key: Name, Value: app-01-TP-AC}, {Key: Projet, Value: SatomCloudNetwork}, {Key: Equipe, Value: TP-AC}, {Key: Environnement, Value: prod}]
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          mkdir -p /opt/tpac
+          cat > /opt/tpac/app.py <<'EOP'
+          from http.server import BaseHTTPRequestHandler, HTTPServer
+          class H(BaseHTTPRequestHandler):
+              def do_GET(self):
+                  self.send_response(200 if self.path.startswith('/api') or self.path in ('/', '/health') else 404)
+                  self.end_headers(); self.wfile.write(b'app-01 TP-AC ' + self.path.encode() + b'\n')
+          HTTPServer(('0.0.0.0', 8080), H).serve_forever()
+          EOP
+          cat > /etc/systemd/system/tpac-app.service <<'EOS'
+          [Unit]
+          Description=TP-AC app
+          [Service]
+          ExecStart=/usr/bin/python3 /opt/tpac/app.py
+          Restart=always
+          [Install]
+          WantedBy=multi-user.target
+          EOS
+          systemctl daemon-reload && systemctl enable --now tpac-app
+
+Outputs:
+  VpcId: {Value: !Ref Vpc}
+  SgWebId: {Value: !Ref SgWeb}
+  SgAppId: {Value: !Ref SgApp}

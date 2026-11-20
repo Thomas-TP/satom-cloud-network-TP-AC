@@ -12,7 +12,7 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | Isoler prod / dev | Deux réseaux privés distincts (`10.20.0.0/22`, `10.21.0.0/24`) reliés par un Transit Gateway, avec une table de routage par environnement ; le dev n'atteint que le port 8080 de l'API | modules 5 et 6 |
 | Relier siège et agence en chiffré | **VPN AWS site à site**, deux tunnels par site (IKEv2, AES-256, SHA-256) rattachés au Transit Gateway ; clés dans un coffre-fort de secrets ; le siège joint l'application, l'agence seulement l'API (8080) ; le réseau de développement n'est pas joignable depuis les sites | modules 7 et 8 |
 | Filtrer et journaliser | Security Groups, NACL, pare-feu managé sur les domaines sortants, journaux de flux réseau, alarme sur erreurs applicatives | modules 3, 4 et 12 |
-| Répartition de charge et DNS | Répartiteur HTTPS sur 2 zones, routage `/api/*`, DNS privé/public avec bascule automatique, CDN | modules 9 à 11 |
+| Répartition de charge et DNS | Répartiteur HTTPS sur 2 zones avec un vrai certificat, routage `/api/*`, DNS privé/public sur un domaine réel avec bascule automatique, CDN | modules 9 à 11 |
 | Maîtriser les coûts | Instances arrêtées hors séance ; NAT et répartiteurs conservés jusqu'à la fin du cours ; budget de 100 USD par mois avec alerte à 80 % | section 7 |
 | Reproductibilité | Template CloudFormation : suppression puis redéploiement identique, sans étape manuelle | module 13 |
 
@@ -22,7 +22,7 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 * **Production** `vpc-prod-leman` (`10.20.0.0/22`, 1 024 adresses – dimensionnée au besoin réel) : sous-réseaux **public** (serveur web, répartiteur), **privé** (application, aucune adresse publique) ; accès Internet sortant par NAT ; accès d'administration par **AWS Systems Manager** (aucun port SSH exposé, aucune clé à gérer).
 * **Développement** `vpc-dev-leman` (`10.21.0.0/24`) : isolé ; il n'atteint la production que sur `app-01:8080`, par le Transit Gateway.
 * **Filtrage sortant** : un Network Firewall n'autorise que les dépôts de mises à jour et les services AWS ; le reste est bloqué et journalisé.
-* **Publication** : CloudFront (CDN) → ALB (HTTPS) → web et API ; l'ALB n'accepte **que** CloudFront.
+* **Publication** : CloudFront (CDN, `cdn.leman.thomastp.ch`) → ALB (HTTPS, `origin.leman.thomastp.ch`) → web et API ; l'ALB n'accepte **que** CloudFront. Le sous-domaine `leman.thomastp.ch` est délégué à Route 53 et les certificats sont des certificats publics ACM validés par DNS.
 * **Sites** : siège `192.168.10.0/24` et agence `192.168.20.0/24` reliés par deux VPN AWS (quatre tunnels). Les sites sont des routeurs simulés. Le Direct Connect Gateway est créé et associé au Transit Gateway ; la liaison dédiée est simulée (GRE et BGP) avec bascule vers le VPN.
 
 ## 4. Sécurité
@@ -32,7 +32,7 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | Défense en profondeur | NACL sans état sur le sous-réseau public, ordre des règles maîtrisé |
 | Secrets | clés IPsec dans AWS Secrets Manager (`Projet/SatomCloudNetwork/vpn`), jamais dans un document ni un dépôt |
 | Aucun accès SSH | administration par SSM Session Manager, traçable |
-| Chiffrement | TLS 1.2/1.3 sur le répartiteur, IPsec entre sites (quatre tunnels) |
+| Chiffrement | TLS 1.2/1.3 sur le répartiteur avec un certificat public ACM, HTTPS jusqu'à l'origine de CloudFront, IPsec entre sites (quatre tunnels) |
 | Traçabilité | VPC Flow Logs (acceptés/rejetés), tags `Projet`, `Equipe`, `Environnement` sur toutes les ressources |
 | Origine protégée | accès direct à l'ALB depuis Internet impossible (liste de préfixes CloudFront seulement) |
 
@@ -49,8 +49,8 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | VPN : panne du tunnel 1 | le trafic reprend sur le tunnel 2 après 29 s (siège) et 34 s (agence), selon la détection d'AWS |
 | Direct Connect (liaison simulée) : panne du DX | bascule vers le VPN en environ 8 s, retour automatique au rétablissement |
 | ALB : serveur web arrêté | cible `unhealthy`, réponse 502, retour à `healthy` après redémarrage |
-| Route 53 : serveur principal arrêté | bascule DNS vers le secours en **34 s**, retour au primaire en **23 s** |
-| CloudFront | contenu statique `Hit` (mis en cache), API jamais mise en cache, accès direct à l'ALB bloqué, invalidation efficace |
+| Route 53 : serveur principal arrêté | bascule DNS vers le secours en **70 s**, retour au primaire en **34 s** (mesuré en interrogeant directement un serveur de noms AWS) |
+| CloudFront | contenu statique `Miss` puis `Hit` (mis en cache), API jamais mise en cache, ancienne version servie après modification puis nouvelle version après invalidation, accès direct à l'ALB bloqué (délai dépassé) |
 | CloudFormation | dérive détectée (`DRIFTED`) puis corrigée ; stack supprimée et redéployée à l'identique |
 
 ## 6. Limites et écarts à connaître
@@ -59,7 +59,9 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | Sites et liaison dédiée | les deux sites sont des routeurs strongSwan ; aucune fibre Direct Connect n'est commandée | le VPN et le Direct Connect Gateway sont ceux d'AWS ; la liaison dédiée est simulée en GRE et BGP. Bascule du VPN : 29 à 34 s (délai de détection d'AWS), pas « sans coupure » ; bascule liaison dédiée vers VPN : environ 10 s |
 | Services refusés en début de semaine | Network Firewall, Transit Gateway, VPN, Direct Connect | levés le 17/11/2026 ; nous avons alors refait ces modules pour de vrai |
 | Région | Stockholm (la région Zurich n'est pas activée sur la plateforme) | Pour la production réelle, Zurich/Francfort conviendrait à la localisation des données : il suffit de changer le paramètre de région |
-| Domaine et certificats | domaine fictif | certificats auto-signés / CloudFront par défaut ; en production : domaine réel + ACM validé par DNS |
+| Domaine et certificats | domaine réel (sous-domaine `leman.thomastp.ch` délégué à Route 53), certificats ACM validés par DNS | le domaine est celui de Thomas, pas celui du client ; en production, la même démarche s'applique au domaine du client |
+| Secours du basculement DNS | le secours est une adresse statique de documentation (`203.0.113.50`), pas un second site | à remplacer par un vrai site de secours en production |
+| Nom alternatif CloudFront | posé avec la ligne de commande : la liste de certificats de la console ne proposait pas le certificat | aucun effet sur le résultat obtenu |
 | Quotas du compte partagé | 16 vCPU au départ, 48 après demande | les deux sites et `app-01` ont pu fonctionner ensemble |
 
 ## 7. Coûts
@@ -81,7 +83,7 @@ Estimation au 16/11 : de l'ordre de 2 à 4 USD pour la première journée (calcu
 ## 9. Recommandations
 1. Raccorder le vrai matériel du siège et de l'agence aux Customer Gateways (les routeurs simulés disparaissent).
 2. Commander la liaison Direct Connect (1 Gbit/s, marge ≈ 44 % pour 2 To transférés en 8 h) et créer l'interface virtuelle vers le Direct Connect Gateway déjà associé au Transit Gateway.
-3. Acquérir le domaine, valider les certificats ACM par DNS, déléguer la zone Route 53.
+3. Reprendre la démarche du module 9 à 11 avec le domaine du client : déléguer un sous-domaine à Route 53, valider les certificats ACM par DNS, remplacer l'adresse de secours par un vrai site de secours.
 4. Déployer en région Zurich ou Francfort (localisation des données), avec une deuxième zone de disponibilité pour l'application.
 5. Mettre en place un budget AWS avec alerte à 80 % et un abonnement e-mail SNS pour l'équipe d'exploitation.
 

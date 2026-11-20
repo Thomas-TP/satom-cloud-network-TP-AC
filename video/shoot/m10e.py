@@ -1,8 +1,9 @@
-"""Module 10 : enregistrements de basculement : portefeuilles (alias vers l'ALB, principal, avec la surveillance de l'etat) et un secours statique."""
+"""Module 10 : enregistrements de basculement dans la vraie zone leman.thomastp.ch : portefeuilles (alias vers l'ALB, principal, avec la surveillance de l'etat) et un secours statique."""
 from common import *
+from m10c import zone_pub
 
 async def run(r):
-    await r.goto(r53_url('ListRecordSets/' + zone_id('leman-finance.example.')), wait=6); await r.hold(2.0)
+    await r.goto('https://us-east-1.console.aws.amazon.com/route53/v2/hostedzones#ListRecordSets/' + zone_pub(), wait=6); await r.hold(2.0)
     await r.click(btn('Créer un enregistrement', True)); await r.hold(3.0)
     await r.type(ph('subdomain'), 'portefeuilles'); await r.hold(0.6)
     await r.click(lambda f: f.get_by_text('Alias', exact=True).first); await r.hold(1.5)

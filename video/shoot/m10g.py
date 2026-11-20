@@ -1,18 +1,19 @@
-"""Module 10 : zone publique interrogee sur son serveur de noms AWS (depuis rtr-siege), puis basculement quand nginx s'arrete sur web-01."""
+"""Module 10 : vraie zone publique interrogee sur son serveur de noms AWS (depuis web-01), puis basculement quand nginx s'arrete sur web-01."""
 from common import *
-from common import _ids
+import subprocess
 from m02f import terminal
 from m07q import open_session
+from m10c import zone_pub
 
 async def run(r):
-    ns = _ids()['ns']
+    ns = subprocess.run(['aws', 'route53', 'get-hosted-zone', '--id', zone_pub(), '--query', 'DelegationSet.NameServers[0]', '--output', 'text', '--profile', 'TP-AC'], capture_output=True, text=True).stdout.strip()
     main = r.page
-    a = await open_session(r, 'rtr-siege-TP-AC')
-    await terminal(r, ['sudo -i', 'apt-get install -y -qq dnsutils >/dev/null 2>&1; echo installe'], pause=1.0)
-    r.mark('install-debut', accelere=6); await r.hold(25.0); r.mark('install-fin')
-    await terminal(r, [f'NS={ns}', 'dig +short @$NS portefeuilles.leman-finance.example'], pause=4.0)
+    a = await open_session(r, 'web-01-TP-AC')
+    await terminal(r, ['sudo -i', 'dnf install -y -q bind-utils >/dev/null 2>&1; echo installe'], pause=1.0)
+    r.mark('install-debut', accelere=6); await r.hold(20.0); r.mark('install-fin')
+    await terminal(r, [f'NS={ns}', 'dig +short @$NS portefeuilles.leman.thomastp.ch'], pause=4.0)
     r.mark('zone-publique')
-    await terminal(r, ['while true; do echo "$(date +%T) $(dig +short @$NS portefeuilles.leman-finance.example | tr "\n" " ")"; sleep 3; done'], pause=8.0)
+    await terminal(r, ['while true; do echo "$(date +%T) $(dig +short @$NS portefeuilles.leman.thomastp.ch | tr "\n" " ")"; sleep 3; done'], pause=8.0)
     r.mark('boucle')
     await r.follow(main)
     b = await open_session(r, 'web-01-TP-AC')

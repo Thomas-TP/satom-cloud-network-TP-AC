@@ -122,6 +122,7 @@ S = [
  G('m09b', "Deux groupes cibles : l'un pour le web, en H-T-T-P-S sur le port quatre cent quarante-trois, l'autre pour l'application, en H-T-T-P sur le port huit mille huitante. Chacun a son contrôle de santé, et sa cible."),
  G('m09c', "Le Security Group de l'équilibreur : le port quatre cent quarante-trois ouvert à tous."),
  G('m09d', "L'équilibreur lui-même, sur deux zones, avec son Security Group, et un listener H-T-T-P-S sur le port quatre cent quarante-trois, qui envoie par défaut vers le groupe web avec le certificat importé. La création prend quelques minutes : l'attente est accélérée."),
+ G('m09d2', "Un alias origin point leman point thomastp point ch vers l'équilibreur."),
  G('m09e', "Le groupe de l'application accepte aussi le port huit mille huitante depuis l'équilibreur."),
  G('m09f', "Une règle sur le listener : tout ce qui commence par slash A-P-I part vers le groupe de l'application, avec la priorité dix."),
  G('m09g', "Les deux groupes cibles sont sains. Dans le navigateur, l'A-P-I répond par l'équilibreur. Le certificat étant auto-signé, nous demandons au navigateur de l'accepter."),
@@ -139,13 +140,12 @@ S = [
 
  M(11, 'Module 11 – CloudFront', 'cache, comportements, invalidation'),
  G('m11a', "Module onze, Cloud-Front. D'abord un fichier statique sur web zéro un : slash static slash logo point P-N-G."),
- G('m11b', "Le certificat de l'équilibreur est auto-signé : Cloud-Front ne pourrait pas le valider. Nous ajoutons donc un listener H-T-T-P sur le port huitante, réservé à Cloud-Front."),
- G('m11c', "Avec la même règle : slash A-P-I part vers le groupe de l'application."),
  G('m11d', "La distribution : paiement à l'utilisation, l'équilibreur en origine, en H-T-T-P seulement, sans pare-feu applicatif. Le déploiement prend quelques minutes."),
+ G('m11d2', "Le nom cdn point leman point thomastp point ch et le certificat ACM de Virginie."),
+ G('m11d3', "Un alias cdn vers la distribution CloudFront."),
  G('m11e', "Un comportement pour slash static : cache optimisé, méthodes G-E-T et H-E-A-D."),
  G('m11e2', "Un comportement pour slash A-P-I : jamais de cache, toutes les méthodes, et tous les en-têtes et cookies transmis."),
  G('m11f', "L'équilibreur ne doit plus être joignable que par Cloud-Front : le port quatre cent quarante-trois public est remplacé par le port huitante, depuis la liste de préfixes gérée par A-W-S pour Cloud-Front."),
- G('m11f2', "La liste de contrôle d'accès du sous-réseau public bloque encore le port huitante : Cloud-Front recevrait une erreur cinq cent quatre. Nous ajoutons la règle cent cinq."),
  G('m11g', "Les tests. Le fichier statique : Miss au premier appel, Hit au deuxième. L'A-P-I : jamais de cache. Nous modifions le fichier : l'ancienne version est encore servie depuis le cache. Une invalidation la supprime, et la nouvelle version apparaît. Enfin, l'équilibreur n'est plus joignable en direct."),
 
  M(12, 'Module 12 – Surveillance', 'CloudWatch, alarme et journaux de flux'),

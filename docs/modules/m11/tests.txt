@@ -1,31 +1,13 @@
-=== TP1 : distribution E3HM34P4WV8A3X (domaine d14byb6fexq6px.cloudfront.net) ===
-GET / (comportement par defaut, TTL 0) :
-   HTTP/1.1 200 OK
-   X-Cache: Miss from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
+=== Domaine reel (20/11/2026) : CloudFront (cdn.leman.thomastp.ch, origine HTTPS origin.leman.thomastp.ch) ===
+1er appel /static/logo.png : HTTP/1.1 200 OK X-Cache: Miss from cloudfront
+2e appel  /static/logo.png : HTTP/1.1 200 OK X-Cache: Hit from cloudfront
+contenu : logo v1
+API 1 : HTTP/1.1 200 OK X-Cache: Miss from cloudfront
+API 2 : HTTP/1.1 200 OK X-Cache: Miss from cloudfront
+fichier modifie sur web-01 (v2) ; le cache sert encore : logo v1 (HTTP/1.1 200 OK X-Cache: Hit from cloudfront )
+apres invalidation (Completed) : logo v2 (HTTP/1.1 200 OK X-Cache: Hit from cloudfront )
 
-=== TP2 : comportements ===
-/static/logo.png 1re requete (apres invalidation initiale) :
-   HTTP/1.1 200 OK
-   X-Cache: Miss from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
-/static/logo.png 2e requete :
-   HTTP/1.1 200 OK
-   X-Cache: Hit from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
-/api/health 1re :
-   HTTP/1.1 200 OK
-   X-Cache: Miss from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
-/api/health 2e (jamais servi depuis le cache) :
-   HTTP/1.1 200 OK
-   X-Cache: Miss from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
-
-=== TP3 : verrouillage de l'origine et invalidation ===
-acces direct a l'ALB depuis Internet : http -> HTTP 000 (bloque : timeout) ; https -> HTTP 000 (bloque : timeout)
-via CloudFront : web-01 TP-AC
-origine modifiee en 'v2', sans invalidation, CloudFront sert encore : logo v1
-apres invalidation IE26QTNMXYDW4LNLD4T9LXYDBL : logo v2
-
-Route 53 : alias primaire -> CloudFront ; reponse DNS : 3.171.102.185	3.171.102.186	3.171.102.187	3.171.102.43
+=== ALB verrouille : seul CloudFront (liste de prefixes geree par AWS) peut le joindre ===
+acces direct a l'ALB (origin.leman.thomastp.ch) : HTTP 000 (delai depasse attendu)
+via CloudFront (cdn.leman.thomastp.ch/api/health) : app-01 TP-AC (cfn) /api/health
+ [HTTP 200]

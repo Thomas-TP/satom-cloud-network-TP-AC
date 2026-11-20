@@ -1,13 +1,14 @@
 === TP1 : zone privee prod.leman.internal (resolveur 10.20.0.2) ===
-web-01 : Success	app -> 10.20.1.10 web -> 10.20.0.10 	
-web-01 : Success	serveur DNS utilise : nameserver 10.20.0.2 	
+web-01 : Success	app -> 10.20.1.10 web -> 10.20.0.10
+web-01 : Success	serveur DNS utilise : nameserver 10.20.0.2
 
-=== TP2 : zone publique leman-finance.example (domaine fictif : pas de delegation NS reelle) ===
-Serveurs NS de la zone : ns-905.awsdns-49.net, ns-1255.awsdns-28.org, ns-345.awsdns-43.com, ns-1952.awsdns-52.co.uk
-Interrogation directe de ns-905.awsdns-49.net -> 16.192.43.233, 13.62.193.147
-curl https://portefeuilles.leman-finance.example/ (resolution forcee vers l'ALB) -> web-01 TP-AC
-
-=== TP3 : health check + failover ===
-Health check 85a1e433-8d08-5102-09a7-699b813f0412 : Success   | reponse DNS : 16.192.43.233	13.62.193.147  (primaire = ALB)
-nginx arrete sur web-01 -> apres 34 s : health check = Failure, reponse DNS = 203.0.113.50 (secondaire statique)
-nginx relance -> apres 23 s : health check = Success, reponse DNS = 16.192.43.233	13.62.193.147 (retour au primaire)
+=== Domaine reel (20/11/2026) : basculement Route 53 (primaire ALB -> secours statique 203.0.113.50) ===
+12:26:03 arret de nginx sur web-01 : Success	11:26:05
+etat de la cible tg-web : unhealthy
+12:30:09 reponse DNS avant relance : 203.0.113.50 (secours)
+12:30:10 relance de nginx : Success	11:30:12
+12:30:44 la reponse DNS publique est revenue a l'equilibreur (13.62.60.176) apres 34 s
+web-01 TP-AC (cfn)
+ [HTTP 200]
+12:31:14 2e mesure - arret de nginx : Success	11:31:15
+12:32:22 la reponse DNS publique est devenue le secours (203.0.113.50) apres 70 s

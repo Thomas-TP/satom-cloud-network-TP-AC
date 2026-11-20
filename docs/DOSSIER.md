@@ -4,6 +4,8 @@ Projet réalisé par Thomas Prud'homme et Abderahmane Chaouche pour le client fi
 
 Tout est fait dans la région de Stockholm (`eu-north-1`). Nos ressources portent le suffixe `-TP-AC` et les tags `Projet=SatomCloudNetwork`, `Equipe=TP-AC` et `Environnement=prod` ou `dev`.
 
+Les modules 9, 10 et 11 utilisent un domaine réel : le sous-domaine `leman.thomastp.ch`, délégué à Route 53, avec des certificats publics ACM validés par DNS.
+
 ## Vidéo
 <video controls preload="metadata" width="100%" src="https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/video/satom-cloud-network-TP-AC.mp4"></video>
 
@@ -47,7 +49,7 @@ Le compte AWS est partagé avec toute la classe et l'organisation du formateur i
 - **Région** : le sujet parle de Zurich, mais seule Stockholm est utilisable (Zurich n'est pas activée, Francfort est refusée).
 - **Services bloqués** : Network Firewall, Transit Gateway, VPN et Direct Connect étaient refusés par l'organisation jusqu'au 17/11/2026 ; ils sont maintenant autorisés (voir `01-services-bloques.md`).
 - **Budget** : le sujet annonce 150 CHF par équipe, mais le compte dispose de 100 USD de crédits partagés. Nous avons créé un budget de 100 USD par mois avec une alerte à 80 %.
-- **Domaine et certificats** : nous n'avons pas acheté de domaine. Le certificat du load balancer est donc auto-signé, et la zone publique `leman-finance.example` n'est pas réellement déléguée.
+- **Domaine et certificats** : nous utilisons un domaine réel, `thomastp.ch` (le portfolio de Thomas, qui n'est pas modifié). Le sous-domaine `leman.thomastp.ch` est délégué à Route 53 (quatre enregistrements NS ajoutés chez Cloudflare, qui héberge le DNS de `thomastp.ch`), et les certificats sont des certificats publics ACM validés par DNS.
 - **Adresses IP** : les autres équipes utilisent déjà `10.0.0.0/16`, et le prof nous a dit qu'un /16 était trop grand. Nous avons pris des plages plus petites.
 - **Accès aux machines** : pas de SSH ni de clé, nous passons par AWS Systems Manager (SSM).
 
@@ -1009,43 +1011,54 @@ Le Direct Connect Gateway ne coûte rien ; son association au Transit Gateway aj
 # Module 9 – Load balancer
 
 ## Objectif
-Publier le site derrière un Application Load Balancer en HTTPS sur deux zones, avec un chemin `/api/*` vers l'API, et savoir diagnostiquer une panne.
+Publier le site derrière un Application Load Balancer en HTTPS sur deux zones, avec un vrai certificat ACM et un chemin `/api/*` vers l'API, et savoir diagnostiquer une panne.
 
 ## Ce qu'il faut savoir
-L'ALB travaille au niveau applicatif et a un nœud par zone de disponibilité : il faut donc deux sous-réseaux dans deux zones. Un listener (ici le 443) applique des règles (chemin, nom d'hôte) qui envoient vers des groupes cibles. Le contrôle de santé retire tout seul une cible qui ne répond plus ; sans cible saine, le client reçoit une erreur 502 ou 503. Les serveurs ne doivent accepter que l'ALB, pas Internet. L'ALB coûte environ 0,03 USD de l'heure.
+L'ALB travaille au niveau applicatif et a un nœud par zone de disponibilité : il faut donc deux sous-réseaux dans deux zones. Un listener (ici le 443) applique des règles (chemin, nom d'hôte) qui envoient vers des groupes cibles. Le contrôle de santé retire tout seul une cible qui ne répond plus ; sans cible saine, le client reçoit une erreur 502 ou 503. Un certificat ACM public est gratuit et se renouvelle seul, mais il faut prouver qu'on contrôle le domaine : la validation DNS consiste à créer un enregistrement CNAME dans la zone ; avec Route 53, la console le crée en un clic. Le certificat doit couvrir le nom que les visiteurs tapent. Les serveurs ne doivent accepter que l'ALB, pas Internet. L'ALB coûte environ 0,03 USD de l'heure.
 
 ## Ce que nous avons fait
 - Un deuxième sous-réseau public `10.20.0.64/26` dans `eu-north-1b`.
 - Deux groupes cibles : `tg-web` (HTTP 80, santé `/health`, cible `web-01`) et `tg-app` (HTTP 8080, santé `/api/health`, cible `app-01`).
 - L'ALB `alb-prod-leman-TP-AC` sur les deux zones, avec son propre Security Group `sg-alb` (443 ouvert).
-- Un listener HTTPS 443 avec un certificat auto-signé importé dans ACM, qui envoie par défaut vers `tg-web` ; une règle de priorité 10 envoie `/api/*` vers `tg-app`.
+- Un vrai certificat public ACM, demandé dans la console pour `leman.thomastp.ch` et `*.leman.thomastp.ch` (sous-domaine de `thomastp.ch`, déjà délégué à la zone Route 53 décrite au module 10), avec la validation DNS : l'enregistrement CNAME est créé en un clic dans la zone Route 53, et le certificat est émis après quelques minutes. En parallèle, un certificat ACM identique en `us-east-1` (Virginie), car CloudFront n'accepte que ceux de cette région (module 11).
+- Un listener HTTPS 443 avec ce certificat, qui envoie par défaut vers `tg-web` ; une règle de priorité 10 envoie `/api/*` vers `tg-app`.
+- Un alias Route 53 `origin.leman.thomastp.ch` vers l'ALB : le nom DNS d'un ALB (`….elb.amazonaws.com`) ne figure pas sur le certificat, il faut donc un nom de notre domaine pour que le certificat corresponde.
+- Les tests se font avec le vrai nom, sans désactiver la vérification du certificat et sans avertissement du navigateur.
 - Trois pannes : nginx arrêté sur `web-01`, port 443 fermé dans `sg-alb`, puis tout remis.
 
-Script : `scripts/m09-alb.ps1`.
+Le scénario a été exécuté dans la console AWS, puis filmé. Le script `scripts/m09-alb.ps1` est la première version en AWS CLI (sans domaine réel) : il n'a pas été adapté au domaine réel.
 
 ![Module 9](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m09-alb.png)
 
 | Élément | Valeur |
 |---|---|
-| Listener | HTTPS 443, politique TLS 1.3/1.2, certificat auto-signé |
+| Listener | HTTPS 443, politique TLS 1.3/1.2, certificat ACM public `leman.thomastp.ch` + `*.leman.thomastp.ch` |
+| Nom de l'ALB | `origin.leman.thomastp.ch` (alias Route 53) |
 | Règle | priorité 10, chemin `/api/*` vers `tg-app` |
 | Santé | 10 s d'intervalle, 2 échecs pour retirer, 2 réussites pour remettre |
 | sg-web / sg-app | acceptent le 80 / le 8080 uniquement depuis `sg-alb` |
 
 ## Si ça ne marche pas : quatre vérifications
-1. Le listener : bon port et bon certificat ?
+1. Le listener : bon port et bon certificat ? Le certificat est-il émis (validation DNS terminée) et couvre-t-il le nom utilisé ?
 2. La règle `/api/*` passe-t-elle avant la règle par défaut ?
 3. L'état de la cible : `describe-target-health` donne `healthy` ou `unhealthy` avec la raison.
 4. Le Security Group de la cible autorise-t-il l'ALB ?
 
 ## Résultats des tests
 ```
-=== TP1/TP2 ===
-tg-web : healthy   tg-app : healthy
-curl https://ALB/            -> web-01 TP-AC  [HTTP 200]
-curl https://ALB/api/health  -> app-01 TP-AC /api/health  [HTTP 200]
+=== Domaine reel (20/11/2026) : tests sans -k, certificat verifie ===
+--- curl.exe sans -k (certificat verifie) :
+https://portefeuilles.leman.thomastp.ch/ -> web-01 TP-AC (cfn)
+ [HTTP 200, verif certificat : 0]
+https://portefeuilles.leman.thomastp.ch/api/health -> app-01 TP-AC (cfn) /api/health
+ [HTTP 200, verif certificat : 0]
+--- certificat :
+subject=CN=leman.thomastp.ch
+issuer=C=US, O=Amazon, CN=Amazon RSA 2048 S21
+notBefore=Nov 20 07:47:39 2026 GMT
+notAfter=Jun  6 08:47:39 2027 GMT
 
-=== TP3 : pannes ===
+=== Pannes (premiere execution, avant le passage au domaine reel) ===
 nginx arrete sur web-01 : tg-web = unhealthy ; curl https://ALB/ -> <html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</h1></center> </body> </html>  [HTTP 502]
 nginx relance : tg-web = healthy
 curl https://ALB/ -> web-01 TP-AC  [HTTP 200]
@@ -1054,10 +1067,10 @@ curl https://ALB/ -> web-01 TP-AC  [HTTP 200]
 ```
 
 ## Nettoyage
-Nous gardons l'ALB et les groupes cibles pour les modules suivants, et nous supprimerons l'ALB à la fin du cours.
+Nous gardons l'ALB et les groupes cibles pour les modules suivants. L'ALB, les certificats ACM et l'alias `origin` seront supprimés avec le reste de ce qui a été créé pour le tournage (voir `docs/NETTOYAGE.md`).
 
 ## Ce qui diffère du sujet
-Nous n'avons pas de domaine, donc le certificat est auto-signé (nos tests utilisent `curl -k`). Le sujet réutilise `sg-web` pour l'ALB ; nous avons préféré un groupe séparé pour que les serveurs n'acceptent que l'ALB.
+Pour le certificat, le sujet est respecté avec un domaine réel (voir l'écart n°9 de `docs/02-ecarts-au-sujet.md`). Le sujet réutilise `sg-web` pour l'ALB ; nous avons préféré un groupe séparé pour que les serveurs n'acceptent que l'ALB.
 
 ## Captures
 
@@ -1083,17 +1096,20 @@ Nous n'avons pas de domaine, donc le certificat est auto-signé (nos tests utili
 # Module 10 – Route 53
 
 ## Objectif
-Donner des noms à nos machines avec une zone privée, publier le site avec une zone publique, et prévoir une bascule automatique si le site tombe.
+Donner des noms à nos machines avec une zone privée, publier le site avec une vraie zone publique déléguée depuis un domaine réel, et prévoir une bascule automatique si le site tombe.
 
 ## Ce qu'il faut savoir
-Une zone privée n'est visible que depuis les VPC auxquels on l'associe (le résolveur du VPC est à l'adresse base + 2, ici `10.20.0.2`). Une zone publique donne quatre serveurs de noms qu'il faut déclarer chez le bureau d'enregistrement du domaine. Un enregistrement « alias » pointe vers une ressource AWS. Pour le failover, on relie l'enregistrement principal à un contrôle de santé et on prévoit un enregistrement de secours.
+Une zone privée n'est visible que depuis les VPC auxquels on l'associe (le résolveur du VPC est à l'adresse base + 2, ici `10.20.0.2`). Une zone publique donne quatre serveurs de noms qu'il faut déclarer chez celui qui héberge le DNS du domaine parent : c'est la délégation. Un enregistrement « alias » pointe vers une ressource AWS. Pour le failover, on relie l'enregistrement principal à une surveillance de l'état (health check) et on prévoit un enregistrement de secours.
 
 ## Ce que nous avons fait
 - La zone privée `prod.leman.internal` associée au VPC de prod, avec `web.prod.leman.internal` (`10.20.0.10`) et `app.prod.leman.internal` (`10.20.1.10`).
-- La zone publique `leman-finance.example`, et un alias `portefeuilles.leman-finance.example` vers l'ALB.
-- Un contrôle de santé HTTPS sur `/health` (toutes les 10 s, 2 échecs), l'alias principal qui en dépend, et un enregistrement de secours vers `203.0.113.50`.
+- La zone publique `leman.thomastp.ch`, sous-domaine de notre domaine réel `thomastp.ch` (le portfolio de Thomas, qui n'est pas modifié). Le DNS de `thomastp.ch` est hébergé chez Cloudflare : nous y avons ajouté uniquement les quatre enregistrements NS du sous-domaine `leman`, qui délèguent `leman.thomastp.ch` à Route 53.
+- L'alias `origin.leman.thomastp.ch` vers l'ALB (créé au module 9), sur lequel porte la surveillance.
+- Une surveillance de l'état HTTPS (port 443) sur `origin.leman.thomastp.ch`, toutes les 10 s, avec un seuil de 2 échecs.
+- Deux enregistrements de basculement pour `portefeuilles.leman.thomastp.ch` : le principal est un alias vers l'ALB, lié à la surveillance ; le secondaire est un enregistrement A vers `203.0.113.50`, une adresse réservée à la documentation (voir l'écart n°9).
+- Le test depuis `web-01` : un `dig` qui interroge directement un serveur de noms AWS de la zone, pendant qu'on arrête puis relance nginx.
 
-Scripts : `scripts/m10-route53.ps1` et `scripts/m10-tests.ps1`.
+Le scénario a été exécuté dans la console AWS, puis filmé. Les scripts `scripts/m10-route53.ps1` et `scripts/m10-tests.ps1` sont la première version en AWS CLI (sans domaine réel) : ils n'ont pas été adaptés au domaine réel. Les mesures complètes du domaine réel (modules 9 à 11) sont dans `docs/modules/m10/tests-domaine-reel.txt`.
 
 ![Module 10](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m10-route53.png)
 
@@ -1101,37 +1117,40 @@ Scripts : `scripts/m10-route53.ps1` et `scripts/m10-tests.ps1`.
 |---|---|---|
 | privée | `web.prod.leman.internal` | `10.20.0.10` |
 | privée | `app.prod.leman.internal` | `10.20.1.10` |
-| publique | `portefeuilles` (principal) | alias ALB, plus tard CloudFront, avec contrôle de santé |
-| publique | `portefeuilles` (secours) | `203.0.113.50` |
+| publique | `origin.leman.thomastp.ch` | alias vers l'ALB |
+| publique | `portefeuilles.leman.thomastp.ch` (principal) | alias vers l'ALB, avec la surveillance de l'état |
+| publique | `portefeuilles.leman.thomastp.ch` (secours) | `203.0.113.50` (adresse de documentation) |
+| publique | `cdn.leman.thomastp.ch` | alias vers CloudFront (module 11) |
 
 ## Si ça ne marche pas : quatre vérifications
-1. La délégation : les serveurs de noms du bureau d'enregistrement sont-ils ceux de la zone ?
+1. La délégation : les quatre enregistrements NS chez Cloudflare sont-ils ceux de la zone Route 53 ?
 2. L'enregistrement : nom, type, politique de routage, alias.
 3. L'état du contrôle de santé (`get-health-check-status`).
-4. La cible : les groupes cibles de l'ALB sont-ils sains ?
+4. La cible : les groupes cibles de l'ALB sont-ils sains, et le port 443 de `origin.leman.thomastp.ch` répond-il ?
 
 ## Résultats des tests
 ```
 === TP1 : zone privee prod.leman.internal (resolveur 10.20.0.2) ===
-web-01 : Success	app -> 10.20.1.10 web -> 10.20.0.10 	
-web-01 : Success	serveur DNS utilise : nameserver 10.20.0.2 	
+web-01 : Success	app -> 10.20.1.10 web -> 10.20.0.10
+web-01 : Success	serveur DNS utilise : nameserver 10.20.0.2
 
-=== TP2 : zone publique leman-finance.example (domaine fictif : pas de delegation NS reelle) ===
-Serveurs NS de la zone : ns-905.awsdns-49.net, ns-1255.awsdns-28.org, ns-345.awsdns-43.com, ns-1952.awsdns-52.co.uk
-Interrogation directe de ns-905.awsdns-49.net -> 16.192.43.233, 13.62.193.147
-curl https://portefeuilles.leman-finance.example/ (resolution forcee vers l'ALB) -> web-01 TP-AC
-
-=== TP3 : health check + failover ===
-Health check 85a1e433-8d08-5102-09a7-699b813f0412 : Success   | reponse DNS : 16.192.43.233	13.62.193.147  (primaire = ALB)
-nginx arrete sur web-01 -> apres 34 s : health check = Failure, reponse DNS = 203.0.113.50 (secondaire statique)
-nginx relance -> apres 23 s : health check = Success, reponse DNS = 16.192.43.233	13.62.193.147 (retour au primaire)
+=== Domaine reel (20/11/2026) : basculement Route 53 (primaire ALB -> secours statique 203.0.113.50) ===
+12:26:03 arret de nginx sur web-01 : Success	11:26:05
+etat de la cible tg-web : unhealthy
+12:30:09 reponse DNS avant relance : 203.0.113.50 (secours)
+12:30:10 relance de nginx : Success	11:30:12
+12:30:44 la reponse DNS publique est revenue a l'equilibreur (13.62.60.176) apres 34 s
+web-01 TP-AC (cfn)
+ [HTTP 200]
+12:31:14 2e mesure - arret de nginx : Success	11:31:15
+12:32:22 la reponse DNS publique est devenue le secours (203.0.113.50) apres 70 s
 ```
 
 ## Nettoyage
-Nous gardons les zones et les enregistrements pour les modules 11 et 12. Le contrôle de santé (environ 0,50 USD par mois) sera supprimé à la fin du cours.
+Nous gardons les zones et les enregistrements pour les modules 11 et 12. La surveillance de l'état (environ 0,50 USD par mois) et la zone publique seront supprimées avec le reste de ce qui a été créé pour le tournage (voir `docs/NETTOYAGE.md`) ; les quatre enregistrements NS chez Cloudflare devront alors être retirés aussi.
 
 ## Ce qui diffère du sujet
-Nous n'avons pas acheté de domaine, donc la délégation réelle est impossible. Nous interrogeons directement un serveur de noms de la zone (`Resolve-DnsName -Server ns-…`) et nous utilisons `route53 test-dns-answer` pour voir la réponse que Route 53 donnerait. Le contrôle de santé vise le nom DNS de l'ALB (puis de CloudFront), car notre nom public n'est pas résolvable.
+La délégation est réelle : le sujet est respecté avec un sous-domaine d'un domaine existant (écart n°9). Deux points restent différents : le secours du basculement est une adresse statique de documentation (`203.0.113.50`), qui ne mène à aucun serveur réel, car nous n'avons pas de second site de secours ; et nos mesures interrogent directement un serveur de noms AWS depuis `web-01`, ce qui évite les caches des résolveurs et donne le temps réel de la bascule.
 
 ## Captures
 
@@ -1157,73 +1176,56 @@ Nous n'avons pas acheté de domaine, donc la délégation réelle est impossible
 # Module 11 – CloudFront
 
 ## Objectif
-Mettre un CDN devant l'ALB : garder en cache le contenu statique, ne jamais mettre l'API en cache, et empêcher l'accès direct à l'ALB.
+Mettre un CDN devant l'ALB : garder en cache le contenu statique, ne jamais mettre l'API en cache, servir le tout sous un nom de notre domaine avec un vrai certificat, et empêcher l'accès direct à l'ALB.
 
 ## Ce qu'il faut savoir
-CloudFront sert le contenu depuis un point de présence proche du visiteur. Les en-têtes de la réponse le montrent : `x-amz-cf-pop` donne le point de présence, `x-cache` indique `Hit` ou `Miss`. Chaque chemin (`/static/*`, `/api/*`, le reste) a sa politique de cache. Pour changer un fichier avant la fin du délai de cache, on lance une invalidation. Pour fermer l'ALB au reste du monde, son Security Group n'accepte que la liste de préfixes gérée par AWS pour CloudFront.
+CloudFront sert le contenu depuis un point de présence proche du visiteur. Les en-têtes de la réponse le montrent : `x-amz-cf-pop` donne le point de présence, `x-cache` indique `Hit` ou `Miss`. Chaque chemin (`/static/*`, `/api/*`, le reste) a sa politique de cache. Pour changer un fichier avant la fin du délai de cache, on lance une invalidation. Pour utiliser un nom de domaine propre (nom alternatif), la distribution a besoin d'un certificat ACM émis en `us-east-1`. Pour fermer l'ALB au reste du monde, son Security Group n'accepte que la liste de préfixes gérée par AWS pour CloudFront.
 
 ## Ce que nous avons fait
-- La distribution `d-leman-portail-TP-AC`, avec l'ALB comme origine.
-- Trois comportements : le défaut (aucun cache, cookies transmis), `/static/*` (cache de 24 h, sans cookies, compression) et `/api/*` (aucun cache, tous les en-têtes et cookies, méthodes GET à DELETE).
+- Une distribution CloudFront en paiement à l'utilisation, sans WAF, avec comme origine `origin.leman.thomastp.ch` (l'ALB), en HTTPS seulement (le réglage recommandé de la console) : le certificat de l'ALB est valide pour ce nom, CloudFront l'accepte.
+- Le nom alternatif `cdn.leman.thomastp.ch`, avec le certificat ACM de `us-east-1` (module 9). Nous avons posé ce réglage avec la ligne de commande (`aws cloudfront update-distribution`) parce que la liste de certificats de la console ne proposait pas le certificat ; le résultat se vérifie dans les paramètres de la distribution.
+- Un alias Route 53 `cdn.leman.thomastp.ch` vers la distribution.
+- Deux comportements en plus de celui par défaut : `/static/*` avec la politique de cache `CachingOptimized`, et `/api/*` avec `CachingDisabled` et la politique de requête à l'origine `AllViewer` (tous les en-têtes, cookies et paramètres sont transmis).
 - Un fichier `/static/logo.png` sur `web-01`, qu'on modifie ensuite pour tester l'invalidation.
-- `sg-alb` limité à la liste de préfixes CloudFront, et l'alias Route 53 déplacé vers CloudFront.
+- `sg-alb` : la règle HTTPS ouverte à tous est remplacée par le 443 depuis la liste de préfixes gérée `com.amazonaws.global.cloudfront.origin-facing`. Il n'y a plus de listener sur le port 80 ni de règle NACL supplémentaire : l'origine est en HTTPS.
 
-Script : `scripts/m11-cloudfront.ps1` (tests : `m11-tests.ps1`).
+Le scénario a été exécuté dans la console AWS (sauf le réglage du nom alternatif, voir plus haut), puis filmé. Les scripts `scripts/m11-cloudfront.ps1` et `scripts/m11-tests.ps1` sont la première version en AWS CLI (sans domaine réel, origine en HTTP) : ils n'ont pas été adaptés. Les mesures complètes du domaine réel sont dans `docs/modules/m10/tests-domaine-reel.txt`.
 
 ![Module 11](https://raw.githubusercontent.com/Thomas-TP/satom-cloud-network-TP-AC/main/docs/images/m11-cloudfront.png)
 
-| Comportement | Chemin | Cache | Méthodes |
+| Comportement | Chemin | Politique de cache | Politique de requête à l'origine |
 |---|---|---|---|
-| défaut | `*` | aucun | GET à DELETE |
-| statique | `/static/*` | 86 400 s | GET, HEAD |
-| API | `/api/*` | aucun | GET à DELETE |
+| statique | `/static/*` | `CachingOptimized` | celle par défaut |
+| API | `/api/*` | `CachingDisabled` | `AllViewer` |
 
 ## Si ça ne marche pas : quatre vérifications
 1. Une erreur 403 : le Security Group de l'ALB laisse-t-il passer CloudFront ?
-2. Une erreur 502 : l'origine répond-elle (Security Group, protocole, certificat) ?
+2. Une erreur 502 : l'origine répond-elle (Security Group, protocole, certificat valide pour `origin.leman.thomastp.ch`) ?
 3. L'en-tête `x-cache` : `Hit` attendu sur le statique, jamais sur l'API.
-4. Le certificat : il doit couvrir le nom utilisé.
+4. Le certificat : il doit couvrir le nom utilisé (`cdn.leman.thomastp.ch`) et être en `us-east-1`.
 
 ## Résultats des tests
 ```
-=== TP1 : distribution E3HM34P4WV8A3X (domaine d14byb6fexq6px.cloudfront.net) ===
-GET / (comportement par defaut, TTL 0) :
-   HTTP/1.1 200 OK
-   X-Cache: Miss from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
+=== Domaine reel (20/11/2026) : CloudFront (cdn.leman.thomastp.ch, origine HTTPS origin.leman.thomastp.ch) ===
+1er appel /static/logo.png : HTTP/1.1 200 OK X-Cache: Miss from cloudfront
+2e appel  /static/logo.png : HTTP/1.1 200 OK X-Cache: Hit from cloudfront
+contenu : logo v1
+API 1 : HTTP/1.1 200 OK X-Cache: Miss from cloudfront
+API 2 : HTTP/1.1 200 OK X-Cache: Miss from cloudfront
+fichier modifie sur web-01 (v2) ; le cache sert encore : logo v1 (HTTP/1.1 200 OK X-Cache: Hit from cloudfront )
+apres invalidation (Completed) : logo v2 (HTTP/1.1 200 OK X-Cache: Hit from cloudfront )
 
-=== TP2 : comportements ===
-/static/logo.png 1re requete (apres invalidation initiale) :
-   HTTP/1.1 200 OK
-   X-Cache: Miss from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
-/static/logo.png 2e requete :
-   HTTP/1.1 200 OK
-   X-Cache: Hit from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
-/api/health 1re :
-   HTTP/1.1 200 OK
-   X-Cache: Miss from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
-/api/health 2e (jamais servi depuis le cache) :
-   HTTP/1.1 200 OK
-   X-Cache: Miss from cloudfront
-   X-Amz-Cf-Pop: ZRH52-P1
-
-=== TP3 : verrouillage de l'origine et invalidation ===
-acces direct a l'ALB depuis Internet : http -> HTTP 000 (bloque : timeout) ; https -> HTTP 000 (bloque : timeout)
-via CloudFront : web-01 TP-AC
-origine modifiee en 'v2', sans invalidation, CloudFront sert encore : logo v1
-apres invalidation IE26QTNMXYDW4LNLD4T9LXYDBL : logo v2
-
-Route 53 : alias primaire -> CloudFront ; reponse DNS : 3.171.102.185	3.171.102.186	3.171.102.187	3.171.102.43
+=== ALB verrouille : seul CloudFront (liste de prefixes geree par AWS) peut le joindre ===
+acces direct a l'ALB (origin.leman.thomastp.ch) : HTTP 000 (delai depasse attendu)
+via CloudFront (cdn.leman.thomastp.ch/api/health) : app-01 TP-AC (cfn) /api/health
+ [HTTP 200]
 ```
 
 ## Nettoyage
-Nous gardons la distribution pour le module 12 et la désactiverons puis supprimerons à la fin du cours.
+Nous gardons la distribution pour le module 12. Elle sera désactivée puis supprimée avec le reste de ce qui a été créé pour le tournage (voir `docs/NETTOYAGE.md`).
 
 ## Ce qui diffère du sujet
-Sans domaine, nous ne pouvons pas avoir de certificat ACM validé : les visiteurs voient le certificat `*.cloudfront.net`. Pour la même raison, CloudFront joint l'ALB en HTTP (port 80) : il refuserait le certificat auto-signé de l'ALB. L'ALB a donc aussi un listener 80, fermé à Internet. Le préfixe CloudFront compte pour environ 55 règles dans un Security Group (limite 60), nous n'avons pu l'utiliser qu'une fois (port 80).
+Le sujet est respecté avec un domaine réel (écart n°9). Seul le nom alternatif a été réglé avec la ligne de commande, parce que la console ne proposait pas le certificat dans sa liste. Le préfixe CloudFront compte pour environ 55 règles dans un Security Group (limite 60) : nous ne pouvons l'utiliser qu'une fois, pour le port 443.
 
 ## Captures
 
@@ -1492,7 +1494,7 @@ Le sujet a été rédigé avec l'aide d'une IA : certaines consignes ne peuvent 
 | 6 | 7 | Déclarer les routes statiques sur la connexion VPN | Pour un VPN rattaché à un Transit Gateway, AWS refuse : les routes se déclarent dans la table de routage du Transit Gateway. | Routes dans `tgw-rt-prod-TP-AC`. |
 | 7 | 4 | Ne mettre que la route de retour `10.20.1.0/26` dans la table publique | Cela casse `web-01` vers `app-01` : la requête passe par le pare-feu, pas la réponse, et le pare-feu perd l'état. Les Security Groups « depuis un groupe » ne correspondent plus au trafic qui sort d'un endpoint de pare-feu. | Routes symétriques, et règles de `sg-app` par plage d'adresses (module 4). |
 | 8 | 4 | Le flux autorisé doit apparaître dans les journaux | Un journal d'alertes ne contient que ce qui est bloqué. | Second journal, de type flux (`/leman/nfw-flow-TP-AC`). |
-| 9 | 10, 11 | Zone publique et certificat ACM validé par DNS pour `leman-finance.example` | Nous n'avons pas de domaine (et n'en achetons pas) : la délégation DNS réelle et la validation ACM sont impossibles. | La zone existe, et nous interrogeons directement un de ses serveurs de noms ainsi que `route53 test-dns-answer`. Les visiteurs voient le certificat `*.cloudfront.net` ; CloudFront joint l'ALB en HTTP (il refuserait le certificat auto-signé de l'ALB). |
+| 9 | 10, 11 | Zone publique et certificat ACM validé par DNS pour le domaine du client | Le nom d'exemple du sujet n'est pas un domaine que nous possédons : on ne peut ni le déléguer, ni y valider un certificat. Au début, nous n'avions pas de domaine. | Le sujet est maintenant respecté avec un domaine réel : le sous-domaine `leman.thomastp.ch` (domaine `thomastp.ch`, jamais modifié) est délégué à une zone publique Route 53 par quatre enregistrements NS ajoutés chez Cloudflare. Certificat public ACM validé par DNS (`leman.thomastp.ch` et `*.leman.thomastp.ch`, plus un en `us-east-1` pour CloudFront), listener HTTPS de l'ALB, nom alternatif `cdn.leman.thomastp.ch` sur CloudFront, tests avec la vérification du certificat activée. Écarts restants : le secours du basculement Route 53 est une adresse statique de documentation (`203.0.113.50`), pas un vrai site de secours ; le nom alternatif de CloudFront a été posé avec la ligne de commande (`aws cloudfront update-distribution`), parce que la liste de certificats de la console ne proposait pas le certificat. |
 | 10 | 0 | Un module « cadrage » sans client joignable | Nous ne pouvons pas poser nos questions au client. | Questions et budget rédigés par nos soins, à relire (module 0). |
 | 11 | 1 | Région Zurich | `eu-central-2` n'est pas activée (`AuthFailure`), Francfort est refusée par l'organisation. | Stockholm (`eu-north-1`), acceptée avec le formateur. |
 | 12 | 8 | Console Direct Connect | La console affiche une erreur `DescribeLocations` : elle appelle un point d'accès global situé dans une région interdite. | Le service est utilisé par la ligne de commande. |
@@ -1501,5 +1503,5 @@ Le sujet a été rédigé avec l'aide d'une IA : certaines consignes ne peuvent 
 ## Ce qui reste simulé malgré tout
 - Les deux sites (siège, agence) sont des instances EC2 avec strongSwan, pas du matériel réel.
 - La « fibre » Direct Connect est un tunnel GRE sur Internet : il n'y a pas d'interface virtuelle physique.
-- Il n'y a pas de domaine réel : certificat auto-signé.
+- Le basculement Route 53 mène à une adresse de documentation (`203.0.113.50`), pas à un second site réel.
 - GNS3 n'est pas utilisé : les routeurs sont des instances EC2 avec FRRouting.
