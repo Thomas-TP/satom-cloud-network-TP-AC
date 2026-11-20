@@ -30,7 +30,7 @@
 ## Gros fichiers volontairement **laissés sur le PC de Thomas** (hors dépôt, inutiles pour le TP final)
 | Quoi | Où (PC de Thomas) | Pourquoi on ne les transmet pas |
 |---|---|---|
-| Enregistrements bruts de la console (189 vidéos `.mp4` et leurs repères `.marks.json`) | `C:\Perso\AWS\video\raw\` | plusieurs Go ; ne servent qu'à refaire la vidéo ou des captures |
+| Enregistrements bruts de la console (189 vidéos `.mp4`, leurs repères `.marks.json` et des captures d'échec non masquées : 382 fichiers, 0,6 Go) | `C:\Perso\AWS\video\raw\` | ne servent qu'à refaire la vidéo ou des captures ; les captures d'échec montrent le bandeau du compte |
 | Vidéos de travail et montages intermédiaires | `video\work`, `video\work2`, `video\work3`, `video\clips`, `video\montage\work` | régénérables |
 | Rendus de la vidéo (la v2 finale fait 931 Mo ; les versions précédentes sont aussi là) | `C:\Perso\AWS\video\*.mp4` | la vidéo finale est sur YouTube (`https://youtu.be/emZqnBNtOjM`) |
 | Voix clonées, modèles et environnement Python de synthèse vocale (Qwen3-TTS) | `C:\Perso\voice\` | spécifique à la vidéo |
