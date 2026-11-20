@@ -7,6 +7,7 @@ Région : **eu-north-1 (Stockholm)** – tags `Projet=SatomCloudNetwork`, `Equip
 | Livrable | Fichier |
 |---|---|
 | Dossier complet (modules 0 à 13, cours, schémas, tableaux, procédures, preuves) | [`docs/DOSSIER.md`](docs/DOSSIER.md) (un fichier par module dans `docs/modules/`) |
+| **Dossier sur HackMD** (4 notes à cause de la limite de 100 000 caractères) | [Sommaire et vidéo](https://hackmd.io/@ThomasTP/HyT1DyC0Mx) · [Partie 1, modules 0 à 4](https://hackmd.io/@ThomasTP/ryxxwJCCzx) · [Partie 2, modules 5 à 8](https://hackmd.io/@ThomasTP/rkMePJRAfl) · [Partie 3, modules 9 à 13](https://hackmd.io/@ThomasTP/SJ4gDy00fg) |
 | Schéma réseau final (WAN) | [`docs/images/global.png`](docs/images/global.png) |
 | Plan d'adressage | [`docs/00-plan-adressage.md`](docs/00-plan-adressage.md) |
 | Dossier client (10 pages max) | [`docs/CLIENT.md`](docs/CLIENT.md) |
