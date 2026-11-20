@@ -8,6 +8,8 @@ Ce fichier est lu en premier par Claude Code (via `CLAUDE.md`) et par tout autre
 - **Phase 2, à faire : le « TP final DevSecOps »** : reconstruire tout le portail en infrastructure as code depuis GitHub, avec une pipeline de qualité et de sécurité, des tests de performance, du monitoring et une preuve de reprise. **Abderahmane en est responsable.** Sujet : https://hackmd.io/@Formateur/rJOiAHwCMg (version 2). Rendu prévu vendredi **27/11/2026** (à confirmer : le formateur a décalé la date).
 - Dépôt public : https://github.com/Thomas-TP/satom-cloud-network-TP-AC (dossier local de Thomas : `C:\Perso\AWS`).
 
+> **Gagne du temps :** des modèles **CloudFormation existent déjà** (`cfn/`, copiés dans `tp-final/satom-leman-portail/templates/_depart/`) : réseau, ALB, pare-feu, Transit Gateway, VPN, Direct Connect. Ils ont été déployés et testés. Pars d'eux (voir `docs/passation/README.md`, section « Gagner du temps », pour les limites et ce qui manque).
+
 ## 2. Où lire quoi
 | Besoin | Fichier |
 |---|---|
