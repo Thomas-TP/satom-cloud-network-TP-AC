@@ -32,10 +32,18 @@ export const Title: React.FC<{dur: number}> = ({dur}) => {
   );
 };
 
-export const Diagram: React.FC<{img: string; dur: number; label: string; sub: string}> = ({img, dur, label, sub}) => {
+export const Diagram: React.FC<{img: string; dur: number; label: string; sub: string; focus?: number[][]}> = ({img, dur, label, sub, focus}) => {
   const f = useCurrentFrame(); const {fps} = useVideoConfig();
   const p = spring({frame: f - 4, fps, config: {damping: 22, stiffness: 80}});
-  const k = interpolate(f, [0, dur], [1.0, 1.045], {easing: Easing.inOut(Easing.quad)});
+  let k = interpolate(f, [0, dur], [1.0, 1.045], {easing: Easing.inOut(Easing.quad)});
+  let tx = 0, ty = 0;
+  if (focus && focus.length > 1) {
+    const kf = focus.filter((q, i) => i === 0 || q[0] > focus[i - 1][0] + 0.05);       // temps strictement croissants
+    const t = f / fps; const ts = kf.map((q) => q[0]);
+    const ez = {easing: Easing.inOut(Easing.cubic), extrapolateLeft: 'clamp' as const, extrapolateRight: 'clamp' as const};
+    const cx = interpolate(t, ts, kf.map((q) => q[1]), ez), cy = interpolate(t, ts, kf.map((q) => q[2]), ez); k = interpolate(t, ts, kf.map((q) => q[3]), ez);
+    tx = k * (0.5 - cx) * 1440; ty = k * (0.5 - cy) * 810;
+  }
   const out = interpolate(f, [dur - 10, dur], [1, 0], {extrapolateLeft: 'clamp'});
   const t2 = spring({frame: f - 18, fps, config: {damping: 20, stiffness: 90}});
   return (
@@ -46,7 +54,7 @@ export const Diagram: React.FC<{img: string; dur: number; label: string; sub: st
           <div style={{color: C.text, fontSize: 58, fontWeight: 800, letterSpacing: -1.5, marginTop: 6}}>{sub}</div>
         </div>
         <div style={{position: 'absolute', left: 240, top: 215, width: 1440, height: 810, borderRadius: 28, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,0.55)', opacity: p, transform: `scale(${0.94 + 0.06 * p})`, background: '#fff'}}>
-          <Img src={img} style={{width: 1440, height: 810, transform: `scale(${k})`, transformOrigin: '50% 50%'}} />
+          <Img src={img} style={{width: 1440, height: 810, transform: `translate(${tx}px, ${ty}px) scale(${k})`, transformOrigin: '50% 50%'}} />
         </div>
       </div>
     </Bg>

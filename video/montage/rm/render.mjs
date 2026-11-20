@@ -25,7 +25,7 @@ if (mode === 'stills') {
   await renderMedia({
     ...common, codec: 'h264', outputLocation: out, concurrency: conc,
     frameRange: mode === 'clip' ? [Number(a), Number(b)] : null,
-    crf: 14, pixelFormat: 'yuv420p', x264Preset: 'medium', videoImageFormat: 'jpeg', jpegQuality: 96, muted: true, overwrite: true,
+    crf: 14, pixelFormat: 'yuv420p', x264Preset: 'medium', videoImageFormat: 'jpeg', jpegQuality: 96, muted: process.env.MUET === '1', audioCodec: 'aac', audioBitrate: '256k', overwrite: true,
     onProgress: (p) => { if (p.renderedFrames - last >= 300) { last = p.renderedFrames; console.log(`frames ${p.renderedFrames}/${p.progress ? Math.round(p.renderedFrames / p.progress) : '?'}  ${((Date.now() - t0) / 1000).toFixed(0)}s`); } },
   });
   console.log('done', out, ((Date.now() - t0) / 1000).toFixed(0) + 's');

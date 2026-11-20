@@ -1,0 +1,629 @@
+# Texte de voix off - montage v3 (Thomas = T, Abderahmane = A)
+# Format : "== scene" ouvre une scene (title, intro, chapN, end, ou identifiant d'une scene console : m01a...).
+#          "X @ancre | texte" : X = T ou A ; ancre facultative = secondes depuis le debut de la scene (@+12.5) ou repere du tournage (@miss, @miss-0.4, @miss+1).
+#          Sans ancre, la phrase suit la precedente (pause de 0,35 s).
+# Les nombres sont ecrits en toutes lettres (septante, huitante, nonante). Les sigles sont epeles par le lexique au moment de la generation.
+
+== title
+T | Bonjour à tous, c'est Thomas.
+A | Et moi, Abderahmane.
+
+== intro
+T | Pour le Groupe Léman Finance, nous avons construit sur AWS un réseau complet : un siège à Genève, une agence à Lausanne, et le cloud au milieu.
+A | Au centre, le Transit Gateway sert de carrefour. À droite, la production, avec son pare-feu et son équilibreur. En dessous, le développement, bien isolé.
+T | Les sites sont reliés par des tunnels chiffrés, et en pointillé, par une liaison Direct Connect que nous simulons.
+A | Tout est refait en direct, à la souris, et testé à chaque étape, pannes comprises. Quand l'attente est longue, on accélère : un badge vous prévient.
+T | Quatorze modules, du budget jusqu'à CloudFormation. C'est parti.
+
+== chap0
+T | Module zéro, le cadrage. Avant le moindre serveur, on fixe un budget, pour éviter toute mauvaise surprise.
+
+== m00
+T @assistant | On crée un budget de coûts, mensuel, de cent dollars.
+A @alerte | Avec une alerte à huitante pour cent, vers une adresse fictive.
+
+== chap1
+T | Le cadre est posé. Abderahmane, le réseau, c'est pour toi !
+A | Merci. Module un : un VPC, deux sous-réseaux, et deux serveurs qui doivent déjà se parler.
+
+== m01a
+A @+0.4 | Le VPC de production : une plage en slash vingt-deux, soit mille vingt-quatre adresses.
+
+== m01b
+T @+0.4 | Pourquoi pas un slash seize, comme dans le sujet ?
+A @+3.9 | Parce que le compte est partagé avec la classe : il faut rester petit.
+A @+9.3 | Deux sous-réseaux, le public d'abord : slash vingt-six, soixante-quatre adresses.
+T @+13.6 | Dont cinq que AWS garde pour lui.
+
+== m01c
+T @+0.2 | Test : un sous-réseau qui en recouvre un autre.
+T @refus-0.2 | AWS refuse.
+
+== m01d
+A @+0.4 | Un rôle pour les serveurs : avec SSM, on les administre sans SSH, ni clé.
+
+== m01e
+A @+0.4 | Premier serveur, web zéro un : son nom, et les balises.
+A @ami-type | Amazon Linux, t trois point micro, sans paire de clés : Session Manager suffira.
+A @+13.9 | Réseau : VPC de production, sous-réseau public, adresse publique.
+A @+18.2 | Adresse privée fixe, puis le rôle SSM.
+
+== m01f
+T @+0.4 | À moi le second serveur, app zéro un. Même recette, avec deux différences.
+T @vpc-sous-reseau-0.4 | Il va dans le sous-réseau privé, sans adresse publique : personne ne l'atteint depuis Internet.
+T @ip-fixe+1.2 | Et dans les données utilisateur, une mini API sur le port huit mille huitante.
+
+== chap2
+A | Nos deux serveurs sont là. À toi, Thomas.
+T | Module deux, le routage : on branche Internet, et une NAT fait sortir le serveur privé.
+
+== m02a
+T @+0.8 | D'abord la passerelle Internet, avec ses balises. Une fois créée, il faut encore l'attacher au VPC.
+T @attacher | Sans cela, elle ne sert à rien.
+
+== m02b
+T @+0.4 | Ensuite, la table de routage du sous-réseau public.
+T @modifier-routes | Dans cette table, une route par défaut : tout ce qui n'est pas local part vers la passerelle Internet.
+T @route-igw+0.4 | Puis on l'associe au sous-réseau public : c'est ce qui le rend public.
+
+== m02c
+A @+0.4 | Même chose pour le privé, avec sa propre table.
+A @creee-0.4 | Elle ne contient que la route locale : rien ne sort.
+
+== m02c2
+A @+0.3 | Un deuxième sous-réseau public, en zone B ? Pourquoi ?
+T @+3.6 | Parce que la zone A a déjà atteint sa limite de passerelles NAT : le compte est partagé avec toute la classe.
+
+== m02d
+T @+0.3 | La passerelle NAT, avec une adresse IP Elastic.
+T @quota-refuse-0.4 | Zone A : refusé, quota atteint.
+T @zone-b-0.4 | Zone B : ça passe.
+A @creee+0.1 | Un peu plus d'une minute d'attente : on accélère.
+
+== m02d2
+T @+0.2 | Et voilà, elle est disponible.
+
+== m02e
+A @+0.5 | Maintenant, la table du sous-réseau privé : sa route par défaut pointe vers la NAT.
+A @+6.6 | Le serveur privé peut sortir, sans jamais être joignable de l'extérieur.
+
+== m02f
+T @+0.2 | La preuve, par Session Manager : depuis app zéro un, on interroge Internet.
+A @ip-nat-0.4 | C'est l'adresse de la NAT.
+
+== m02g
+A @+1.6 | Et maintenant, une panne volontaire.
+T @boucle-0.5 | Une boucle interroge Internet chaque seconde.
+T @route-retiree-0.4 | On retire la route par défaut du privé.
+T @echecs-0.3 | Et les requêtes échouent aussitôt.
+A @+13.5 | Quand une sortie Internet tombe, on vérifie dans l'ordre : la table associée, la route par défaut, sa cible, et l'état de cette cible.
+T @route-remise-0.2 | On remet la route, et l'adresse de la NAT revient.
+
+== chap3
+T | Le routage tient. Abderahmane, la sécurité ?
+A | Module trois : les Security Groups retiennent l'état des connexions, les NACL n'ont aucune mémoire.
+
+== m03a
+A @+0.3 | Premier groupe, pour le web : le port quatre cent quarante-trois, ouvert à tous.
+A @regle-22-0.2 | Le port vingt-deux, lui, est limité à une plage d'adresses précise.
+A @balises-1.0 | Et on étiquette, comme toujours.
+
+== m03b
+A @+0.4 | Pour l'application, on est plus strict : la source des règles n'est pas une adresse.
+T @+6.2 | C'est quoi, alors ?
+A @+8.2 | Le groupe web lui-même. Seuls les serveurs web peuvent parler à l'application : le port huit mille huitante, le SSH, et le ping.
+
+== m03c
+T @+0.3 | Il faut maintenant brancher ces groupes sur les instances, à la place du groupe par défaut.
+T @modifier-app-01-TP-AC-0.2 | Web zéro un reçoit le groupe web, app zéro un le groupe application.
+
+== m03d
+A @terminal-0.2 | Depuis web zéro un : le ping passe, et l'API aussi.
+T @install-debut+0.5 | On installe nginx, avec un certificat auto-signé, pour répondre en HTTPS.
+T @conf-0.5 | Une page à la racine, et un relais vers l'API sous slash api.
+
+== m03e
+A @+0.4 | La NACL filtre au niveau du sous-réseau, et elle ne retient rien.
+T @editeur-entrant-0.3 | Donc il faut tout autoriser, dans les deux sens ?
+A @regles-entrantes-0.6 | Oui. Le quatre cent quarante-trois, les ports éphémères pour les réponses, et le trafic interne du VPC.
+A @regles-sortantes-0.5 | Et la même chose en sortie.
+
+== m03f
+A @+0.4 | Dernière vérification : web zéro un interroge l'API en boucle.
+A @regle-8080-retiree-0.4 | On retire le huit mille huitante du groupe application.
+T @echecs-0.4 | Échec : c'est bien ce groupe qui décide.
+A @regle-8080-remise-0.4 | On remet la règle, et tout repart.
+
+== chap4
+A | Notre réseau est filtré de l'intérieur. Thomas, tu nous mets un pare-feu ?
+T | Module quatre : Network Firewall. Tout ce qui sort du serveur privé passera par lui.
+
+== m04a
+T @+0.4 | Le pare-feu a son propre sous-réseau, tout petit : seize adresses, le minimum accepté.
+
+== m04b
+T @+0.5 | Pour que le trafic passe au bon endroit : des tables de routage.
+T @rt-fw-creee-0.4 | La première, pour le sous-réseau du pare-feu : tout part vers la NAT.
+A @+11.5 | Le chemin sera donc : serveur privé, pare-feu, NAT, puis Internet.
+T @rt-fw-associee-0.4 | On l'associe au sous-réseau du pare-feu.
+T @rt-nat-creee-1.5 | La seconde est pour le sous-réseau de la NAT, en zone B : tout part vers la passerelle Internet.
+T @rt-nat-route-3.5 | Avec ces deux tables, le chemin de sortie est prêt, à un maillon près.
+
+== m04c
+A @+0.4 | Ensuite, les règles : un groupe de règles avec état, de type liste de domaines, en autorisation.
+A @liste-domaines-0.4 | Deux domaines seulement : les dépôts Amazon Linux, et les services AWS.
+
+== m04d
+T @+0.4 | Puis la politique : elle décide quoi faire de ce que les règles ne couvrent pas.
+T @ordre-strict-0.6 | Ordre strict, et tout ce qui n'est pas autorisé est abandonné, avec une alerte.
+
+== m04e
+A @+0.3 | Toutes les pièces sont là : on crée le pare-feu ?
+T @capacite | Oui : le VPC, le sous-réseau dédié, et notre politique.
+T @+9.0 | AWS y déploie un point de terminaison.
+
+== m04f0
+A @+0.3 | Deux groupes de journaux : les alertes d'un côté, les flux de l'autre.
+
+== m04f
+A @+0.4 | On les branche sur le pare-feu : les alertes ici, les flux là.
+
+== m04g
+T @+0.3 | Pare-feu prêt : la route par défaut du privé vise maintenant son point de terminaison.
+
+== m04h
+A @+0.2 | Et une route de retour, pour que la réponse revienne par le même chemin.
+
+== m04i
+T @+0.4 | Le test, depuis app zéro un : d'abord un domaine autorisé.
+T @autorise-0.3 | Ça aboutit : le quatre cent trois, c'est la réponse du site.
+A @bloque+0.2 | Example point com ? Pas dans la liste : ça expire.
+
+== m04j
+A @+0.2 | CloudWatch a tout enregistré : l'alerte, et les flux.
+
+== chap5
+T | Le pare-feu filtre bien. Je te passe la main, Abderahmane.
+A | Module cinq : un VPC de développement, relié à la production par un appairage.
+
+== m05a1
+A @+0.3 | Le VPC de développement : sa plage ne doit surtout pas chevaucher celle de la production.
+
+== m05a2
+T @+0.5 | Dedans, un petit sous-réseau en slash vingt-six.
+T @+5.0 | Une plage modeste suffit : un seul serveur y vivra.
+
+== m05b1
+T @+0.4 | Comme avant, une passerelle Internet, créée puis attachée.
+T @+5.5 | Elle donnera au développement sa sortie vers Internet.
+
+== m05b2
+T @+0.4 | Les mêmes gestes qu'au module deux ?
+A @+4.5 | Exactement : une table, une route par défaut vers la passerelle, et l'association au sous-réseau.
+
+== m05c1
+A @+0.4 | Pour le développement, un Security Group sans aucune règle entrante : personne ne peut y entrer.
+
+== m05c2
+A @+0.4 | Puis le serveur dev zéro un, dans ce VPC, avec le même rôle pour Session Manager.
+A @sg-0.2 | Avec le groupe sans règle entrante.
+A @ip-fixe-0.3 | Adresse fixe, elle aussi.
+
+== m05d
+T @+0.4 | Maintenant, l'appairage : on demande la connexion de la production vers le développement.
+T @menu-accepter-0.8 | Même compte : on l'accepte nous-mêmes.
+
+== m05e
+A @+0.3 | Chaque côté a besoin de sa route vers l'autre : d'abord dans le privé de la production, puis dans le développement.
+
+== m05f
+T @+0.2 | Le port huit mille huitante s'ouvre au développement, et à lui seul.
+
+== m05g
+A @+0.3 | Test depuis dev zéro un.
+T @api-0.4 | L'API répond.
+A @ping-refuse-0.5 | Ping refusé.
+T @ssh-ferme-2.7 | SSH aussi : seul ce qu'on ouvre passe.
+
+== m05h
+A @+0.3 | Dernier test : deux VPC aux plages qui se chevauchent ne s'apparient pas.
+T @refus-0.4 | AWS refuse.
+
+== chap6
+A | L'appairage ne passe pas à l'échelle. Thomas, tu as mieux ?
+T | Module six : le Transit Gateway, un carrefour unique, avec une table de routage par environnement.
+
+== m06a
+T @+0.3 | Avec l'appairage, chaque nouveau VPC demande une connexion de plus. Ici, un seul Transit Gateway.
+T @+6.9 | On désactive l'association et la propagation par défaut : on veut tout piloter nous-mêmes.
+
+== m06b
+A @+0.4 | Premier attachement : le VPC de production, avec un sous-réseau par zone.
+
+== m06c
+A @+0.4 | Deuxième attachement : le développement, avec son propre sous-réseau.
+
+== m06d
+T @+0.4 | Deux tables de routage : une pour la production, une pour le développement.
+A @+6.2 | Pourquoi deux ?
+T @+7.8 | Pour contrôler qui peut parler à qui. Chaque environnement ne verra que ce qu'on décide.
+
+== m06e
+T @+0.4 | On associe chaque attachement à sa table. Puis on croise les propagations : la production apprend les routes du développement, et inversement.
+
+== m06i
+A @+0.2 | Chaque table ne connaît que l'autre côté.
+
+== m06f
+T @+0.3 | Dans les VPC, les routes visent désormais le Transit Gateway, plus l'appairage.
+
+== m06g
+A @+0.2 | L'appairage ne sert plus : on le supprime.
+
+== m06h
+T @terminal-0.4 | Depuis dev zéro un, l'API répond, cette fois par le Transit Gateway.
+A @boucle-0.2 | Maintenant, on casse quelque chose. Une boucle d'appels, et on retire la propagation du développement dans la table de production.
+T @echecs-0.4 | Plus de route : les requêtes échouent.
+A @propagation-remise-0.4 | On remet la propagation, et tout repart.
+
+== chap7
+T | Le carrefour est en place. Abderahmane, on y raccorde les sites ?
+A | Module sept : le VPN site à site. Deux sites simulés par des serveurs Linux, mais des tunnels IPsec bien réels.
+
+== m07a
+A @+0.3 | Avant de créer les tunnels, les clés partagées : elles ne doivent jamais traîner dans un fichier. On les range dans Secrets Manager.
+A @cles+3.3 | Elles sont saisies masquées : elles n'apparaissent nulle part.
+
+== m07b
+A @+0.3 | Le rôle des serveurs reçoit le droit de lire ce secret, et rien d'autre.
+
+== m07c
+A @+0.4 | Le siège et l'agence sont simulés par deux VPC séparés, chacun avec un slash vingt-quatre d'adresses d'entreprise.
+T @vpc-cree+0.4 | On refait les gestes des modules un et deux, mais en accéléré.
+A @sous-reseau-cree-0.4 | Un VPC, un sous-réseau, une passerelle Internet, une table de routage : rien de nouveau.
+T @igw-attachee-0.4 | Pas de siège réel dans notre salle de cours : ces VPC jouent le rôle des sites.
+T @+33.0 | Celui-ci joue le siège, à Genève.
+A @table-associee-2.8 | Dernier geste : on associe la table au sous-réseau.
+
+== m07c2
+T @+0.4 | Même chose pour l'agence, à Lausanne, avec sa propre plage d'adresses.
+A @+15.0 | Les deux sites ne se recouvrent ni entre eux, ni avec nos VPC AWS : c'est indispensable pour qu'un VPN route correctement.
+T @+30.5 | Les gestes sont les mêmes, simplement accélérés.
+A @+41.0 | Et la table de routage, associée au sous-réseau.
+
+== m07d
+T @+0.4 | Un Security Group par routeur, et pour l'instant, aucune règle entrante.
+A @+9.5 | Les règles IPsec viendront quand on connaîtra les adresses des tunnels.
+
+== m07e
+A @+0.4 | Le routeur du siège : une instance Ubuntu, dans le VPC du siège.
+A @vpc-sous-reseau-0.4 | Avec son Security Group, une adresse privée fixe, et le rôle pour Session Manager.
+
+== m07e2
+T @+0.4 | Même recette pour le routeur de l'agence.
+A @+9.0 | Ubuntu encore, avec son Security Group, son adresse privée fixe, et le rôle pour Session Manager.
+
+== m07f
+T @+0.4 | Chaque routeur reçoit une adresse IP Elastic : une adresse publique fixe, celle que la passerelle cliente décrira.
+A @siege-associer-0.4 | On l'alloue, puis on l'associe à l'instance.
+T @agence-allouee-0.3 | Et pareil pour l'agence.
+
+== m07g
+A @+0.4 | Les passerelles clientes : une par site. Chacune décrit le routeur par son adresse publique.
+T @agence-formulaire-0.3 | Le numéro d'AS est obligatoire, mais sans effet en routage statique.
+
+== m07h
+T @+0.4 | Les connexions VPN : cible, le Transit Gateway, routage statique.
+T @siege-cles-0.4 | Deux tunnels par connexion, chacun avec sa clé, saisie masquée.
+A @siege-creee-1.5 | Au total, AWS prépare quatre tunnels : deux par site.
+T @agence-cible-0.4 | Même chose pour l'agence.
+A @agence-cles-0.4 | Deux tunnels, deux clés, comme pour le siège.
+T @attente-debut-0.4 | La création prend quelques minutes : on accélère.
+
+== m07i
+T @+0.4 | Sur le Transit Gateway, une troisième table, réservée aux sites.
+T @assoc-siege-0.5 | Les deux VPN y sont associés, et seule la production s'y propage.
+A @+14.1 | Les sites ne verront donc jamais le développement.
+
+== m07j
+T @+0.4 | Dans la table de la production, une route statique par site, vers son VPN.
+
+== m07k
+T @+0.4 | Et côté VPC de production, la table privée envoie les deux plages des sites vers le Transit Gateway.
+
+== m07l
+A @+0.3 | Le port huit mille huitante s'ouvre au siège et à l'agence, à eux seuls.
+
+== m07m
+A @+0.4 | Chaque routeur n'accepte que le trafic venant des deux adresses publiques de ses tunnels AWS.
+T @+7.5 | Toute autre adresse est simplement ignorée.
+
+== m07n
+A @terminal-0.2 | Place à la configuration du routeur du siège, par Session Manager.
+A @+7.0 | On installe strongSwan, puis on lit les clés dans Secrets Manager, sans jamais les afficher.
+T @recup-0.4 | Un petit script Python lit la description du VPN et écrit la configuration : deux tunnels IPsec.
+A @conf-0.4 | En IKE version deux, avec du chiffrement AES deux cent cinquante-six.
+T @+25.0 | Puis une interface par tunnel, et un suivi qui ne garde la route que sur un tunnel établi.
+A @tunnels-0.4 | Deux sessions établies.
+
+== m07n2
+T @+0.4 | Même configuration pour l'agence : on installe, on récupère les clés et la description, on génère.
+T @+10.0 | Les clés sont lues à la volée dans Secrets Manager, jamais écrites en clair.
+A @conf-0.5 | Rien de nouveau : seules les adresses changent.
+T @negociation-debut-0.4 | On attend la négociation des tunnels.
+
+== m07o
+T @+0.2 | Dans la console, les quatre tunnels sont hauts, et les routes sont là.
+
+== m07p
+T @+0.4 | Les tests, d'abord depuis le siège.
+T @siege-api-0.2 | L'API répond.
+A @siege-ping | Ping refusé : seul le huit mille huitante passe.
+T @+12.2 | Le développement reste injoignable.
+A @agence-terminal-0.4 | Même scénario depuis l'agence.
+T @agence-api-0.3 | L'API répond ici aussi, et le développement reste hors de portée.
+
+== m07q
+A @+0.4 | Dernier test du module : la panne d'un tunnel. D'abord, on règle IKE pour que la détection soit la plus rapide possible.
+T @boucle-0.5 | Une boucle interroge l'API pendant qu'on coupe le tunnel un du siège.
+A @panne-0.4 | Les requêtes échouent le temps de la détection, environ une trentaine de secondes : ce n'est pas une bascule sans coupure, et on préfère le dire.
+T @+33.3 | Puis tout passe par le tunnel deux, et on rétablit le tunnel un.
+
+== chap8
+A | Les sites sont connectés. Thomas, Direct Connect est pour toi.
+T | Module huit : la passerelle est réelle, la liaison est simulée par un tunnel GRE avec du BGP, et le VPN reste en secours.
+
+== m08a
+T @+0.3 | Une Direct Connect Gateway, bien réelle, avec son propre numéro d'AS.
+T @+5.0 | Le bandeau rouge, c'est l'organisation qui bloque les emplacements.
+
+== m08b
+A @+0.4 | On l'associe au Transit Gateway, en limitant les préfixes à la production et au siège.
+A @+7.2 | L'association devient active après quelques minutes.
+
+== m08c
+T @+0.4 | Côté AWS, un routeur aura besoin d'une route vers le siège, par le Transit Gateway.
+T @+10.0 | Et son propre Security Group.
+
+== m08j
+A @+0.4 | La même route dans la table du sous-réseau de la zone B.
+
+== m08d
+T @+0.4 | Le routeur côté AWS : une instance Ubuntu, dans le sous-réseau public de la zone B, avec une adresse fixe.
+T @+11.5 | Son adresse fixe servira de point d'extrémité aux tunnels GRE.
+T @lancee-1.4 | Refusé : limite de vCPU atteinte.
+
+== m08e
+T @+1.4 | On arrête dev zéro un, inutile pour l'instant.
+
+== m08f
+A @+0.4 | On relance le routeur : cette fois, le quota le permet.
+A @ami-ubuntu-0.4 | Toujours Ubuntu, toujours dans le sous-réseau public de la zone B.
+A @lancee-0.9 | Cette fois, il démarre.
+
+== m08k
+A @+0.4 | Un attachement ne couvre que les zones déclarées : on ajoute la zone B, celle du routeur.
+
+== m08g
+A @+0.4 | Les règles de sécurité : entre les deux routeurs, le protocole GRE, numéro quarante-sept.
+A @aws-regles-0.4 | Et le port huit mille huitante d'app zéro un, ouvert à ce routeur.
+A @+11.5 | Sans ces règles, les tunnels GRE ne monteraient jamais.
+
+== m08h
+T @terminal-0.4 | Sur le routeur côté AWS : FRRouting, un logiciel de routage libre.
+T @gre-0.5 | Deux tunnels GRE : l'un pour la liaison simulée, via Internet, l'autre à l'intérieur du VPN.
+T @vtysh-debut+4.5 | Et BGP par-dessus.
+
+== m08i
+A @terminal-0.4 | Le routeur du siège reçoit les mêmes tunnels.
+T @+10.8 | Un VPN statique ne parle pas BGP : comment le secours peut-il fonctionner ?
+A @+16.0 | Le BGP du secours circule dans un tunnel GRE, à l'intérieur du VPN : c'est ce tunnel-là qui fait le travail.
+A @bgp-1.0 | Liaison d'abord, VPN en secours.
+
+== m08l
+T @siege-bgp-0.5 | Deux sessions BGP établies.
+T @siege-localpref | Le meilleur chemin passe par la liaison : préférence locale deux cents.
+A @siege-api-0.3 | L'API répond par la liaison simulée.
+A @aws-terminal-0.4 | Côté AWS, le chemin du VPN arrive allongé.
+
+== m08m
+T @+0.4 | Le test décisif : on coupe la liaison dédiée. D'abord, une boucle qui affiche par où passe le trafic.
+A @+8.5 | Pour l'instant, tout passe par la liaison.
+T @panne-0.4 | On coupe le GRE avec une règle iptables : en silence, sans toucher à l'interface.
+A @bascule-0.5 | BGP s'en aperçoit, et le trafic bascule sur le chemin du VPN, en quelques secondes.
+T @+28.8 | Maintenant, on rétablit la liaison.
+A @+37.0 | Et dès qu'elle revient, BGP la préfère de nouveau.
+
+== m08n
+T @+0.3 | Et dans la console, l'association est active.
+
+== chap9
+T | Direct Connect est validé. Abderahmane, on passe aux applications ?
+A | Module neuf : l'équilibreur de charge, en HTTPS, vers deux groupes cibles : le web, et l'application.
+
+== m09a
+A @+0.3 | Un certificat auto-signé, importé dans ACM, pour le HTTPS de l'équilibreur.
+A @+5.3 | La clé privée est collée masquée : elle n'apparaît nulle part.
+
+== m09b
+A @+0.4 | Deux groupes cibles. D'abord le web : HTTPS, port quatre cent quarante-trois.
+A @tg-web-sante+0.8 | Avec son contrôle de santé, puis web zéro un comme cible.
+T @tg-app-detail-0.4 | Le second pour l'application, en HTTP sur le port huit mille huitante, avec le même principe.
+T @tg-app-cible-0.4 | Cible : app zéro un.
+
+== m09c
+A @+0.4 | Le Security Group de l'équilibreur : le port quatre cent quarante-trois, ouvert à tous.
+A @+9.0 | Il laisse entrer les clients, et rien d'autre.
+
+== m09d
+T @+0.4 | L'équilibreur lui-même, sur deux zones de disponibilité.
+T @listener-0.3 | Un listener HTTPS sur le port quatre cent quarante-trois, qui envoie par défaut vers le groupe web, avec notre certificat.
+A @cree-0.8 | Il se déploie en quelques minutes : on accélère.
+
+== m09e
+A @+0.3 | Le groupe application accepte l'équilibreur, sur le port huit mille huitante.
+
+== m09f
+A @+0.3 | Une règle sur le listener : tout ce qui commence par slash api part vers le groupe de l'application.
+
+== m09g
+T @+0.2 | Les deux groupes sont sains.
+T @api-1.2 | L'API répond par l'équilibreur.
+
+== m09h
+T @+0.4 | La panne : on arrête nginx sur web zéro un.
+A @502-0.5 | L'équilibreur renvoie une erreur cinq cent deux, et la cible passe à non saine.
+T @relance-0.4 | On relance nginx : après quelques contrôles réussis, la cible redevient saine.
+
+== chap10
+A | Le trafic est équilibré. Thomas, on s'occupe des noms ?
+T | Module dix, Route cinquante-trois : une zone privée, une zone publique, et un basculement automatique.
+
+== m10a
+T @+0.4 | D'abord une zone privée : prod point leman point internal, rattachée au VPC de production.
+T @+6.5 | Elle n'est visible que de l'intérieur.
+
+== m10b
+T @+0.3 | Deux enregistrements : web et app.
+
+== m10f0
+T @+0.2 | Il faut activer les noms d'hôte DNS sur le VPC.
+
+== m10f
+T @+0.3 | Depuis web zéro un, le nom se résout bien : c'est le résolveur du VPC qui répond.
+
+== m10c
+A @+0.3 | La zone publique, pour un domaine fictif : leman-finance point example.
+A @+4.8 | Fictif, donc sans délégation chez un registraire.
+
+== m10d
+A @+0.3 | On surveille l'équilibreur en HTTPS, toutes les dix secondes.
+A @+4.2 | Deux échecs, et il est déclaré en panne.
+
+== m10e
+A @+0.4 | Les enregistrements de basculement. Le nom portefeuilles pointe d'abord vers l'équilibreur : c'est le principal, lié à la surveillance.
+T @secours-0.5 | Et le secours : une adresse statique de documentation.
+
+== m10g
+T @+0.4 | On interroge directement un serveur de noms d'AWS, depuis un routeur. D'abord, on installe l'outil dig.
+A @zone-publique-0.4 | Les serveurs de noms se lisent dans la zone publique.
+T @boucle+0.3 | Une boucle demande la réponse toutes les trois secondes : c'est l'adresse de l'équilibreur.
+A @arret-0.1 | Maintenant, on arrête nginx sur web zéro un.
+A | Il faut patienter : la surveillance doit constater la panne.
+T @bascule-0.4 | La réponse change : adresse de secours.
+A @+37.6 | On relance nginx, et la réponse revient à l'équilibreur.
+
+== chap11
+T | Le basculement fonctionne. Abderahmane, la vitrine, c'est CloudFront.
+A | Module onze : un cache devant l'équilibreur, qui ne sera plus joignable en direct.
+
+== m11a
+A @+0.3 | Un petit fichier statique sur web zéro un : un logo, servi sous slash static.
+
+== m11b
+A @+0.2 | Certificat auto-signé oblige : un listener HTTP pour CloudFront.
+
+== m11c
+A @+0.3 | Sur ce listener HTTP, la même règle : slash api part vers l'application, le reste vers le web.
+
+== m11d
+T @+0.3 | La distribution CloudFront, avec le paiement à l'utilisation.
+A @elb-0.4 | L'équilibreur sert d'origine, en HTTP seulement, sans pare-feu applicatif.
+
+== m11e
+T @+0.3 | Un comportement pour slash static : cache optimisé.
+
+== m11e2
+A @+0.3 | Et pour slash api : jamais de cache, tous les en-têtes transmis.
+
+== m11f
+T @+0.3 | On verrouille l'équilibreur : seul CloudFront y accède, grâce à la liste de préfixes d'AWS.
+
+== m11f2
+T @+0.3 | La NACL bloquait encore le port huitante : on ajoute la règle cent cinq.
+
+== m11g
+A @+0.4 | Les tests. On appelle le fichier statique.
+T @miss-0.3 | Premier appel : Miss, la réponse vient de l'origine.
+A @+10.4 | Deuxième appel : Hit, depuis le cache.
+T @api-0.4 | Pour l'API, jamais de cache : Miss à chaque fois.
+A @fichier-modifie-0.5 | On modifie le fichier : le cache sert encore l'ancienne version.
+T @invalidation-0.4 | Une invalidation vide son cache.
+A @creee-0.4 | Quelques minutes d'attente, accélérées.
+T @nouveau-0.4 | Et la nouvelle version apparaît.
+A @alb-direct-0.4 | Accès direct : bloqué.
+
+== chap12
+A | Le site est en ligne. Thomas, comment sait-on qu'il va bien ?
+T | Module douze : la surveillance. Un tableau de bord, une alarme SNS, et les journaux de flux.
+
+== m12a
+T @+0.3 | D'abord une rubrique SNS, qui servira aux notifications d'alarme.
+T @abonnement-0.2 | Abonné par e-mail, avec une adresse fictive.
+
+== m12b
+T @+0.3 | Une file SQS, qui nous servira de preuve de réception.
+
+== m12b2
+T @+0.2 | Et on l'abonne à la rubrique.
+
+== m12c
+A @+0.3 | L'alarme : on surveille les erreurs HTTP cinq cents de l'équilibreur.
+A @seuil-0.4 | Au-delà de cinq erreurs, elle se déclenche.
+T @rubrique-0.4 | Elle prévient la rubrique en passant en alarme, et en revenant à la normale.
+
+== m12d
+T @+0.3 | Le tableau de bord : cibles saines, temps de réponse, erreurs cinq cents, décrits par une source JSON.
+
+== m12e
+T @+0.3 | Les journaux de flux du VPC de production : tout le trafic part vers CloudWatch Logs.
+T @+6.6 | Avec un rôle de service, créé par la console.
+
+== m12f
+A @+0.3 | Pour générer du trafic refusé, une sonde SSH non autorisée, depuis l'agence vers web zéro un.
+A @+7.0 | Le Security Group la refuse.
+
+== m12g
+A @+0.2 | Logs Insights : une requête compte les connexions refusées.
+
+== m12h
+T @+0.4 | Le test de l'alarme. Pour la déclencher, on commence par arrêter nginx.
+A @arret-0.4 | Puis on envoie soixante requêtes par CloudFront : elles reviendront toutes en erreur cinq cent deux.
+T @+13.5 | CloudWatch évalue par périodes : il faut un peu de patience avant que l'alarme bascule.
+A @+22.5 | Chaque requête traverse CloudFront et l'équilibreur, puis tombe sur une cible arrêtée.
+A @attente1-debut-0.4 | On accélère l'attente.
+T @+33.0 | L'alarme se déclenche.
+A @relance-0.3 | On relance nginx : sans nouvelles erreurs, l'alarme finit par se calmer.
+
+== m12i
+A @+0.3 | La file SQS a bien reçu les notifications : voilà notre preuve.
+
+== chap13
+T | Tout est surveillé. Il reste à tout automatiser, Abderahmane.
+A | Module treize : CloudFormation. Le réseau décrit dans un modèle, avec détection de dérive.
+
+== m13a
+A @+0.3 | On téléverse le modèle, on nomme la pile, et on renseigne les paramètres.
+A @balises-0.4 | Le certificat est masqué, les balises sont posées, et on autorise la pile à créer un rôle IAM.
+
+== m13b
+A @+0.2 | Les événements montrent l'ordre de création des ressources.
+
+== m13c
+T @+0.2 | Maintenant, une dérive : on ajoute une règle SSH à la main sur le groupe web.
+
+== m13d
+A @+0.3 | On lance la détection : la pile est en dérive, et la règle ajoutée est visible.
+
+== m13e
+A @+0.3 | On retire la règle manuelle : la pile est de nouveau en phase.
+
+== m13f
+T @+0.3 | Dernier geste : supprimer la pile. CloudFormation défait tout, dans l'ordre inverse de la création.
+
+== end
+T | Voilà, c'est la fin du parcours : quatorze modules, tous réalisés à la main dans la console AWS.
+A | Un réseau sur trois sites, cloisonné, surveillé, et reproductible grâce à CloudFormation.
+T | On est restés honnêtes sur les limites : les sites sont simulés, la liaison Direct Connect aussi, et le domaine est fictif. Tous les écarts avec le sujet sont expliqués dans le dossier.
+A | Merci de nous avoir suivis.
+T | À bientôt !
