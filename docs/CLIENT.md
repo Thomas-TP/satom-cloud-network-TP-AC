@@ -37,6 +37,8 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | Origine protégée | accès direct à l'ALB depuis Internet impossible (liste de préfixes CloudFront seulement) |
 
 ## 5. Résultats des tests (extraits)
+Les mesures viennent de la vidéo (tout refait à la main dans la console) ; quand une valeur vient de notre première exécution en ligne de commande, c'est écrit.
+
 | Test | Résultat |
 |---|---|
 | VPC : création d'un sous-réseau chevauchant | refusée par AWS (`InvalidSubnet.Conflict`) |
@@ -46,12 +48,12 @@ Un réseau AWS sécurisé qui sépare la production et le développement, relie 
 | Pare-feu : domaines sortants | les dépôts autorisés répondent, `example.com` est bloqué, l'alerte est journalisée |
 | Transit Gateway : propagation retirée | le test dev vers prod échoue (pas de route retour), puis réussit une fois la propagation remise |
 | VPN : quatre tunnels | tous à l'état haut ; le siège joint l'application ; l'agence seulement le port 8080 ; aucun site ne joint le dev |
-| VPN : panne du tunnel 1 | le trafic reprend sur le tunnel 2 après 29 s (siège) et 34 s (agence), selon la détection d'AWS |
-| Direct Connect (liaison simulée) : panne du DX | bascule vers le VPN en environ 8 s, retour automatique au rétablissement |
+| VPN : panne du tunnel 1 | le trafic reprend sur le tunnel 2 après 29 s au siège (mesuré dans la vidéo) et 34 s à l'agence (1re exécution), selon la détection d'AWS |
+| Direct Connect (liaison simulée) : panne du DX | bascule vers le VPN en environ 7 s (vidéo) et 10 s (1re exécution), retour automatique au rétablissement |
 | ALB : serveur web arrêté | cible `unhealthy`, réponse 502, retour à `healthy` après redémarrage |
-| Route 53 : serveur principal arrêté | bascule DNS vers le secours en **70 s**, retour au primaire en **34 s** (mesuré en interrogeant directement un serveur de noms AWS) |
+| Route 53 : serveur principal arrêté | bascule DNS vers le secours en **33 s** dans la vidéo (70 s à la 1re mesure), retour au primaire en **141 s** dans la vidéo (34 s à la 1re mesure), mesuré en interrogeant directement un serveur de noms AWS |
 | CloudFront | contenu statique `Miss` puis `Hit` (mis en cache), API jamais mise en cache, ancienne version servie après modification puis nouvelle version après invalidation, accès direct à l'ALB bloqué (délai dépassé) |
-| CloudFormation | dérive détectée (`DRIFTED`) puis corrigée ; stack supprimée et redéployée à l'identique |
+| CloudFormation | dérive détectée (`DRIFTED`) puis corrigée (`IN_SYNC`) ; pile supprimée d'un geste. Le jeu de modifications et le redéploiement identique ont été essayés à la 1re exécution en ligne de commande, pas dans la vidéo |
 
 ## 6. Limites et écarts à connaître
 | Sujet | Situation | Conséquence |

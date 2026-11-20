@@ -26,6 +26,6 @@ Nous avons demandé au formateur de retirer ces actions de la règle (liste de `
 | Direct Connect Gateway (création et association) | autorisé |
 | Quota de vCPU | 48 (demande approuvée) |
 
-Nous ne savons pas quelle règle exacte a été modifiée. Il reste des refus liés à la restriction de régions : la **console** Direct Connect affiche une erreur `DescribeLocations` parce qu'elle appelle un point d'accès global dans une région interdite. Le service fonctionne par la ligne de commande.
+Nous ne savons pas quelle règle exacte a été modifiée. Il reste un refus : la page *Passerelles Direct Connect* de la **console** affiche un bandeau rouge, `AccessDeniedException ... directconnect:DescribeLocations with an explicit deny in a service control policy`. C'est la liste des emplacements Direct Connect qui est refusée par l'organisation. La page reste utilisable : nous avons créé et associé la passerelle Direct Connect directement dans la console.
 
-Nous avons donc refait pour de vrai les modules 4, 6, 7 et 8. Les scripts et les preuves sont dans `scripts/` et `docs/modules/`.
+Nous avons donc refait pour de vrai les modules 4, 6, 7 et 8. Une première fois le 17/11 avec des scripts (`scripts/`, `docs/modules/`), puis une seconde fois à la main dans la console du 18 au 20/11, filmée : c'est la version décrite dans le dossier.

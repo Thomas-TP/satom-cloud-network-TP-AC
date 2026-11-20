@@ -1,16 +1,31 @@
-=== Module 2 : routage ===
-TP1 - IGW + rt-public (0.0.0.0/0 -> igw) + IP publique (Elastic IP) sur web-01
-  web-01 -> ping 8.8.8.8 : 2/2 recus (ttl 119, ~3 ms)
-  web-01 -> app-01 ping 10.20.1.10 : 3/3 recus
-TP2 - NAT nat-prod-leman-TP-AC + rt-prive (0.0.0.0/0 -> nat)
-  app-01 -> ping 8.8.8.8 : 2/2 recus (~4 ms) ; curl https://checkip.amazonaws.com -> IP de la NAT (l'adresse de app-01 reste privee)
-  app-01 n'a aucune adresse IP publique (describe-instances : PublicIpAddress = None) : il n'est pas joignable depuis Internet
-TP3 - route par defaut retiree puis retablie (ping 8.8.8.8 chaque seconde depuis app-01, heures UTC de l'instance) :
-  10:49:04 a 10:49:18  OK    (route 0.0.0.0/0 -> NAT presente)
-  10:49:19 a 10:49:37  ECHEC (route retiree a 10:49:20 UTC, soit 19 s d'echec)
-  10:49:39 a 10:49:59  OK    (route retablie a 10:49:39 UTC)
-Tables de routage finales :
-  rt-public-leman-TP-AC : 10.20.0.0/22 local | 0.0.0.0/0 -> igw-prod-leman-TP-AC
-  rt-prive-leman-TP-AC  : 10.20.0.0/22 local | 0.0.0.0/0 -> nat-prod-leman-TP-AC
+=== Module 2 : routage, passerelle Internet et NAT (relevé sur le tournage dans la console, région eu-north-1) ===
+Passerelle Internet igw-prod-leman-TP-AC (igw-0476502e016e32232) : état Attached au VPC vpc-prod-leman-TP-AC.
 
+Tables de routage :
+  rt-public-leman-TP-AC (rtb-06d51c36561985d79) : 10.20.0.0/22 local ; 0.0.0.0/0 -> igw-0476502e016e32232
+      associée à sub-public-1a-TP-AC et sub-public-1b-TP-AC
+  rt-prive-leman-TP-AC  (rtb-088ba1f009f668cfc) : 10.20.0.0/22 local ; 0.0.0.0/0 -> nat-055a6d12887edeb60
+      associée à sub-prive-1a-TP-AC
 
+Passerelle NAT, premier essai dans sub-public-1a-TP-AC (eu-north-1a) :
+  -> erreur : "Performing this operation would exceed the limit of 5 NAT gateways"
+Passerelle NAT, second essai dans sub-public-1b-TP-AC (eu-north-1b, 10.20.0.64/26) :
+  nat-prod-leman-TP-AC (nat-055a6d12887edeb60), connectivité publique, adresse privée 10.20.0.101, adresse Elastic 13.62.130.160
+  état Pending à la création, Available un peu plus d'une minute plus tard
+
+Session Manager, instances en ligne : app-01-TP-AC et web-01-TP-AC (Ping status : Online).
+Session Manager sur app-01-TP-AC (aucune adresse publique) :
+  sh-5.2$ whoami
+  ssm-user
+  sh-5.2$ hostname -I
+  10.20.1.10
+  sh-5.2$ curl -s https://checkip.amazonaws.com
+  13.62.130.160            <- l'adresse Elastic de la NAT, pas celle d'app-01
+
+Panne volontaire (boucle : while true; do curl -s -m 2 https://checkip.amazonaws.com || echo ECHEC; sleep 1; done) :
+  13.62.130.160 (route 0.0.0.0/0 -> NAT présente)
+  route 0.0.0.0/0 supprimée de rt-prive-leman-TP-AC
+  ECHEC x 29 (une tentative dure au plus 3 s : 2 s de délai de curl et 1 s de pause)
+  route 0.0.0.0/0 -> NAT remise
+  13.62.130.160 (la sortie repart)
+Pendant la coupure, la fenêtre de Session Manager est restée figée : les lignes ECHEC ne se sont affichées qu'une fois la route remise.

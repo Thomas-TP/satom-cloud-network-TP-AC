@@ -15,10 +15,9 @@ Région : **eu-north-1 (Stockholm)** – tags `Projet=SatomCloudNetwork`, `Equip
 | Services bloqués par l'organisation | [`docs/01-services-bloques.md`](docs/01-services-bloques.md) |
 | Points du sujet impossibles ou incohérents (pour le formateur) | [`docs/02-ecarts-au-sujet.md`](docs/02-ecarts-au-sujet.md) |
 | Journal de projet et nettoyage | [`docs/NETTOYAGE.md`](docs/NETTOYAGE.md) |
-| Captures (console AWS réelles, état CLI, preuves de tests) | [`captures/`](captures/) |
-| Vidéo de rendu v2 (environ 8 min, captures et terminaux) | [`video/satom-cloud-network-TP-AC.mp4`](video/satom-cloud-network-TP-AC.mp4) |
-| **Vidéo tutoriel complète avec voix (34 min, vrai domaine pour les modules 9 à 11)** | [https://youtu.be/emZqnBNtOjM](https://youtu.be/emZqnBNtOjM) (YouTube, non répertoriée) |
-| Vidéo tutoriel refaite à la main dans la console AWS (version complète d'environ 38 min, version courte de 6 min 30) | fichiers locaux `video/satom-cloud-network-TP-AC-gui.mp4` et `…-court.mp4` (trop lourds pour le dépôt) ; outils de tournage et de montage : [`video/rig/`](video/rig/), [`video/shoot/`](video/shoot/), [`video/scenario2.py`](video/scenario2.py), [`video/build_video.py`](video/build_video.py) |
+| Captures de la console AWS tirées de la vidéo (bandeau du compte masqué) | [`docs/images/shots/`](docs/images/shots/) (outil : `scripts/shot.py`) |
+| **Vidéo tutoriel complète avec voix** (34 min, tout refait à la main dans la console, vrai domaine pour les modules 9 à 11) | [https://youtu.be/emZqnBNtOjM](https://youtu.be/emZqnBNtOjM) (YouTube, non répertoriée) |
+| Ancienne vidéo de rendu (environ 8 min, captures et terminaux, première version en ligne de commande) | [`video/satom-cloud-network-TP-AC.mp4`](video/satom-cloud-network-TP-AC.mp4) |
 
 ## Rejouer le projet
 ```powershell

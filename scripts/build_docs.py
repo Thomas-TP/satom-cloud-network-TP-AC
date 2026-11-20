@@ -25,6 +25,7 @@ def label(fn):
 
 
 def captures_section(m, absolute):
+    return ''   # anciennes captures de terminal (1re version scriptee) : remplacees par les captures de la console dans docs/images/shots/
     pngs = sorted(glob.glob(os.path.join(ROOT, 'captures', m, '*.png')))
     pngs = [p for p in pngs if os.path.basename(p).startswith(tuple(LABELS))]
     if not pngs:
