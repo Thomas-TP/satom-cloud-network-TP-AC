@@ -10,16 +10,30 @@ fix = lambda t: re.sub(r'\]\(\.\./images/', '](' + RAW + '/', t)
 PARTS = [('partie1', 'Partie 1 : modules 0 à 4', range(0, 5), 'cadrage, réseaux, routage, sécurité, pare-feu'),
          ('partie2', 'Partie 2 : modules 5 à 8', range(5, 9), 'peering, Transit Gateway, VPN, Direct Connect'),
          ('partie3', 'Partie 3 : modules 9 à 13', range(9, 14), 'ALB, Route 53, CloudFront, surveillance, CloudFormation')]
-nav = lambda cur: ' · '.join(('**' + t + '**') if k == cur else f'[{t}]({{{{URL_{k}}}}})' for k, t in [('sommaire', 'Sommaire')] + [(k, t.split(' : ')[0]) for k, t, _, _ in PARTS])
+NOM = {k: t.split(' : ')[0] for k, t, _, _ in PARTS}
+SUJET = {k: t.split(' : ')[1] for k, t, _, _ in PARTS}
+nav = lambda cur: ' · '.join(('**' + t + '**') if k == cur else f'[{t}]({{{{URL_{k}}}}})' for k, t in [('sommaire', 'Sommaire')] + [(k, NOM[k]) for k, _, _, _ in PARTS])
 
-def module(n): return fix(rd(os.path.join(D, 'modules', f'm{n:02d}.md')).replace('\n# Module', '\n# Module'))
+def module(n): return fix(rd(os.path.join(D, 'modules', f'm{n:02d}.md')))
 
 for k, title, rng, sub in PARTS:
     body = '\n\n---\n\n'.join(module(n) for n in rng)
     txt = f"# Satom Cloud Network (TP-AC) – {title}\n\n{nav(k)}\n\n[TOC]\n\n---\n\n{body}\n\n---\n\n{nav(k)}\n"
     open(os.path.join(OUT, k + '.md'), 'w', encoding='utf-8', newline='\n').write(txt); print(k, len(txt))
 
+# --- sommaire : introduction, liens bien visibles, video, tableau des modules (avec lien vers la partie), schema
 head = fix(rd(os.path.join(D, 'src', 'entete.md')))
-liste = '\n'.join(f"- [{t}]({{{{URL_{k}}}}}) : {sub}" for k, t, _, sub in PARTS)
-som = head + '\n\n## Comment lire le dossier\nLe dossier est coupé en trois notes (limite de taille de HackMD). Chaque note a son propre sommaire en haut.\n\n' + liste + '\n'
+part_of = lambda n: next(k for k, _, rng, _ in PARTS if n in rng)
+
+def ligne(m):
+    k = part_of(int(m.group(1)))
+    return m.group(0) + f" **[{NOM[k]}]({{{{URL_{k}}}}})** |"
+
+head = re.sub(r'^\| (\d+) \| [^|]+\| terminé \|', ligne, head, flags=re.M)
+head = head.replace('| Module | Sujet | État |\n|---|---|---|', '| Module | Sujet | État | Lire |\n|---|---|---|---|')
+entetes = ' | '.join(f'[{NOM[k]}]({{{{URL_{k}}}}})' for k, _, _, _ in PARTS)
+cellules = ' | '.join(f'**[{SUJET[k]}]({{{{URL_{k}}}}})**<br>{sub}' for k, _, _, sub in PARTS)
+lire = f"## Lire le dossier\n\n| {entetes} |\n|:---:|:---:|:---:|\n| {cellules} |\n\n"
+titre, p1, reste = head.split('\n\n', 2)
+som = titre + '\n\n' + p1 + '\n\n' + lire + reste
 open(os.path.join(OUT, 'sommaire.md'), 'w', encoding='utf-8', newline='\n').write(som); print('sommaire', len(som))
